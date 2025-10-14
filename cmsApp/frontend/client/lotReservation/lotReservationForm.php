@@ -119,12 +119,57 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                     </div>
                     <?php endif; ?>
 
-                    <!-- Reservation form will be added here -->
-                    <div class="text-center py-5">
-                        <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
-                        <h3 class="text-muted">Reservation Form</h3>
-                        <p class="text-muted">The lot reservation form will be implemented here.</p>
+                    <!-- Reservation form with available lots -->
+                    <div class="mb-4">
+                        <h4>Available Lots</h4>
+                        <div id="availableLotsContainer" class="mb-3">
+                            <div class="text-muted">Loading available lots...</div>
+                        </div>
                     </div>
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Determine the type from the selected package (PHP to JS)
+                        let selectedType = '';
+                        <?php
+                        $typeLabel = '';
+                        $burialKeywords = ['Regular Lot', '4-Lot Package', 'Exhumation'];
+                        $mausoleumKeywords = ['Mausoleum'];
+                        foreach ($burialKeywords as $kw) {
+                            if (stripos($selectedPackage, $kw) !== false) {
+                                $typeLabel = 'BurialLot';
+                                break;
+                            }
+                        }
+                        foreach ($mausoleumKeywords as $kw) {
+                            if (stripos($selectedPackage, $kw) !== false) {
+                                $typeLabel = 'Mausoleum';
+                                break;
+                            }
+                        }
+                        ?>
+                        selectedType = '<?php echo $typeLabel; ?>';
+                        fetch('/stJohnCmsApp/cms.api/get_lots.php?limit=1000')
+                            .then(res => res.json())
+                            .then(data => {
+                                if (!data.success) throw new Error('Failed to fetch lots');
+                                const lots = data.data.filter(lot => lot.type === selectedType);
+                                const container = document.getElementById('availableLotsContainer');
+                                if (lots.length === 0) {
+                                    container.innerHTML = `<div class="text-danger">No available lots found for type: <b>${selectedType || 'N/A'}</b>.</div>`;
+                                    return;
+                                }
+                                let html = '<table class="table table-bordered table-sm"><thead><tr><th>Lot ID</th><th>Block</th><th>Area</th><th>Row</th><th>Lot No.</th><th>Type</th><th>Status</th></tr></thead><tbody>';
+                                lots.forEach(lot => {
+                                    html += `<tr><td>${lot.lotId}</td><td>${lot.block}</td><td>${lot.area}</td><td>${lot.rowNumber}</td><td>${lot.lotNumber}</td><td>${lot.type}</td><td>${lot.status}</td></tr>`;
+                                });
+                                html += '</tbody></table>';
+                                container.innerHTML = html;
+                            })
+                            .catch(err => {
+                                document.getElementById('availableLotsContainer').innerHTML = '<div class="text-danger">Error loading lots.</div>';
+                            });
+                    });
+                    </script>
 
                 </div>
             </div>
