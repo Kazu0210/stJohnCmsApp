@@ -39,11 +39,11 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
     <?php include dirname(__DIR__) . '/clientNavbar.php'; ?>
 
 
-    <main class="main-content container-fluid">
-        <div class="row justify-content-center mt-5">
-            <div class="col-lg-8">
+    <main class="main-content container-fluid px-0 px-md-2">
+        <div class="row justify-content-center mt-4 mx-0">
+            <div class="col-12 col-md-11 col-lg-8 px-1 px-sm-2">
                 <?php if ($selectedPackage): ?>
-                <div class="alert alert-info mb-4">
+                <div class="alert alert-info mb-4 mx-1 mx-sm-0">
                     <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Selected Package</h5>
                     <p class="mb-2"><strong><?php echo $selectedPackage; ?></strong></p>
                     <?php
@@ -71,7 +71,7 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                     <p class="mb-0">Details: <?php echo $selectedDetails; ?></p>
                 </div>
                 <?php endif; ?>
-                <div class="card p-4 mb-4">
+                <div class="card p-3 p-md-4 mb-4 mx-1 mx-sm-0">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h2 class="mb-0">Lot Reservation Form</h2>
                         <a href="lotReservation.php" class="btn btn-outline-secondary">
@@ -84,15 +84,51 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         <!-- You can add helper text or icons here for clarity -->
                     </form>
                 </div>
-                <div class="card p-3">
+                <div class="card p-2 p-md-3 mx-1 mx-sm-0">
                     <h4 class="mb-3">Available Lots</h4>
                     <div class="mb-2">
-                        <span class="fw-semibold text-primary"><i class="fas fa-mouse-pointer me-1"></i>Click a row to select a lot and auto-fill the reservation form above.</span>
+                        <span class="fw-semibold text-primary"><i class="fas fa-mouse-pointer me-1"></i>Tap a row to select a lot and auto-fill the reservation form above.</span>
                     </div>
-                    <div id="availableLotsContainer" class="mb-2">
-                        <div class="text-muted">Loading available lots...</div>
+                    <div class="table-responsive mb-2" style="overflow-x:auto;">
+                        <div id="availableLotsContainer">
+                            <div class="text-muted">Loading available lots...</div>
+                        </div>
                     </div>
                     <div id="selectedLotMsg" class="alert alert-success py-2 px-3 d-none" style="font-size:0.95rem;"></div>
+                                        <!-- Payment Option Modal -->
+                                                                                <div class="modal fade" id="paymentOptionModal" tabindex="-1" aria-labelledby="paymentOptionModalLabel" aria-hidden="true">
+                                                                                    <div class="modal-dialog modal-dialog-centered">
+                                                                                        <div class="modal-content border-0 shadow-lg rounded-4">
+                                                                                            <div class="modal-header border-0 pb-0">
+                                                                                                <div class="w-100">
+                                                                                                    <h5 class="modal-title mb-0 fw-bold" id="paymentOptionModalLabel">Select Payment Method</h5>
+                                                                                                    <small class="text-muted">How would you like to pay for your reservation?</small>
+                                                                                                </div>
+                                                                                                <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                                            </div>
+                                                                                            <div class="modal-body pt-2">
+                                                                                                <div class="d-grid gap-2 gap-md-3 my-3">
+                                                                                                    <button type="button" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payGcash">
+                                                                                                        <i class="fas fa-mobile-alt fa-lg"></i>
+                                                                                                        <span class="fw-semibold">Gcash</span>
+                                                                                                    </button>
+                                                                                                    <button type="button" class="btn btn-outline-success d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payBank">
+                                                                                                        <i class="fas fa-university fa-lg"></i>
+                                                                                                        <span class="fw-semibold">Bank Transfer</span>
+                                                                                                    </button>
+                                                                                                    <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payCash">
+                                                                                                        <i class="fas fa-money-bill-wave fa-lg"></i>
+                                                                                                        <span class="fw-semibold">Cash</span>
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                                <div class="text-center text-muted mt-2" style="font-size:0.97rem;">
+                                                                                                    <hr class="my-3">
+                                                                                                    <span><i class="fas fa-info-circle me-1"></i>You can change your payment method later if needed.</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
                 </div>
             </div>
         </div>
@@ -157,6 +193,9 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         const msg = document.getElementById('selectedLotMsg');
                         msg.textContent = `Selected Lot: Block ${lots[idx].block}, Area ${lots[idx].area}, Row ${lots[idx].rowNumber}, Lot No. ${lots[idx].lotNumber}`;
                         msg.classList.remove('d-none');
+                        // Show payment modal
+                        var paymentModal = new bootstrap.Modal(document.getElementById('paymentOptionModal'));
+                        paymentModal.show();
                         // TODO: Auto-fill form fields here if needed
                     });
                 });
