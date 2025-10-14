@@ -33,109 +33,139 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
     <!-- DataTables Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 </head>
-<body>
+
+<body class="bg-light" style="min-height:100vh;">
 
     <?php include dirname(__DIR__) . '/clientNavbar.php'; ?>
 
+
     <main class="main-content container-fluid">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card p-4 mb-4 mt-5">
+        <div class="row justify-content-center mt-5">
+            <div class="col-lg-8">
+                <?php if ($selectedPackage): ?>
+                <div class="alert alert-info mb-4">
+                    <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Selected Package</h5>
+                    <p class="mb-2"><strong><?php echo $selectedPackage; ?></strong></p>
+                    <?php
+                    $typeLabel = '';
+                    $burialKeywords = ['Regular Lot', '4-Lot Package', 'Exhumation'];
+                    $mausoleumKeywords = ['Mausoleum'];
+                    foreach ($burialKeywords as $kw) {
+                        if (stripos($selectedPackage, $kw) !== false) {
+                            $typeLabel = 'Burial Lot';
+                            break;
+                        }
+                    }
+                    foreach ($mausoleumKeywords as $kw) {
+                        if (stripos($selectedPackage, $kw) !== false) {
+                            $typeLabel = 'Mausoleum';
+                            break;
+                        }
+                    }
+                    ?>
+                    <?php if ($typeLabel): ?>
+                    <p class="mb-2">Type: <span class="badge bg-primary"><?php echo $typeLabel; ?></span></p>
+                    <?php endif; ?>
+                    <p class="mb-2">Price: <strong><?php echo $selectedPrice; ?></strong></p>
+                    <p class="mb-2">Monthly Payment: <strong><?php echo $selectedMonthly; ?></strong></p>
+                    <p class="mb-0">Details: <?php echo $selectedDetails; ?></p>
+                </div>
+                <?php endif; ?>
+                <div class="card p-4 mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h2 class="mb-0">Lot Reservation Form</h2>
                         <a href="lotReservation.php" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Back to Packages
                         </a>
                     </div>
-
-                    <?php if ($selectedPackage): ?>
-                    <!-- Selected Package Summary -->
-                    <div class="alert alert-info">
-                        <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Selected Package</h5>
-                        <p class="mb-2"><strong><?php echo $selectedPackage; ?></strong></p>
-                        <?php
-                        // Determine if package is Burial Lot or Mausoleum
-                        $typeLabel = '';
-                        $burialKeywords = ['Regular Lot', '4-Lot Package', 'Exhumation'];
-                        $mausoleumKeywords = ['Mausoleum'];
-                        foreach ($burialKeywords as $kw) {
-                            if (stripos($selectedPackage, $kw) !== false) {
-                                $typeLabel = 'Burial Lot';
-                                break;
-                            }
-                        }
-                        foreach ($mausoleumKeywords as $kw) {
-                            if (stripos($selectedPackage, $kw) !== false) {
-                                $typeLabel = 'Mausoleum';
-                                break;
-                            }
-                        }
-                        ?>
-                        <?php if ($typeLabel): ?>
-                        <p class="mb-2">Type: <span class="badge bg-primary"><?php echo $typeLabel; ?></span></p>
-                        <?php endif; ?>
-                        <p class="mb-2">Price: <strong><?php echo $selectedPrice; ?></strong></p>
-                        <p class="mb-2">Monthly Payment: <strong><?php echo $selectedMonthly; ?></strong></p>
-                        <p class="mb-0">Details: <?php echo $selectedDetails; ?></p>
+                    <form id="reservationForm" class="row g-3">
+                        <h5 class="mb-3">Client Information</h5>
+                        <!-- ...existing form fields... -->
+                        <!-- You can add helper text or icons here for clarity -->
+                    </form>
+                </div>
+                <div class="card p-3">
+                    <h4 class="mb-3">Available Lots</h4>
+                    <div class="mb-2">
+                        <span class="fw-semibold text-primary"><i class="fas fa-mouse-pointer me-1"></i>Click a row to select a lot and auto-fill the reservation form above.</span>
                     </div>
-                    <?php endif; ?>
-
-                    <!-- Reservation form with available lots -->
-                    <div class="mb-4">
-                        <h4>Available Lots</h4>
-                        <div id="availableLotsContainer" class="mb-3">
-                            <div class="text-muted">Loading available lots...</div>
-                        </div>
+                    <div id="availableLotsContainer" class="mb-2">
+                        <div class="text-muted">Loading available lots...</div>
                     </div>
-                    <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        // Determine the type from the selected package (PHP to JS)
-                        let selectedType = '';
-                        <?php
-                        $typeLabel = '';
-                        $burialKeywords = ['Regular Lot', '4-Lot Package', 'Exhumation'];
-                        $mausoleumKeywords = ['Mausoleum'];
-                        foreach ($burialKeywords as $kw) {
-                            if (stripos($selectedPackage, $kw) !== false) {
-                                $typeLabel = 'BurialLot';
-                                break;
-                            }
-                        }
-                        foreach ($mausoleumKeywords as $kw) {
-                            if (stripos($selectedPackage, $kw) !== false) {
-                                $typeLabel = 'Mausoleum';
-                                break;
-                            }
-                        }
-                        ?>
-                        selectedType = '<?php echo $typeLabel; ?>';
-                        fetch('/stJohnCmsApp/cms.api/get_lots.php?limit=1000')
-                            .then(res => res.json())
-                            .then(data => {
-                                if (!data.success) throw new Error('Failed to fetch lots');
-                                const lots = data.data.filter(lot => lot.type === selectedType);
-                                const container = document.getElementById('availableLotsContainer');
-                                if (lots.length === 0) {
-                                    container.innerHTML = `<div class="text-danger">No available lots found for type: <b>${selectedType || 'N/A'}</b>.</div>`;
-                                    return;
-                                }
-                                let html = '<table id="availableLotsTable" class="table table-bordered table-sm"><thead><tr><th>Block</th><th>Area</th><th>Row</th><th>Lot No.</th><th>Type</th><th>Status</th></tr></thead><tbody>';
-                                lots.forEach(lot => {
-                                    html += `<tr><td>${lot.block}</td><td>${lot.area}</td><td>${lot.rowNumber}</td><td>${lot.lotNumber}</td><td>${lot.type}</td><td>${lot.status}</td></tr>`;
-                                });
-                                html += '</tbody></table>';
-                                container.innerHTML = html;
-                            })
-                            .catch(err => {
-                                document.getElementById('availableLotsContainer').innerHTML = '<div class="text-danger">Error loading lots.</div>';
-                            });
-                    });
-                    </script>
-
+                    <div id="selectedLotMsg" class="alert alert-success py-2 px-3 d-none" style="font-size:0.95rem;"></div>
                 </div>
             </div>
         </div>
     </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Determine the type from the selected package (PHP to JS)
+        let selectedType = '';
+        <?php
+        $typeLabel = '';
+        $burialKeywords = ['Regular Lot', '4-Lot Package', 'Exhumation'];
+        $mausoleumKeywords = ['Mausoleum'];
+        foreach ($burialKeywords as $kw) {
+            if (stripos($selectedPackage, $kw) !== false) {
+                $typeLabel = 'BurialLot';
+                break;
+            }
+        }
+        foreach ($mausoleumKeywords as $kw) {
+            if (stripos($selectedPackage, $kw) !== false) {
+                $typeLabel = 'Mausoleum';
+                break;
+            }
+        }
+        ?>
+        selectedType = '<?php echo $typeLabel; ?>';
+        fetch('/stJohnCmsApp/cms.api/get_lots.php?limit=1000')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) throw new Error('Failed to fetch lots');
+                const lots = data.data.filter(lot => lot.type === selectedType);
+                const container = document.getElementById('availableLotsContainer');
+                if (lots.length === 0) {
+                    container.innerHTML = `<div class="text-danger">No available lots found for type: <b>${selectedType || 'N/A'}</b>.</div>`;
+                    return;
+                }
+                let html = '<table id="availableLotsTable" class="table table-bordered table-sm lot-table-enhanced"><thead><tr><th>Block</th><th>Area</th><th>Row</th><th>Lot No.</th><th>Type</th><th>Status</th></tr></thead><tbody>';
+                lots.forEach((lot, idx) => {
+                    html += `<tr data-idx="${idx}"><td>${lot.block}</td><td>${lot.area}</td><td>${lot.rowNumber}</td><td>${lot.lotNumber}</td><td>${lot.type}</td><td>${lot.status}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+                // Add row interactivity
+                const table = document.getElementById('availableLotsTable');
+                let selectedRow = null;
+                table.querySelectorAll('tbody tr').forEach((row, idx) => {
+                    row.style.cursor = 'pointer';
+                    row.addEventListener('mouseenter', function() {
+                        if (row !== selectedRow) row.classList.add('table-active');
+                    });
+                    row.addEventListener('mouseleave', function() {
+                        if (row !== selectedRow) row.classList.remove('table-active');
+                    });
+                    row.addEventListener('click', function() {
+                        if (selectedRow) selectedRow.classList.remove('table-success');
+                        if (selectedRow && selectedRow !== row) selectedRow.classList.remove('table-active');
+                        row.classList.add('table-success');
+                        selectedRow = row;
+                        // Show message
+                        const msg = document.getElementById('selectedLotMsg');
+                        msg.textContent = `Selected Lot: Block ${lots[idx].block}, Area ${lots[idx].area}, Row ${lots[idx].rowNumber}, Lot No. ${lots[idx].lotNumber}`;
+                        msg.classList.remove('d-none');
+                        // TODO: Auto-fill form fields here if needed
+                    });
+                });
+            })
+            .catch(err => {
+                document.getElementById('availableLotsContainer').innerHTML = '<div class="text-danger">Error loading lots.</div>';
+            });
+    });
+    </script>
 
     <footer class="footer text-center py-3">
         <div class="container d-flex flex-column flex-md-row justify-content-center align-items-center">
