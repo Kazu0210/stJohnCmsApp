@@ -107,6 +107,7 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                                                                                 <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                                             </div>
                                                                                             <div class="modal-body pt-2">
+                                                                                                <div id="selectedLotDetails" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
                                                                                                 <div class="d-grid gap-2 gap-md-3 my-3">
                                                                                                     <button type="button" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payGcash">
                                                                                                         <i class="fas fa-mobile-alt fa-lg"></i>
@@ -193,6 +194,10 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         const msg = document.getElementById('selectedLotMsg');
                         msg.textContent = `Selected Lot: Block ${lots[idx].block}, Area ${lots[idx].area}, Row ${lots[idx].rowNumber}, Lot No. ${lots[idx].lotNumber}`;
                         msg.classList.remove('d-none');
+                        // Show lot details in modal
+                        const lotDetails = document.getElementById('selectedLotDetails');
+                        lotDetails.innerHTML = `<strong>Selected Lot Details:</strong><br>Block: <b>${lots[idx].block}</b> &nbsp; | &nbsp; Area: <b>${lots[idx].area}</b> &nbsp; | &nbsp; Row: <b>${lots[idx].rowNumber}</b> &nbsp; | &nbsp; Lot No.: <b>${lots[idx].lotNumber}</b> &nbsp; | &nbsp; Type: <b>${lots[idx].type}</b> &nbsp; | &nbsp; Status: <b>${lots[idx].status}</b>`;
+                        lotDetails.classList.remove('d-none');
                         // Show payment modal
                         var paymentModal = new bootstrap.Modal(document.getElementById('paymentOptionModal'));
                         paymentModal.show();
