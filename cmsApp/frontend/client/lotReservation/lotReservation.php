@@ -26,48 +26,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg fixed-top shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-                <span class="fw-bold">Blessed Saint John Memorial</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="../clientDashboard/clientDashboard.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../cemeteryMap/cemeteryMap.html">Cemetery Map</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="lotReservation.html">Lot Reservation</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../payment/payment.html">Payment</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../burialRecord/burialRecord.html">Burial Record</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../maintenanceServiceRequest/maintenanceServiceRequest.html">Maintenance Request</a></li>
-                </ul>
-            
-            <div class="dropdown d-none d-lg-block">
-                <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span id="user-name-display-desktop">
-                        <?php 
-                        // Display user name from session, fallback to email if name not available
-                        if (isset($_SESSION['firstName']) && isset($_SESSION['lastName'])) {
-                            echo htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']);
-                        } elseif (isset($_SESSION['username'])) {
-                            echo htmlspecialchars($_SESSION['username']);
-                        } else {
-                            echo htmlspecialchars($_SESSION['email']);
-                        }
-                        ?>
-                    </span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" href="../../../../cms.api/logout.php" id="logoutLinkDesktop">
-
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                    </a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <?php include dirname(__DIR__) . '/clientNavbar.php'; ?>
 
     <main class="main-content container-fluid">
         <div class="row">
