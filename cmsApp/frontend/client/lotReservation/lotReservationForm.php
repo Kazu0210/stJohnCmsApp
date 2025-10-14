@@ -92,6 +92,27 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                     <div class="alert alert-info">
                         <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Selected Package</h5>
                         <p class="mb-2"><strong><?php echo $selectedPackage; ?></strong></p>
+                        <?php
+                        // Determine if package is Burial Lot or Mausoleum
+                        $typeLabel = '';
+                        $burialKeywords = ['Regular Lot', '4-Lot Package', 'Exhumation'];
+                        $mausoleumKeywords = ['Mausoleum'];
+                        foreach ($burialKeywords as $kw) {
+                            if (stripos($selectedPackage, $kw) !== false) {
+                                $typeLabel = 'Burial Lot';
+                                break;
+                            }
+                        }
+                        foreach ($mausoleumKeywords as $kw) {
+                            if (stripos($selectedPackage, $kw) !== false) {
+                                $typeLabel = 'Mausoleum';
+                                break;
+                            }
+                        }
+                        ?>
+                        <?php if ($typeLabel): ?>
+                        <p class="mb-2">Type: <span class="badge bg-primary"><?php echo $typeLabel; ?></span></p>
+                        <?php endif; ?>
                         <p class="mb-2">Price: <strong><?php echo $selectedPrice; ?></strong></p>
                         <p class="mb-2">Monthly Payment: <strong><?php echo $selectedMonthly; ?></strong></p>
                         <p class="mb-0">Details: <?php echo $selectedDetails; ?></p>
