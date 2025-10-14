@@ -122,6 +122,18 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                                                                                         <span class="fw-semibold">Cash</span>
                                                                                                     </button>
                                                                                                 </div>
+                                                                                                <form id="paymentProofForm" class="d-none mt-3">
+                                                                                                    <div class="text-center mb-3" id="qrCodeContainer"></div>
+                                                                                                    <div class="mb-3">
+                                                                                                        <label for="referenceNumber" class="form-label">Reference Number <span class="text-danger">*</span></label>
+                                                                                                        <input type="text" class="form-control" id="referenceNumber" name="referenceNumber" required>
+                                                                                                    </div>
+                                                                                                    <div class="mb-3">
+                                                                                                        <label for="paymentProof" class="form-label">Upload Proof of Payment <span class="text-danger">*</span></label>
+                                                                                                        <input type="file" class="form-control" id="paymentProof" name="paymentProof" accept="image/*,application/pdf" required>
+                                                                                                    </div>
+                                                                                                    <button type="submit" class="btn btn-primary w-100">Submit Payment Information</button>
+                                                                                                </form>
                                                                                                 <div class="text-center text-muted mt-2" style="font-size:0.97rem;">
                                                                                                     <hr class="my-3">
                                                                                                     <span><i class="fas fa-info-circle me-1"></i>You can change your payment method later if needed.</span>
@@ -198,12 +210,49 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         const lotDetails = document.getElementById('selectedLotDetails');
                         lotDetails.innerHTML = `<strong>Selected Lot Details:</strong><br>Block: <b>${lots[idx].block}</b> &nbsp; | &nbsp; Area: <b>${lots[idx].area}</b> &nbsp; | &nbsp; Row: <b>${lots[idx].rowNumber}</b> &nbsp; | &nbsp; Lot No.: <b>${lots[idx].lotNumber}</b> &nbsp; | &nbsp; Type: <b>${lots[idx].type}</b> &nbsp; | &nbsp; Status: <b>${lots[idx].status}</b>`;
                         lotDetails.classList.remove('d-none');
+                        // Reset payment form and QR
+                        document.getElementById('paymentProofForm').classList.add('d-none');
+                        document.getElementById('qrCodeContainer').innerHTML = '';
                         // Show payment modal
                         var paymentModal = new bootstrap.Modal(document.getElementById('paymentOptionModal'));
                         paymentModal.show();
                         // TODO: Auto-fill form fields here if needed
                     });
                 });
+
+                // Payment method logic
+                function showPaymentForm(method) {
+                    const form = document.getElementById('paymentProofForm');
+                    const qr = document.getElementById('qrCodeContainer');
+                    form.reset && form.reset();
+                    form.classList.remove('d-none');
+                    let qrImg = '';
+                    if (method === 'gcash') {
+                        qrImg = '<img src="/stJohnCmsApp/cmsApp/frontend/client/lotReservation/gcash-qr.png" alt="Gcash QR Code" class="img-fluid rounded mb-2" style="max-width:180px;">';
+                        qr.innerHTML = `<div class='mb-2'><strong>Scan to pay with Gcash:</strong></div>` + qrImg;
+                    } else if (method === 'bank') {
+                        qrImg = '<img src="/stJohnCmsApp/cmsApp/frontend/client/lotReservation/bank-qr.png" alt="Bank Transfer QR Code" class="img-fluid rounded mb-2" style="max-width:180px;">';
+                        qr.innerHTML = `<div class='mb-2'><strong>Scan to pay via Bank Transfer:</strong></div>` + qrImg;
+                    } else {
+                        form.classList.add('d-none');
+                        qr.innerHTML = '';
+                    }
+                }
+                document.getElementById('payGcash').onclick = function() { showPaymentForm('gcash'); };
+                document.getElementById('payBank').onclick = function() { showPaymentForm('bank'); };
+                document.getElementById('payCash').onclick = function() {
+                    document.getElementById('paymentProofForm').classList.add('d-none');
+                    document.getElementById('qrCodeContainer').innerHTML = '';
+                };
+
+                // Optional: handle payment form submission
+                document.getElementById('paymentProofForm').onsubmit = function(e) {
+                    e.preventDefault();
+                    // You can add AJAX here to submit the payment info
+                    alert('Payment information submitted!');
+                    var paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentOptionModal'));
+                    paymentModal && paymentModal.hide();
+                };
             })
             .catch(err => {
                 document.getElementById('availableLotsContainer').innerHTML = '<div class="text-danger">Error loading lots.</div>';
