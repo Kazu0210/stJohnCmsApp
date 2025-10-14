@@ -95,54 +95,57 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         </div>
                     </div>
                     <div id="selectedLotMsg" class="alert alert-success py-2 px-3 d-none" style="font-size:0.95rem;"></div>
-                                        <!-- Payment Option Modal -->
-                                                                                <div class="modal fade" id="paymentOptionModal" tabindex="-1" aria-labelledby="paymentOptionModalLabel" aria-hidden="true">
-                                                                                    <div class="modal-dialog modal-dialog-centered">
-                                                                                        <div class="modal-content border-0 shadow-lg rounded-4">
-                                                                                            <div class="modal-header border-0 pb-0">
-                                                                                                <div class="w-100">
-                                                                                                    <h5 class="modal-title mb-0 fw-bold" id="paymentOptionModalLabel">Select Payment Method</h5>
-                                                                                                    <small class="text-muted">How would you like to pay for your reservation?</small>
-                                                                                                </div>
-                                                                                                <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                                                            </div>
-                                                                                            <div class="modal-body pt-2">
-                                                                                                <div id="selectedLotDetails" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
-                                                                                                <div class="d-grid gap-2 gap-md-3 my-3">
-                                                                                                    <button type="button" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payGcash">
-                                                                                                        <i class="fas fa-mobile-alt fa-lg"></i>
-                                                                                                        <span class="fw-semibold">Gcash</span>
-                                                                                                    </button>
-                                                                                                    <button type="button" class="btn btn-outline-success d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payBank">
-                                                                                                        <i class="fas fa-university fa-lg"></i>
-                                                                                                        <span class="fw-semibold">Bank Transfer</span>
-                                                                                                    </button>
-                                                                                                    <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payCash">
-                                                                                                        <i class="fas fa-money-bill-wave fa-lg"></i>
-                                                                                                        <span class="fw-semibold">Cash</span>
-                                                                                                    </button>
-                                                                                                </div>
-                                                                                                <form id="paymentProofForm" class="d-none mt-3">
-                                                                                                    <div class="text-center mb-3" id="qrCodeContainer"></div>
-                                                                                                    <div class="mb-3">
-                                                                                                        <label for="referenceNumber" class="form-label">Reference Number <span class="text-danger">*</span></label>
-                                                                                                        <input type="text" class="form-control" id="referenceNumber" name="referenceNumber" required>
-                                                                                                    </div>
-                                                                                                    <div class="mb-3">
-                                                                                                        <label for="paymentProof" class="form-label">Upload Proof of Payment <span class="text-danger">*</span></label>
-                                                                                                        <input type="file" class="form-control" id="paymentProof" name="paymentProof" accept="image/*,application/pdf" required>
-                                                                                                    </div>
-                                                                                                    <button type="submit" class="btn btn-primary w-100">Submit Payment Information</button>
-                                                                                                </form>
-                                                                                                <div class="text-center text-muted mt-2" style="font-size:0.97rem;">
-                                                                                                    <hr class="my-3">
-                                                                                                    <span><i class="fas fa-info-circle me-1"></i>You can change your payment method later if needed.</span>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
                 </div>
+                <!-- Payment Option Modal moved outside card for valid HTML structure -->
+            </div>
+        </div>
+        <!-- Payment Option Modal -->
+        <div class="modal fade" id="paymentOptionModal" tabindex="-1" aria-labelledby="paymentOptionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header border-0 pb-0">
+                        <div class="w-100">
+                            <h5 class="modal-title mb-0 fw-bold" id="paymentOptionModalLabel">Select Payment Method</h5>
+                            <small class="text-muted">How would you like to pay for your reservation?</small>
+                        </div>
+                        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body pt-2">
+                        <div id="selectedLotDetails" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
+                        <div class="d-grid gap-2 gap-md-3 my-3">
+                            <button type="button" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payGcash">
+                                <i class="fas fa-mobile-alt fa-lg"></i>
+                                <span class="fw-semibold">Gcash</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-success d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payBank">
+                                <i class="fas fa-university fa-lg"></i>
+                                <span class="fw-semibold">Bank Transfer</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-3 fs-6 fs-md-5" id="payCash">
+                                <i class="fas fa-money-bill-wave fa-lg"></i>
+                                <span class="fw-semibold">Cash</span>
+                            </button>
+                        </div>
+                        <form id="paymentProofForm" class="d-none mt-3">
+                            <div class="text-center mb-3" id="qrCodeContainer"></div>
+                            <div class="mb-3">
+                                <label for="referenceNumber" class="form-label">Reference Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="referenceNumber" name="referenceNumber" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentProof" class="form-label">Upload Proof of Payment <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" id="paymentProof" name="paymentProof" accept="image/*,application/pdf" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Submit Payment Information</button>
+                        </form>
+                        <div class="text-center text-muted mt-2" style="font-size:0.97rem;">
+                            <hr class="my-3">
+                            <span><i class="fas fa-info-circle me-1"></i>You can change your payment method later if needed.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
             </div>
         </div>
     </main>
