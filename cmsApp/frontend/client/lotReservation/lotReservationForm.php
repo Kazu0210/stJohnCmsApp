@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($clientName) || empty($address) || empty($contactNumber) || empty($reservationDate) || $lotTypeId === null || empty($clientValidId)) {
             $reservationError = 'Missing required fields or client valid ID.';
         } else {
-            $reservationStatus = 'Pending';
+            $reservationStatus = 'For Reservation';
             $createdAt = date('Y-m-d H:i:s');
             $stmt = $conn->prepare("INSERT INTO reservations (
                 userId, lotId, clientName, address, contactNumber, deceasedName, burialDate, reservationDate,
