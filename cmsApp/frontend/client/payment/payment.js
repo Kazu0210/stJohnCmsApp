@@ -63,7 +63,7 @@ const amountInput = document.getElementById("amountInput");
     let pdfDoc = null;
     let pageNum = 1;
     const TOTAL_MONTHS = 50;
-    let allLots = [];
+    // let allLots = [];
     let paymentHistoryData = {};
     const CONTRACT_START_DATE = new Date();
     let currentFileInput = null;
@@ -87,37 +87,7 @@ const amountInput = document.getElementById("amountInput");
     }
     
 
-    // --- Load Reserved Lots ---
-   async function loadReservedLots() {
-        try {
-            lotSelect.innerHTML = '<option>Loading lots...</option>';
-            const res = await fetch(`${API_BASE_URL}getReservedLots.php`, { credentials: "include" });
-            const result = await res.json();
-            const data = result.data || [];
-            allLots = data;
 
-            lotSelect.innerHTML = '<option value="">-- Select a Lot --</option>';
-            if (data.length > 0) {
-                data.forEach(lot => {
-                    const option = document.createElement("option");
-                    option.value = lot.reservationId; // ✅ sends correct ID
-                    option.textContent = `${lot.clientName} - Area ${lot.area}, Block ${lot.block}, Row ${lot.rowNumber}, Lot ${lot.lotNumber}`;
-                    lotSelect.appendChild(option);
-                });
-                // Auto-select lot if specified in URL
-                if (autoSelectLotId) {
-                    lotSelect.value = autoSelectLotId;
-                    // Trigger change event to update UI
-                    lotSelect.dispatchEvent(new Event('change'));
-                }
-            } else {
-                lotSelect.innerHTML = '<option disabled>No lots reserved</option>';
-            }
-        } catch (err) {
-            console.error("❌ Error loading lots:", err);
-            lotSelect.innerHTML = '<option disabled>Error loading lots</option>';
-        }
-    }
 
     // --- Update Reservation Status ---
     async function updateReservationStatus(reservationId, newStatus) {
@@ -175,14 +145,14 @@ const amountInput = document.getElementById("amountInput");
      window.selectMethod = function(element, method) {
         document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
-        onlinePaymentFields.style.display = 'block';
+        if (onlinePaymentFields) onlinePaymentFields.style.display = 'block';
 
         if (method === 'gcash') {
-            gcashDetails.style.display = 'block';
-            bankDetails.style.display = 'none';
+            if (gcashDetails) gcashDetails.style.display = 'block';
+            if (bankDetails) bankDetails.style.display = 'none';
         } else if (method === 'bank') {
-            gcashDetails.style.display = 'none';
-            bankDetails.style.display = 'block';
+            if (gcashDetails) gcashDetails.style.display = 'none';
+            if (bankDetails) bankDetails.style.display = 'block';
         }
     };
 
@@ -192,9 +162,9 @@ const amountInput = document.getElementById("amountInput");
 
 
     // --- Lot Selection Change ---
-    lotSelect.addEventListener("change", async () => {
+    if (lotSelect) lotSelect.addEventListener("change", async () => {
         const selectedId = lotSelect.value;
-        const selectedLot = allLots.find(lot => String(lot.reservationId) === String(selectedId));
+    // const selectedLot = allLots.find(lot => String(lot.reservationId) === String(selectedId));
 
         if (!selectedLot) {
             currentSelectedLot = null;
@@ -206,17 +176,7 @@ const amountInput = document.getElementById("amountInput");
             return;
         }
 
-        currentSelectedLot = selectedLot;
 
-        lotPriceDisplay.textContent = formatCurrency(selectedLot.price || 0);
-        monthlyPaymentDisplay.textContent = formatCurrency(selectedLot.monthlyPayment || 0);
-        monthlyPaymentDesc.textContent = selectedLot.paymentDescription || "";
-
-        updatePaymentSummary();
-
-        // Update backend & start countdown
-        await updateReservationStatus(selectedId, "For Reservation");
-        startPaymentCountdown(selectedId);
     });
 
     // --- Payment Summary + Other Functions ---
@@ -683,32 +643,35 @@ nextPageBtn.addEventListener("click", () => {
 
 
     function selectMethod(element, method) {
-    document.querySelectorAll('.payment-method').forEach(card => card.classList.remove('selected'));
-    element.classList.add('selected');
+        document.querySelectorAll('.payment-method').forEach(card => card.classList.remove('selected'));
+        element.classList.add('selected');
 
-    document.getElementById('online-payment-fields').style.display = 'block';
-    document.getElementById('gcash-details').style.display = (method === 'gcash') ? 'block' : 'none';
-    document.getElementById('bank-details').style.display = (method === 'bank') ? 'block' : 'none';
-}
+        var onlinePaymentFields = document.getElementById('online-payment-fields');
+        var gcashDetails = document.getElementById('gcash-details');
+        var bankDetails = document.getElementById('bank-details');
+        if (onlinePaymentFields) onlinePaymentFields.style.display = 'block';
+        if (gcashDetails) gcashDetails.style.display = (method === 'gcash') ? 'block' : 'none';
+        if (bankDetails) bankDetails.style.display = (method === 'bank') ? 'block' : 'none';
+    }
     
     function fetchPaymentData() {
         updatePaymentSummary();
     }
 
     // Event listeners
-    lotSelect.addEventListener('change', updatePaymentSummary);
-    paymentTypeSelect.addEventListener('change', updateCalculatedAmount);
-    monthsToPayInput.addEventListener('input', () => {
-        customAmountInput.value = '';
+    if (typeof lotSelect !== 'undefined' && lotSelect) lotSelect.addEventListener('change', updatePaymentSummary);
+    if (typeof paymentTypeSelect !== 'undefined' && paymentTypeSelect) paymentTypeSelect.addEventListener('change', updateCalculatedAmount);
+    if (typeof monthsToPayInput !== 'undefined' && monthsToPayInput) monthsToPayInput.addEventListener('input', () => {
+        if (typeof customAmountInput !== 'undefined' && customAmountInput) customAmountInput.value = '';
         updateCalculatedAmount();
     });
-    customAmountInput.addEventListener('input', () => {
-        monthsToPayInput.value = '';
+    if (typeof customAmountInput !== 'undefined' && customAmountInput) customAmountInput.addEventListener('input', () => {
+        if (typeof monthsToPayInput !== 'undefined' && monthsToPayInput) monthsToPayInput.value = '';
         updateCalculatedAmount();
     });
     
     // Initial calls
     loadUserName();
-    loadReservedLots();
+
      updatePaymentSummary();
 });

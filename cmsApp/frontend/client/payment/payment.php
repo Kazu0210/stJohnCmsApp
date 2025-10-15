@@ -76,6 +76,7 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                 </div>
             </div>
+
             <!-- Payment Method Section -->
             <div class="payment-section card mb-4 p-3 border-0">
                 <h3 class="h5 mb-3 text-center">Choose Payment Method</h3>
@@ -283,21 +284,26 @@ if (!isset($_SESSION['user_id'])) {
     function selectMethod(el, method) {
         document.querySelectorAll('.payment-method').forEach(e => e.classList.remove('border-primary', 'border-success', 'border-secondary', 'selected'));
         el.classList.add('selected');
+        // Show/hide payment details sections safely
+        var gcashDetails = document.getElementById('gcash-details');
+        var onlinePaymentFields = document.getElementById('online-payment-fields');
+        var bankDetails = document.getElementById('bank-details');
+        var cashPaymentFields = document.getElementById('cash-payment-fields');
         if (method === 'gcash') {
-            document.getElementById('online-payment-fields').style.display = '';
-            document.getElementById('gcash-details').style.display = '';
-            document.getElementById('bank-details').style.display = 'none';
-            document.getElementById('cash-payment-fields').style.display = 'none';
+            if (gcashDetails) gcashDetails.style.display = '';
+            if (onlinePaymentFields) onlinePaymentFields.style.display = '';
+            if (bankDetails) bankDetails.style.display = 'none';
+            if (cashPaymentFields) cashPaymentFields.style.display = 'none';
         } else if (method === 'bank') {
-            document.getElementById('online-payment-fields').style.display = '';
-            document.getElementById('gcash-details').style.display = 'none';
-            document.getElementById('bank-details').style.display = '';
-            document.getElementById('cash-payment-fields').style.display = 'none';
+            if (gcashDetails) gcashDetails.style.display = 'none';
+            if (onlinePaymentFields) onlinePaymentFields.style.display = '';
+            if (bankDetails) bankDetails.style.display = '';
+            if (cashPaymentFields) cashPaymentFields.style.display = 'none';
         } else if (method === 'cash') {
-            document.getElementById('online-payment-fields').style.display = 'none';
-            document.getElementById('gcash-details').style.display = 'none';
-            document.getElementById('bank-details').style.display = 'none';
-            document.getElementById('cash-payment-fields').style.display = '';
+            if (gcashDetails) gcashDetails.style.display = 'none';
+            if (onlinePaymentFields) onlinePaymentFields.style.display = 'none';
+            if (bankDetails) bankDetails.style.display = 'none';
+            if (cashPaymentFields) cashPaymentFields.style.display = '';
         }
         // Store selected method in a hidden input for form submission
         let methodInput = document.getElementById('payment-method');
