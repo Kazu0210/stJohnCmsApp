@@ -8,6 +8,17 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
     exit();
 }
 
+/**
+ * Retrieves the currently logged-in user's information from the database.
+ *
+ * - Includes the database connection file.
+ * - Gets the user ID from the session.
+ * - Prepares and executes a SQL statement to select the user's data by ID.
+ * - If the user exists, fetches their data as an associative array.
+ */
+// Fetch user info from API
+include_once(dirname(__DIR__, 4) . '/cms.api/fetchUserInfo.php');
+
 // Optional: You can also check user role if needed
 // if ($_SESSION['role'] !== 'client') {
 //     header("Location: ../../auth/login/login.php");
@@ -117,7 +128,16 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                     </div>
                                     <div class="col-md-6">
                                         <label for="client_contact" class="form-label">Contact Number: <span class="text-danger">*</span></label>
-                                        <input type="text" id="client_contact" name="client_contact" class="form-control" required>
+                                        <input type="text" id="client_contact" name="client_contact" class="form-control" required 
+                                            value="<?php 
+                                                if (isset($user['contactNumber']) && !empty($user['contactNumber'])) {
+                                                 echo htmlspecialchars($user['contactNumber']);
+                                                } elseif (isset($_SESSION['contactNumber'])) {
+                                                 echo htmlspecialchars($_SESSION['contactNumber']);
+                                                } else {
+                                                 echo '';
+                                                }
+                                            ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="client_id_upload" class="form-label">Upload Client's Valid ID: <span class="text-danger">*</span></label>
