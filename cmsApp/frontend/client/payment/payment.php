@@ -117,7 +117,7 @@ if ($lotId) {
                                 <p class="mb-1"><strong>Lot Number:</strong> <span id="lot-number-info"><?php echo htmlspecialchars($reservationInfo['lotNumber']); ?></span></p>
                                 <p class="mb-1"><strong>Type:</strong> <span id="type-info"><?php echo htmlspecialchars($reservationInfo['type']); ?></span></p>
                             </div>
-                            <form id="paymentForm" action="../../../cms.api/save_payment.php" method="POST" enctype="multipart/form-data">
+                            <form id="paymentForm" action="../../../../cms.api/save_payment.php" method="POST" enctype="multipart/form-data">
                                 <div class="mb-3">
                                     <label for="paymentAmount" class="form-label">Amount</label>
                                     <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">

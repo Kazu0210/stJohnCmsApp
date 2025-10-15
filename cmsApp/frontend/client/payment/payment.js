@@ -360,11 +360,6 @@ document.querySelectorAll(".view-icon").forEach(btn => {
     });
 });
 
-
-
-
-
-
     // PDF Navigation
 
 if (typeof prevPageBtn !== 'undefined' && prevPageBtn) {
