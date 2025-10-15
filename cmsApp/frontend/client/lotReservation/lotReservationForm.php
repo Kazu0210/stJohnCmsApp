@@ -76,6 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $reservationStatus, $createdAt, $lotTypeId
             );
             if ($stmt->execute()) {
+                // Update lot status to 'Pending'
+                $updateLotStmt = $conn->prepare("UPDATE lots SET status = 'Pending' WHERE lotId = ?");
+                $updateLotStmt->bind_param("i", $lotId);
+                $updateLotStmt->execute();
+                $updateLotStmt->close();
                 $reservationSuccess = true;
             } else {
                 $reservationError = 'Database error: ' . $stmt->error;
