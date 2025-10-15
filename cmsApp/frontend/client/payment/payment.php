@@ -136,6 +136,15 @@ if ($lotId) {
                                     <input type="month" class="form-control" id="month" name="month" value="<?php echo date('Y-m'); ?>" required>
                                 </div>
                                 <div class="mb-3">
+                                    <label for="paymentType" class="form-label">Payment Type</label>
+                                    <select class="form-select" id="paymentType" name="paymentType" required>
+                                        <option value="">Select payment type</option>
+                                        <option value="exact">Exact Installment Amount</option>
+                                        <option value="advance">Advance Payment</option>
+                                        <option value="deferred">Deferred Amount</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
                                     <label for="reference" class="form-label">Reference</label>
                                     <input type="text" class="form-control" id="reference" name="reference" placeholder="Enter payment reference or transaction number" required>
                                 </div>
