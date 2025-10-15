@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Add event listener for payment method dropdown
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    if (paymentMethodSelect) {
+        paymentMethodSelect.addEventListener('change', function() {
+            // You can replace this with any logic you want to trigger on change
+            console.log('Selected payment method:', this.value);
+        });
+    }
     // --- Auto-select lot if lotId is in URL ---
     function getLotIdFromUrl() {
         const params = new URLSearchParams(window.location.search);

@@ -146,12 +146,12 @@ if ($lotId) {
                             <h2 class="fs-5 fw-semibold mb-3 text-center">Scan to Pay</h2>
                             <div class="row w-100 g-3">
                                 <div class="col-12 d-flex flex-column align-items-center" id="gcashQrContainer" style="display:none;">
-                                    <div class="mb-2 fw-semibold">GCash</div>
-                                    <img src="gcashqr.jpg" alt="GCash QR Code" class="img-fluid payment-qr-code mb-2" style="max-width:180px; max-height:180px;">
+                                    <div class="mb-2 fw-semibold" style="display:none;">GCash</div>
+                                    <img src="gcashqr.jpg" alt="GCash QR Code" class="img-fluid payment-qr-code mb-2" style="max-width:180px; max-height:180px; display:none;">
                                 </div>
                                 <div class="col-12 d-flex flex-column align-items-center" id="bankQrContainer" style="display:none;">
-                                    <div class="mb-2 fw-semibold">Bank Transfer</div>
-                                    <img src="bankqr.jpg" alt="Bank Transfer QR Code" class="img-fluid payment-qr-code mb-2" style="max-width:180px; max-height:180px;">
+                                    <div class="mb-2 fw-semibold" style="display:none;">Bank Transfer</div>
+                                    <img src="bankqr.jpg" alt="Bank Transfer QR Code" class="img-fluid payment-qr-code mb-2" style="max-width:180px; max-height:180px; display:none;">
                                 </div>
                             </div>
                             <div class="mt-3 text-center text-muted" style="font-size:0.95rem;">Upload your payment receipt after scanning the QR code.</div>
