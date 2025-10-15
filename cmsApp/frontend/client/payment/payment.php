@@ -102,44 +102,68 @@ if ($lotId) {
             </div>
         </div>
     </header>
-</header>
-
     <main class="container mb-5">
         <div class="row justify-content-center">
-            <div class="col-lg-8 col-md-10">
-                <div class="bg-white rounded-4 shadow-sm border p-4">
-                    <h2 class="fs-4 fw-semibold mb-3">Pay for Your Reservation</h2>
-                    <!-- Reservation Details Placeholder -->
-                    <div class="mb-4" id="reservation-details">
-                        <p class="mb-1"><strong>Block:</strong> <span id="block-info"><?php echo htmlspecialchars($reservationInfo['block']); ?></span></p>
-                        <p class="mb-1"><strong>Row Number:</strong> <span id="row-info"><?php echo htmlspecialchars($reservationInfo['rowNumber']); ?></span></p>
-                        <p class="mb-1"><strong>Lot Number:</strong> <span id="lot-number-info"><?php echo htmlspecialchars($reservationInfo['lotNumber']); ?></span></p>
-                        <p class="mb-1"><strong>Type:</strong> <span id="type-info"><?php echo htmlspecialchars($reservationInfo['type']); ?></span></p>
+            <div class="col-lg-10">
+                <div class="row g-4">
+                    <!-- Payment Form Column -->
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-4 shadow-sm border p-4 h-100">
+                            <h2 class="fs-4 fw-semibold mb-3">Pay for Your Reservation</h2>
+                            <!-- Reservation Details Placeholder -->
+                            <div class="mb-4" id="reservation-details">
+                                <p class="mb-1"><strong>Block:</strong> <span id="block-info"><?php echo htmlspecialchars($reservationInfo['block']); ?></span></p>
+                                <p class="mb-1"><strong>Row Number:</strong> <span id="row-info"><?php echo htmlspecialchars($reservationInfo['rowNumber']); ?></span></p>
+                                <p class="mb-1"><strong>Lot Number:</strong> <span id="lot-number-info"><?php echo htmlspecialchars($reservationInfo['lotNumber']); ?></span></p>
+                                <p class="mb-1"><strong>Type:</strong> <span id="type-info"><?php echo htmlspecialchars($reservationInfo['type']); ?></span></p>
+                            </div>
+                            <form id="paymentForm" action="../../../cms.api/save_payment.php" method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="paymentAmount" class="form-label">Amount</label>
+                                    <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="paymentMethod" class="form-label">Payment Method</label>
+                                    <select class="form-select" id="paymentMethod" name="method" required>
+                                        <option value="">Select method</option>
+                                        <option value="bank">Bank Transfer</option>
+                                        <option value="gcash">GCash</option>
+                                        <option value="cash">Cash</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="receipt" class="form-label">Upload Payment Receipt</label>
+                                    <input class="form-control" type="file" id="receipt" name="receipt" accept="image/*,application/pdf" required>
+                                </div>
+                                <input type="hidden" name="reservation_id" id="reservationIdInput" value="<?php echo htmlspecialchars($lotId); ?>">
+                                <button type="submit" class="btn btn-success w-100">Submit Payment</button>
+                            </form>
+                        </div>
                     </div>
-                    <form id="paymentForm" action="../../../cms.api/save_payment.php" method="POST" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="paymentAmount" class="form-label">Amount</label>
-                            <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
+                    <!-- QR Code Column -->
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-4 shadow-sm border p-4 h-100 d-flex flex-column align-items-center justify-content-center">
+                            <h2 class="fs-5 fw-semibold mb-3 text-center">Scan to Pay</h2>
+                            <div class="row w-100 g-3">
+                                <div class="col-12 d-flex flex-column align-items-center" id="gcashQrContainer" style="display:none;">
+                                    <div class="mb-2 fw-semibold">GCash</div>
+                                    <img src="gcashqr.jpg" alt="GCash QR Code" class="img-fluid payment-qr-code mb-2" style="max-width:180px; max-height:180px;">
+                                </div>
+                                <div class="col-12 d-flex flex-column align-items-center" id="bankQrContainer" style="display:none;">
+                                    <div class="mb-2 fw-semibold">Bank Transfer</div>
+                                    <img src="bankqr.jpg" alt="Bank Transfer QR Code" class="img-fluid payment-qr-code mb-2" style="max-width:180px; max-height:180px;">
+                                </div>
+                            </div>
+                            <div class="mt-3 text-center text-muted" style="font-size:0.95rem;">Upload your payment receipt after scanning the QR code.</div>
                         </div>
-                        <div class="mb-3">
-                            <label for="paymentMethod" class="form-label">Payment Method</label>
-                            <select class="form-select" id="paymentMethod" name="method" required>
-                                <option value="">Select method</option>
-                                <option value="bank">Bank Transfer</option>
-                                <option value="gcash">GCash</option>
-                                <option value="cash">Cash</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="receipt" class="form-label">Upload Payment Receipt</label>
-                            <input class="form-control" type="file" id="receipt" name="receipt" accept="image/*,application/pdf" required>
-                        </div>
-                        <input type="hidden" name="reservation_id" id="reservationIdInput" value="<?php echo htmlspecialchars($lotId); ?>">
-                        <button type="submit" class="btn btn-success w-100">Submit Payment</button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
+</main>
+<script src="payment.js"></script>
+<!-- Bootstrap JS Bundle (for modal and Toast support) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

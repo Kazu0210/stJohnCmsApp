@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthsToPayInput = document.getElementById('months-to-pay');
     const customAmountInput = document.getElementById('custom-amount');
     const calculatedAmountInput = document.getElementById('calculated-amount');
-    const paymentHistoryBody = document.getElementById('paymentHistoryBody');
+
     const gcashDetails = document.getElementById('gcash-details');
     const bankDetails = document.getElementById('bank-details');
     const onlinePaymentFields = document.getElementById('online-payment-fields');
@@ -28,14 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutLinks = document.querySelectorAll('#logoutLinkDesktop, #logoutLinkMobile');
     const submitBtn = document.querySelector('button[type="submit"]');
     const lotSelect = document.getElementById("lot-select");
-    const toastElement = document.getElementById("liveToast");
-    const toastBody = toastElement.querySelector(".toast-body");
-    const toastTime = toastElement.querySelector("small");
-    const reservationSelect = document.getElementById("reservationSelect");
-const amountInput = document.getElementById("amountInput");
+    // Removed toast and reservation/payment history related DOM elements
     
     // --- Modal Elements ---
-     const docModal = new bootstrap.Modal(document.getElementById('docModal'));
+    let docModal = null;
+    const docModalElem = document.getElementById('docModal');
+    if (docModalElem && window.bootstrap && bootstrap.Modal) {
+        docModal = new bootstrap.Modal(docModalElem);
+    }
     const docFilename = document.getElementById('docFilename');
     const imgPreview = document.getElementById('img-preview');
     const pdfCanvas = document.getElementById('pdf-canvas');
@@ -49,30 +49,23 @@ const amountInput = document.getElementById("amountInput");
     const replaceFileInput = document.getElementById('replaceFileInput');
 
 
-    // --- Toast ---
-    const toast = new bootstrap.Toast(toastElement, {
-        delay: 24 * 60 * 60 * 1000, // 24 hours
-        autohide: false
-    });
+
 
     
 
     // --- Global State ---
-    let countdownInterval = null;
     let currentSelectedLot = null;
     let pdfDoc = null;
     let pageNum = 1;
-    const TOTAL_MONTHS = 50;
-    // let allLots = [];
-    let paymentHistoryData = {};
-    const CONTRACT_START_DATE = new Date();
     let currentFileInput = null;
+
 
     // --- Logout ---
     logoutLinks.forEach(link => link.addEventListener('click', e => {
         e.preventDefault();
         window.location.href = '../../auth/login/login.php';
     }));
+
 
     // --- Load User Name ---
     async function loadUserName() {
@@ -110,37 +103,7 @@ const amountInput = document.getElementById("amountInput");
         }
     }
 
-    // --- Countdown Toast ---
-    function startPaymentCountdown(reservationId) {
-        const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-        if (countdownInterval) clearInterval(countdownInterval);
-
-        function updateCountdown() {
-            const now = new Date();
-            const diff = deadline - now;
-
-            if (diff <= 0) {
-                toastBody.textContent = "Your payment time has expired!";
-                toastTime.textContent = "Now";
-                clearInterval(countdownInterval);
-                updateReservationStatus(reservationId, "Cancelled");
-                if (typeof loadReservationHistory === "function") loadReservationHistory();
-                return;
-            }
-
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            toastBody.textContent = `You have ${hours}h ${minutes}m ${seconds}s left to pay this reservation!`;
-            toastTime.textContent = "Counting down...";
-        }
-
-        updateCountdown();
-        toast.show();
-        countdownInterval = setInterval(updateCountdown, 1000);
-    }
 
      window.selectMethod = function(element, method) {
         document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
@@ -161,43 +124,10 @@ const amountInput = document.getElementById("amountInput");
     }
 
 
-    // --- Lot Selection Change ---
-    if (lotSelect) lotSelect.addEventListener("change", async () => {
-        const selectedId = lotSelect.value;
-    // const selectedLot = allLots.find(lot => String(lot.reservationId) === String(selectedId));
 
-        if (!selectedLot) {
-            currentSelectedLot = null;
-            lotPriceDisplay.textContent = "₱0.00";
-            monthlyPaymentDisplay.textContent = "₱0.00";
-            monthlyPaymentDesc.textContent = "";
-            totalPaidDisplay.textContent = "₱0.00";
-            remainingBalanceDisplay.textContent = "₱0.00";
-            return;
-        }
-
-
-    });
 
     // --- Payment Summary + Other Functions ---
-    function updatePaymentSummary() {
-        if (!currentSelectedLot) {
-            totalPaidDisplay.textContent = formatCurrency(0);
-            remainingBalanceDisplay.textContent = formatCurrency(0);
-            paymentHistoryBody.innerHTML =
-                '<tr><td colspan="7" class="text-center text-muted">Please select a lot to view its payment history.</td></tr>';
-            return;
-        }
- const reservationId = currentSelectedLot.reservationId;
-        const history = paymentHistoryData[reservationId] || [];
-        const totalPaid = history.reduce((sum, payment) => sum + payment.amount, 0);
-        const remainingBalance = Math.max(0, currentSelectedLot.price - totalPaid);
 
-        totalPaidDisplay.textContent = formatCurrency(totalPaid);
-        remainingBalanceDisplay.textContent = formatCurrency(remainingBalance);
-
-        updateCalculatedAmount();
-    }
 
     function updateCalculatedAmount() {
         if (!currentSelectedLot) return;
@@ -242,81 +172,7 @@ const amountInput = document.getElementById("amountInput");
         }
     }
 
-   async function renderPaymentSchedule(paymentId = null) {
-    try {
-        let url = `${API_BASE_URL}save_payment.php?mode=getPayments`;
-        if (paymentId) url += `&paymentId=${paymentId}`;
 
-        const response = await fetch(url, { method: "GET", credentials: "include" });
-        const data = await response.json();
-
-        console.log("📜 Payment history data:", data);
-
-        if (data.status !== "success" || !Array.isArray(data.data) || data.data.length === 0) {
-            paymentHistoryBody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center text-muted">
-                        No payment history found.
-                    </td>
-                </tr>`;
-            return;
-        }
-
-        let html = "";
-        data.data.forEach(payment => {
-            const datePaid = payment.datePaid
-                ? new Date(payment.datePaid).toLocaleDateString()
-                : "N/A";
-
-            const amount = payment.amount ? formatCurrency(payment.amount) : "₱0.00";
-            const method = payment.methodName || "N/A";
-            const paymentType = payment.paymentType ? payment.paymentType.charAt(0).toUpperCase() + payment.paymentType.slice(1) : "N/A";
-            const reference = payment.reference || "N/A";
-            const status = payment.status || "Pending";
-
-            const statusClass =
-                status === "Confirmed"
-                    ? "paid"
-                    : status === "Pending"
-                    ? "pending"
-                    : "unpaid";
-
-            const docButton = payment.document
-                ? `<button type="button" class="btn btn-sm btn-info view-doc-btn"
-                    data-file-url="${payment.document}"
-                    data-file-name="${payment.document.split('/').pop()}">
-                    View
-                </button>`
-                : "N/A";
-
-            html += `
-                <tr>
-                    <td>${payment.month}</td>
-                    <td>${datePaid}</td>
-                    <td>${amount}</td>
-                    <td>${method}</td>
-                    <td>${paymentType}</td>
-                    <td>${reference}</td>
-                    <td><span class="status ${statusClass}">${status}</span></td>
-                    <td>${docButton}</td>
-                </tr>
-            `;
-        });
-
-        paymentHistoryBody.innerHTML = html;
-
-    } catch (err) {
-        console.error("Fetch error:", err);
-        paymentHistoryBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center text-danger">
-                    Error loading payment data.
-                </td>
-            </tr>`;
-    }
-}
-
-    renderPaymentSchedule();
     
     // --- Modal and File Preview Functions ---
    function renderPage(num) {
@@ -466,96 +322,46 @@ document.querySelectorAll(".view-icon").forEach(btn => {
 
 
 
-    // View button in the payment history table
-  paymentHistoryBody.addEventListener("click", async (e) => {
-    if (e.target.classList.contains("view-doc-btn")) {
-        const fileURL = e.target.dataset.fileUrl;
-        const fileName = e.target.dataset.fileName || "document";
 
-        if (!fileURL) {
-            alert("⚠️ No document available to view.");
-            return;
-        }
-
-        try {
-            // Detect file type by extension if possible
-            const fileExt = fileURL.split('.').pop().toLowerCase();
-            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt);
-            const isPdf = fileExt === "pdf";
-
-            // Directly preview without fetch for images/PDFs
-            if (isImage || isPdf) {
-                showDocument({ 
-                    name: fileName, 
-                    type: isPdf ? "application/pdf" : `image/${fileExt}`,
-                    url: fileURL 
-                }, null, true);
-                return;
-            }
-
-            // Otherwise, fallback to fetch (for unknown types)
-            const response = await fetch(fileURL);
-            if (!response.ok) throw new Error("File not found");
-
-            const blob = await response.blob();
-            const file = new File([blob], fileName, { type: blob.type });
-            showDocument(file, null, true);
-
-        } catch (err) {
-            console.error("Error fetching file:", err);
-            alert("❌ Failed to load document preview.");
-        }
-    }
-});
 
 
     // PDF Navigation
- prevPageBtn.addEventListener("click", () => {
-    if (pageNum <= 1) return;
-    pageNum--;
-    renderPage(pageNum);
-});
 
-nextPageBtn.addEventListener("click", () => {
-    if (pageNum >= pdfDoc.numPages) return;
-    pageNum++;
-    renderPage(pageNum);
-});
+if (typeof prevPageBtn !== 'undefined' && prevPageBtn) {
+    prevPageBtn.addEventListener("click", () => {
+        if (pageNum <= 1) return;
+        pageNum--;
+        renderPage(pageNum);
+    });
+}
 
+if (typeof nextPageBtn !== 'undefined' && nextPageBtn) {
+    nextPageBtn.addEventListener("click", () => {
+        if (pageNum >= pdfDoc.numPages) return;
+        pageNum++;
+        renderPage(pageNum);
+    });
+}
 
-    // Modal Action Buttons (for files from local input)
-  replaceFileInput.addEventListener('change', e => {
-    if (!currentFileInput) return;
-    const file = e.target.files[0];
-    if (file) {
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        currentFileInput.files = dt.files;
+// Modal Action Buttons (for files from local input)
+if (typeof replaceFileInput !== 'undefined' && replaceFileInput) {
+    replaceFileInput.addEventListener('change', e => {
+        if (!currentFileInput) return;
+        const file = e.target.files[0];
+        if (file) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            currentFileInput.files = dt.files;
 
-        const fileNameSpan = document.getElementById(currentFileInput.id + '-filename');
-        fileNameSpan.textContent = file.name;
+            const fileNameSpan = document.getElementById(currentFileInput.id + '-filename');
+            fileNameSpan.textContent = file.name;
 
-        docModal.hide();
-        replaceFileInput.value = '';
-    }
-});
-
-  deleteBtn.addEventListener('click', () => {
-    if (!currentFileInput) return;
-
-    currentFileInput.value = null;
-    const fileNameSpan = document.getElementById(currentFileInput.id + '-filename');
-    fileNameSpan.textContent = 'No file chosen';
-
-    const viewBtn = document.querySelector(`.view-icon[data-target="${currentFileInput.id}"]`);
-    if (viewBtn) viewBtn.style.display = 'none';
-
-    docModal.hide();
-    currentFileInput = null;
-});
-
-
-    // --- Form Submission (PHP Connection) ---
+            docModal.hide();
+            replaceFileInput.value = '';
+        }
+    });
+}
+   // --- Form Submission (PHP Connection) ---
 
 
 
@@ -592,5 +398,4 @@ nextPageBtn.addEventListener("click", () => {
     // Initial calls
     loadUserName();
 
-     updatePaymentSummary();
 });
