@@ -1,3 +1,62 @@
+<?php
+session_start();
+// Redirect to login if not authenticated
+if (!isset($_SESSION['user_id'])) {
+    header('Location: /cmsApp/frontend/auth/login/login.php');
+    exit();
+}
+
+// Get lotId from URL
+$lotId = isset($_GET['lotId']) ? $_GET['lotId'] : null;
+$reservationInfo = [];
+if ($lotId) {
+    require_once __DIR__ . '/../../../../cms.api/db_connect.php'; // adjust path as needed
+
+    $stmt = $conn->prepare("SELECT lotId, block, lotNumber, rowNumber, type FROM lots WHERE lotId = ?");
+    $stmt->bind_param("i", $lotId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $reservationInfo = [
+            'lotId' => $row['lotId'],
+            'block' => $row['block'],
+            'lotNumber' => $row['lotNumber'],
+            'rowNumber' => $row['rowNumber'],
+            'type' => $row['type'],
+            // You may need to fetch amount_due and reservation_ref from another table if needed
+            'amount_due' => '25000.00', // Placeholder, replace with actual value if available
+            'reservation_ref' => 'RES-' . date('Y') . '-' . str_pad($row['lotId'], 5, '0', STR_PAD_LEFT)
+        ];
+    } else {
+        // Handle not found
+        $reservationInfo = [
+            'lotId' => '',
+            'block' => '',
+            'lotNumber' => '',
+            'rowNumber' => '',
+            'type' => '',
+            'amount_due' => '',
+            'reservation_ref' => ''
+        ];
+    }
+    $stmt->close();
+    $conn->close();
+} else {
+    // Handle missing lotId
+    $reservationInfo = [
+        'lotId' => '',
+        'block' => '',
+        'lotNumber' => '',
+        'rowNumber' => '',
+        'type' => '',
+        'amount_due' => '',
+        'reservation_ref' => ''
+    ];
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,14 +96,12 @@
                     <h2 class="fs-4 fw-semibold mb-3">Pay for Your Reservation</h2>
                     <!-- Reservation Details Placeholder -->
                     <div class="mb-4" id="reservation-details">
-                        <p class="mb-1"><strong>Lot Reserved:</strong> <span id="lot-info">(Lot details here)</span></p>
-                        <p class="mb-1"><strong>Amount Due:</strong> <span id="amount-due">₱0.00</span></p>
-                        <p class="mb-1"><strong>Reservation Reference:</strong> <span id="reservation-ref">(Reference #)</span></p>
+                        <p class="mb-1"><strong>Lot Reserved:</strong> <span id="lot-info">Block 5, Lot 12</span></p>
                     </div>
                     <form id="paymentForm" action="../../../cms.api/save_payment.php" method="POST" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label for="paymentAmount" class="form-label">Amount</label>
-                            <input type="number" class="form-control" id="paymentAmount" name="amount" min="0" step="0.01" required readonly>
+                            <input type="number" class="form-control" id="paymentAmount" name="amount" min="0" step="0.01" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? htmlspecialchars($reservationInfo['amount_due']) : ''; ?>">
                         </div>
                         <div class="mb-3">
                             <label for="paymentMethod" class="form-label">Payment Method</label>
@@ -59,7 +116,7 @@
                             <label for="receipt" class="form-label">Upload Payment Receipt</label>
                             <input class="form-control" type="file" id="receipt" name="receipt" accept="image/*,application/pdf" required>
                         </div>
-                        <input type="hidden" name="reservation_id" id="reservationIdInput">
+                        <input type="hidden" name="reservation_id" id="reservationIdInput" value="<?php echo htmlspecialchars($lotId); ?>">
                         <button type="submit" class="btn btn-success w-100">Submit Payment</button>
                     </form>
                 </div>
