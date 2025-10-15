@@ -4,7 +4,78 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: ../../auth/login/login.php');
     exit();
 }
+
+// Show selected lot details if lotId is present
+$lotId = isset($_GET['lotId']) ? htmlspecialchars($_GET['lotId']) : '';
+$lotDetails = null;
+if ($lotId) {
+    $apiUrl = 'http://localhost/stJohnCmsApp/cms.api/get_lots.php?search=' . urlencode($lotId) . '&limit=1';
+    $apiResponse = @file_get_contents($apiUrl);
+    if ($apiResponse !== false) {
+        $apiData = json_decode($apiResponse, true);
+        if ($apiData && isset($apiData['success']) && $apiData['success'] && !empty($apiData['data'])) {
+            $lotDetails = $apiData['data'][0];
+        }
+    }
+}
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="payment.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg fixed-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <span class="fw-bold">Blessed Saint John Memorial</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="../clientDashboard/clientDashboard.php">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../cemeteryMap/cemeteryMap.php">Cemetery Map</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../lotReservation/lotReservation.php">Lot Reservation</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="../payment/payment.php">Payment</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../burialRecord/burialRecord.php">Burial Record</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../maintenanceServiceRequest/maintenanceServiceRequest.php">Maintenance Request</a></li>
+                </ul>
+            
+            <div class="dropdown d-none d-lg-block">
+                <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span id="user-name-display-desktop">User Name</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="../../auth/login/login.php" id="logoutLinkDesktop">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main class="container py-4">
+    <?php
+    if ($lotId) {
+        echo '<div class="alert alert-primary mb-2">Lot ID from URL: <b>' . $lotId . '</b></div>';
+    }
+    if ($lotDetails) {
+        echo '<div class="alert alert-info mb-4"><strong>Selected Lot:</strong> ';
+        echo 'Block <b>' . htmlspecialchars($lotDetails['block']) . '</b>, ';
+        echo 'Area <b>' . htmlspecialchars($lotDetails['area']) . '</b>, ';
+        echo 'Row <b>' . htmlspecialchars($lotDetails['rowNumber']) . '</b>, ';
+        echo 'Lot No. <b>' . htmlspecialchars($lotDetails['lotNumber']) . '</b>, ';
+        echo 'Type <b>' . htmlspecialchars($lotDetails['type']) . '</b>';
+        echo '</div>';
+    }
+    ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,7 +121,24 @@ if (!isset($_SESSION['user_id'])) {
     </nav>
 
     <main class="container py-4">
+<?php
+if ($lotId) {
+    echo '<div class="alert alert-primary mb-2">Lot ID from URL: <b>' . $lotId . '</b></div>';
+}
+if ($lotDetails) {
+    echo '<div class="alert alert-info mb-4"><strong>Selected Lot:</strong> ';
+    echo 'Block <b>' . htmlspecialchars($lotDetails['block']) . '</b>, ';
+    echo 'Area <b>' . htmlspecialchars($lotDetails['area']) . '</b>, ';
+    echo 'Row <b>' . htmlspecialchars($lotDetails['rowNumber']) . '</b>, ';
+    echo 'Lot No. <b>' . htmlspecialchars($lotDetails['lotNumber']) . '</b>, ';
+    echo 'Type <b>' . htmlspecialchars($lotDetails['type']) . '</b>';
+    echo '</div>';
+}
+?>
         <form id="payment-form" method="POST" action="save_payment.php" enctype="multipart/form-data" class="p-4 rounded-3">
+            <?php if ($lotId): ?>
+                <input type="hidden" name="lotId" value="<?php echo $lotId; ?>">
+            <?php endif; ?>
 
             <h2 class="text-center mb-4">Payment Portal</h2>
 
