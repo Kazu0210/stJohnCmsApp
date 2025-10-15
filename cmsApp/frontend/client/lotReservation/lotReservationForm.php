@@ -41,7 +41,7 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
 
     <main class="main-content container-fluid px-0 px-md-2">
         <div class="row justify-content-center mt-4 mx-0">
-            <div class="col-12 col-md-11 col-lg-8 px-1 px-sm-2">
+            <div class="col-12 col-md-11 col-lg-10 px-1 px-sm-2">
                 <?php if ($selectedPackage): ?>
                 <div class="alert alert-info mb-4 mx-1 mx-sm-0">
                     <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Selected Package</h5>
@@ -71,30 +71,36 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                     <p class="mb-0">Details: <?php echo $selectedDetails; ?></p>
                 </div>
                 <?php endif; ?>
-                <div class="card p-3 p-md-4 mb-4 mx-1 mx-sm-0">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0">Lot Reservation Form</h2>
-                        <a href="lotReservation.php" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Packages
-                        </a>
-                    </div>
-                    <form id="reservationForm" class="row g-3">
-                        <h5 class="mb-3">Client Information</h5>
-                        <!-- ...existing form fields... -->
-                        <!-- You can add helper text or icons here for clarity -->
-                    </form>
-                </div>
-                <div class="card p-2 p-md-3 mx-1 mx-sm-0">
-                    <h4 class="mb-3">Available Lots</h4>
-                    <div class="mb-2">
-                        <span class="fw-semibold text-primary"><i class="fas fa-mouse-pointer me-1"></i>Tap a row to select a lot and auto-fill the reservation form above.</span>
-                    </div>
-                    <div class="table-responsive mb-2" style="overflow-x:auto;">
-                        <div id="availableLotsContainer">
-                            <div class="text-muted">Loading available lots...</div>
+                <div class="row g-4">
+                    <div class="col-12 col-md-6">
+                        <div class="card p-2 p-md-3 h-100">
+                            <h4 class="mb-3">Available Lots</h4>
+                            <div class="mb-2">
+                                <span class="fw-semibold text-primary"><i class="fas fa-mouse-pointer me-1"></i>Tap a row to select a lot and auto-fill the reservation form.</span>
+                            </div>
+                            <div class="table-responsive mb-2" style="overflow-x:auto;">
+                                <div id="availableLotsContainer">
+                                    <div class="text-muted">Loading available lots...</div>
+                                </div>
+                            </div>
+                            <div id="selectedLotMsg" class="alert alert-success py-2 px-3 d-none" style="font-size:0.95rem;"></div>
                         </div>
                     </div>
-                    <div id="selectedLotMsg" class="alert alert-success py-2 px-3 d-none" style="font-size:0.95rem;"></div>
+                    <div class="col-12 col-md-6">
+                        <div class="card p-3 p-md-4 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2 class="mb-0">Lot Reservation Form</h2>
+                                <a href="lotReservation.php" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Packages
+                                </a>
+                            </div>
+                            <form id="reservationForm" class="row g-3">
+                                <h5 class="mb-3">Client Information</h5>
+                                <!-- ...existing form fields... -->
+                                <!-- You can add helper text or icons here for clarity -->
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
