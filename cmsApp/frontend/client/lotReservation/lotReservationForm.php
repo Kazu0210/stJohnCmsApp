@@ -81,7 +81,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateLotStmt->bind_param("i", $lotId);
                 $updateLotStmt->execute();
                 $updateLotStmt->close();
-                $reservationSuccess = true;
+                // Redirect to payment page
+                header('Location: ../payment/payment.php');
+                exit();
             } else {
                 $reservationError = 'Database error: ' . $stmt->error;
             }
