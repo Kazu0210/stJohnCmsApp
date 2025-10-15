@@ -242,11 +242,40 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                     }
                 }
                 document.getElementById('payGcash').onclick = function() { showPaymentForm('gcash'); };
-                document.getElementById('payBank').onclick = function() { showPaymentForm('bank'); };
-                document.getElementById('payCash').onclick = function() {
-                    document.getElementById('paymentProofForm').classList.add('d-none');
-                    document.getElementById('qrCodeContainer').innerHTML = '';
+                document.getElementById('payGcash').onclick = function() {
+                    // Redirect to payment.php with details
+                    redirectToPayment('gcash');
                 };
+                document.getElementById('payBank').onclick = function() {
+                    redirectToPayment('bank');
+                };
+                document.getElementById('payCash').onclick = function() {
+                    redirectToPayment('cash');
+                };
+
+                function redirectToPayment(method) {
+                    // Get selected lot details
+                    let lotDetails = selectedRow ? selectedRow.children : null;
+                    if (!lotDetails) {
+                        alert('Please select a lot first.');
+                        return;
+                    }
+                    // Get package details from PHP variables
+                    const params = new URLSearchParams({
+                        package: '<?php echo rawurlencode($selectedPackage); ?>',
+                        price: '<?php echo rawurlencode($selectedPrice); ?>',
+                        monthly: '<?php echo rawurlencode($selectedMonthly); ?>',
+                        details: '<?php echo rawurlencode($selectedDetails); ?>',
+                        lotType: '<?php echo rawurlencode($selectedLotType); ?>',
+                        paymentMethod: method,
+                        block: lotDetails[0].textContent,
+                        area: lotDetails[1].textContent,
+                        row: lotDetails[2].textContent,
+                        lotNumber: lotDetails[3].textContent,
+                        type: lotDetails[4].textContent
+                    });
+                    window.location.href = '../payment/payment.php?' + params.toString();
+                }
 
                 // Optional: handle payment form submission
                 document.getElementById('paymentProofForm').onsubmit = function(e) {
