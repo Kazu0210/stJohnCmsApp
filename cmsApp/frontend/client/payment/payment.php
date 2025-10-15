@@ -119,7 +119,7 @@ if ($lotId) {
                     <form id="paymentForm" action="../../../cms.api/save_payment.php" method="POST" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label for="paymentAmount" class="form-label">Amount</label>
-                            <input type="number" class="form-control" id="paymentAmount" name="amount" min="0" step="0.01" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? htmlspecialchars($reservationInfo['amount_due']) : ''; ?>">
+                            <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
                         </div>
                         <div class="mb-3">
                             <label for="paymentMethod" class="form-label">Payment Method</label>
