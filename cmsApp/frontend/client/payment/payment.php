@@ -96,7 +96,10 @@ if ($lotId) {
                     <h2 class="fs-4 fw-semibold mb-3">Pay for Your Reservation</h2>
                     <!-- Reservation Details Placeholder -->
                     <div class="mb-4" id="reservation-details">
-                        <p class="mb-1"><strong>Lot Reserved:</strong> <span id="lot-info">Block 5, Lot 12</span></p>
+                        <p class="mb-1"><strong>Block:</strong> <span id="block-info"><?php echo htmlspecialchars($reservationInfo['block']); ?></span></p>
+                        <p class="mb-1"><strong>Row Number:</strong> <span id="row-info"><?php echo htmlspecialchars($reservationInfo['rowNumber']); ?></span></p>
+                        <p class="mb-1"><strong>Lot Number:</strong> <span id="lot-number-info"><?php echo htmlspecialchars($reservationInfo['lotNumber']); ?></span></p>
+                        <p class="mb-1"><strong>Type:</strong> <span id="type-info"><?php echo htmlspecialchars($reservationInfo['type']); ?></span></p>
                     </div>
                     <form id="paymentForm" action="../../../cms.api/save_payment.php" method="POST" enctype="multipart/form-data">
                         <div class="mb-3">
