@@ -40,7 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['mode'] ?? '') === 'getPaymen
                 p.datePaid,
                 p.reference,
                 p.document,
-                p.status
+                p.status,
+                p.paymentType
             FROM payments p
             LEFT JOIN payment_methods pm ON p.paymentMethodId = pm.paymentMethodId
             LEFT JOIN reservations r ON p.reservationId = r.reservationId
@@ -82,7 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['mode'] ?? '') === 'getPaymen
                 "datePaid"        => $row['datePaid'],
                 "reference"       => $row['reference'],
                 "document"        => $row['document'],
-                "status"          => $row['status']
+                "status"          => $row['status'],
+                "paymentType"     => $row['paymentType'] ?? ''
             ];
         }
 
@@ -107,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $month           = trim($_POST['month'] ?? date('F'));
     $amount          = trim($_POST['amount'] ?? '');
     $reference       = trim($_POST['reference'] ?? '');
+    $paymentType     = trim($_POST['paymentType'] ?? '');
     $status          = "Pending";
     $datePaid        = date("Y-m-d H:i:s");
     $filePath        = null;
@@ -150,11 +153,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $stmt = $conn->prepare("
             INSERT INTO payments 
-            (reservationId, userId, paymentMethodId, month, amount, datePaid, reference, document, status, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            (reservationId, userId, paymentMethodId, month, amount, datePaid, reference, document, status, paymentType, createdAt, updatedAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         ");
         $stmt->bind_param(
-            "iiissssss",
+            "iiisssssss",
             $reservationId,
             $userId,
             $paymentMethodId,
@@ -163,7 +166,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $datePaid,
             $reference,
             $filePath,
-            $status
+            $status,
+            $paymentType
         );
 
         if ($stmt->execute()) {

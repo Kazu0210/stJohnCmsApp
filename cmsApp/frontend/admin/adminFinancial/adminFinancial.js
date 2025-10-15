@@ -1,3 +1,78 @@
+// --- Add Payment Modal Logic ---
+const addPaymentBtn = document.getElementById('addPaymentBtn');
+const addPaymentModal = document.getElementById('addPaymentModal');
+const addPaymentForm = document.getElementById('addPaymentForm');
+const addClientReservation = document.getElementById('addClientReservation');
+const addMonthDue = document.getElementById('addMonthDue');
+const addAmountPaid = document.getElementById('addAmountPaid');
+const addPaymentMethod = document.getElementById('addPaymentMethod');
+const addReference = document.getElementById('addReference');
+
+// Fetch reservations for dropdown
+async function populateReservationDropdown() {
+    addClientReservation.innerHTML = '<option value="">Select Reservation</option>';
+    try {
+        const res = await fetch('/stJohnCmsApp/cms.api/fetchReservations.php');
+        const data = await res.json();
+        if (data.success && data.data) {
+            data.data.forEach(r => {
+                const label = `ID:${r.reservationId} | Lot: ${r.area}-${r.block}-${r.lotNumber} | User: ${r.userId}`;
+                const opt = document.createElement('option');
+                opt.value = r.reservationId;
+                opt.textContent = label;
+                addClientReservation.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        addClientReservation.innerHTML = '<option value="">Error loading reservations</option>';
+    }
+}
+
+if (addPaymentBtn) {
+    addPaymentBtn.addEventListener('click', () => {
+        populateReservationDropdown();
+        // Set default month to current month
+        const now = new Date();
+        addMonthDue.value = now.toLocaleString('default', { month: 'long' });
+        addAmountPaid.value = '';
+        addPaymentMethod.value = '3'; // Cash
+        addReference.value = '';
+    });
+}
+
+if (addPaymentForm) {
+    addPaymentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+    const formData = new FormData(addPaymentForm);
+    // Map paymentMethodId to backend values (1: GCash, 2: Bank, 3: Cash)
+    const paymentMethodId = formData.get('paymentMethodId');
+    formData.set('paymentMethodId', paymentMethodId);
+    // Add paymentType to backend
+    const paymentType = formData.get('paymentType');
+    formData.set('paymentType', paymentType);
+    // Add dummy userId if needed (handled by backend session)
+        try {
+            const res = await fetch('/stJohnCmsApp/cms.api/save_payment.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert('Payment added successfully!');
+                addPaymentForm.reset();
+                var modal = bootstrap.Modal.getInstance(addPaymentModal);
+                modal && modal.hide();
+                // Optionally reload payment records table
+                location.reload();
+            } else {
+                alert(result.message || 'Failed to add payment.');
+            }
+        } catch (err) {
+            alert('Error submitting payment.');
+        }
+    });
+}
 // adminFinancial.js
 document.addEventListener('DOMContentLoaded', function () {
 

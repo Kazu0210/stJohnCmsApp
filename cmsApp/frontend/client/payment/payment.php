@@ -92,10 +92,21 @@
                         <i class="fas fa-university fa-2x mb-2 text-success"></i>
                         <span>Bank Transfer</span>
                     </div>
+                    <div class="payment-method card p-3 flex-fill text-center" onclick="selectMethod(this,'cash')">
+                        <i class="fas fa-money-bill-wave fa-2x mb-2 text-secondary"></i>
+                        <span>Cash (Secretary)</span>
+                    </div>
                 </div>
             </div>
 
             <div id="online-payment-fields" class="payment-section" style="display:none;">
+            <div id="cash-payment-fields" class="payment-section card p-4 mb-4" style="display:none;">
+                <h3 class="h5 mb-3 text-center">Cash Payment</h3>
+                <div class="alert alert-info text-center">
+                    Please pay the secretary directly at the office. The secretary will log your payment in the system and provide you with a receipt.<br>
+                    <strong>Your reservation will be confirmed after secretary input.</strong>
+                </div>
+            </div>
                 <div id="gcash-details" class="card p-4 mb-4" style="display:none;">
                     <h3 class="h5 mb-3 text-center">GCash Details</h3>
                     <div class="qr-code-section mb-3 text-center">
@@ -203,6 +214,7 @@
                             <th>Date Paid</th>
                             <th>Amount</th>
                             <th>Method</th>
+                            <th>Type</th>
                             <th>Reference</th>
                             <th>Status</th>
                             <th>Document</th>
@@ -272,6 +284,39 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Payment method selection logic
+    function selectMethod(el, method) {
+        document.querySelectorAll('.payment-method').forEach(e => e.classList.remove('border-primary', 'border-success', 'border-secondary', 'selected'));
+        el.classList.add('selected');
+        if (method === 'gcash') {
+            document.getElementById('online-payment-fields').style.display = '';
+            document.getElementById('gcash-details').style.display = '';
+            document.getElementById('bank-details').style.display = 'none';
+            document.getElementById('cash-payment-fields').style.display = 'none';
+        } else if (method === 'bank') {
+            document.getElementById('online-payment-fields').style.display = '';
+            document.getElementById('gcash-details').style.display = 'none';
+            document.getElementById('bank-details').style.display = '';
+            document.getElementById('cash-payment-fields').style.display = 'none';
+        } else if (method === 'cash') {
+            document.getElementById('online-payment-fields').style.display = 'none';
+            document.getElementById('gcash-details').style.display = 'none';
+            document.getElementById('bank-details').style.display = 'none';
+            document.getElementById('cash-payment-fields').style.display = '';
+        }
+        // Store selected method in a hidden input for form submission
+        let methodInput = document.getElementById('payment-method');
+        if (!methodInput) {
+            methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.id = 'payment-method';
+            methodInput.name = 'payment-method';
+            document.getElementById('payment-form').appendChild(methodInput);
+        }
+        methodInput.value = method;
+    }
+    </script>
     <script src="payment.js"></script>
 </body>
 </html>

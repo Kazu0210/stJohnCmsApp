@@ -297,6 +297,7 @@ const amountInput = document.getElementById("amountInput");
 
             const amount = payment.amount ? formatCurrency(payment.amount) : "₱0.00";
             const method = payment.methodName || "N/A";
+            const paymentType = payment.paymentType ? payment.paymentType.charAt(0).toUpperCase() + payment.paymentType.slice(1) : "N/A";
             const reference = payment.reference || "N/A";
             const status = payment.status || "Pending";
 
@@ -321,6 +322,7 @@ const amountInput = document.getElementById("amountInput");
                     <td>${datePaid}</td>
                     <td>${amount}</td>
                     <td>${method}</td>
+                    <td>${paymentType}</td>
                     <td>${reference}</td>
                     <td><span class="status ${statusClass}">${status}</span></td>
                     <td>${docButton}</td>
@@ -601,6 +603,7 @@ nextPageBtn.addEventListener("click", () => {
 
     const currentMonth = new Date().toLocaleString("default", { month: "long" });
     const amountValue = parseFloat(calculatedAmountInput?.value?.replace(/[₱,]/g, "") || amountInput?.value || 0);
+
     const proofInput =
         document.getElementById("gcash-proof")?.files[0] ||
         document.getElementById("bank-proof")?.files[0] ||
@@ -609,15 +612,18 @@ nextPageBtn.addEventListener("click", () => {
     let referenceInput = null;
     if (paymentMethodId === "1") referenceInput = document.getElementById("gcash-ref");
     else if (paymentMethodId === "2") referenceInput = document.getElementById("bank-ref");
-    else if (paymentMethodId === "3") referenceInput = document.getElementById("cash-ref");
 
     const referenceValue = referenceInput?.value.trim() || "";
 
     if (!paymentMethodId) return alert("⚠️ Please select a payment method.");
     if (isNaN(amountValue) || amountValue <= 0)
         return alert("⚠️ Please enter a valid payment amount.");
-    if (paymentMethodId !== "3" && !proofInput)
-        return alert("⚠️ Please upload proof for GCash or Bank Transfer.");
+    if (paymentMethodId === "1" || paymentMethodId === "2") {
+        if (!referenceValue)
+            return alert("⚠️ Please enter the reference number for GCash or Bank Transfer.");
+        if (!proofInput)
+            return alert("⚠️ Please upload proof for GCash or Bank Transfer.");
+    }
 
     const formData = new FormData();
     formData.append("reservationId", reservationId);
@@ -625,6 +631,9 @@ nextPageBtn.addEventListener("click", () => {
     formData.append("month", currentMonth);
     formData.append("amount", amountValue);
     formData.append("reference", referenceValue);
+    // Add payment type
+    const paymentType = document.getElementById('payment-type')?.value || '';
+    formData.append("paymentType", paymentType);
     if (proofInput) formData.append("proofFile", proofInput);
 
     try {

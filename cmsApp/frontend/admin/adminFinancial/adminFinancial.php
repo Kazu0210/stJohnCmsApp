@@ -162,7 +162,64 @@ $userRole = getCurrentUserRole();
                     </div>
                 </div>
 
+                <div class="d-flex justify-content-end mb-2">
+                    <button class="btn btn-success" id="addPaymentBtn"><i class="fas fa-plus"></i> Add Payment</button>
+                </div>
                 <div class="table-responsive rounded">
+    <!-- Add Payment Modal -->
+    <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPaymentModalLabel"><i class="fas fa-plus me-2"></i>Add New Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addPaymentForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="addClientReservation" class="form-label">Reservation/Client</label>
+                            <select class="form-select" id="addClientReservation" name="reservationId" required>
+                                <option value="">Select Reservation</option>
+                                <!-- Options will be populated by JS -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addMonthDue" class="form-label">Month Due</label>
+                            <input type="text" class="form-control" id="addMonthDue" name="month" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addAmountPaid" class="form-label">Amount Paid (₱)</label>
+                            <input type="number" step="0.01" class="form-control" id="addAmountPaid" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addPaymentType" class="form-label">Payment Type</label>
+                            <select class="form-select" id="addPaymentType" name="paymentType" required>
+                                <option value="exact">Exact Monthly Payment</option>
+                                <option value="advance">Advance Payment</option>
+                                <option value="deferred">Deferred/Unable to Pay</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addPaymentMethod" class="form-label">Payment Method</label>
+                            <select class="form-select" id="addPaymentMethod" name="paymentMethodId" required>
+                                <option value="3" selected>Cash</option>
+                                <option value="1">GCash</option>
+                                <option value="2">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addReference" class="form-label">Reference/OR No.</label>
+                            <input type="text" class="form-control" id="addReference" name="reference">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
                     <table class="table table-hover align-middle">
                         <thead>
                             <tr>
@@ -329,5 +386,13 @@ $userRole = getCurrentUserRole();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="adminFinancial.js"></script>
+    <script>
+    // Show Add Payment Modal
+    document.getElementById('addPaymentBtn').addEventListener('click', function() {
+        var modal = new bootstrap.Modal(document.getElementById('addPaymentModal'));
+        modal.show();
+        // TODO: Populate reservation/client dropdown via AJAX
+    });
+    </script>
 </body>
 </html>

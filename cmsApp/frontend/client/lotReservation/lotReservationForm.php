@@ -184,7 +184,9 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                 }
                 let html = '<table id="availableLotsTable" class="table table-bordered table-sm lot-table-enhanced"><thead><tr><th>Block</th><th>Area</th><th>Row</th><th>Lot No.</th><th>Type</th><th>Status</th></tr></thead><tbody>';
                 lots.forEach((lot, idx) => {
-                    html += `<tr data-idx="${idx}"><td>${lot.block}</td><td>${lot.area}</td><td>${lot.rowNumber}</td><td>${lot.lotNumber}</td><td>${lot.type}</td><td>${lot.status}</td></tr>`;
+                    // Add a class if not available
+                    const rowClass = lot.status !== 'Available' ? 'table-danger not-available' : '';
+                    html += `<tr data-idx="${idx}" class="${rowClass}"><td>${lot.block}</td><td>${lot.area}</td><td>${lot.rowNumber}</td><td>${lot.lotNumber}</td><td>${lot.type}</td><td>${lot.status}</td></tr>`;
                 });
                 html += '</tbody></table>';
                 container.innerHTML = html;
@@ -201,6 +203,15 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         if (row !== selectedRow) row.classList.remove('table-active');
                     });
                     row.addEventListener('click', function() {
+                        if (lots[idx].status !== 'Available') {
+                            // Show error message
+                            const msg = document.getElementById('selectedLotMsg');
+                            msg.textContent = `This lot is not available for reservation.`;
+                            msg.classList.remove('d-none');
+                            msg.classList.remove('alert-success');
+                            msg.classList.add('alert-danger');
+                            return;
+                        }
                         if (selectedRow) selectedRow.classList.remove('table-success');
                         if (selectedRow && selectedRow !== row) selectedRow.classList.remove('table-active');
                         row.classList.add('table-success');
@@ -208,7 +219,8 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         // Show message
                         const msg = document.getElementById('selectedLotMsg');
                         msg.textContent = `Selected Lot: Block ${lots[idx].block}, Area ${lots[idx].area}, Row ${lots[idx].rowNumber}, Lot No. ${lots[idx].lotNumber}`;
-                        msg.classList.remove('d-none');
+                        msg.classList.remove('d-none', 'alert-danger');
+                        msg.classList.add('alert-success');
                         // Show lot details in modal
                         const lotDetails = document.getElementById('selectedLotDetails');
                         lotDetails.innerHTML = `<strong>Selected Lot Details:</strong><br>Block: <b>${lots[idx].block}</b> &nbsp; | &nbsp; Area: <b>${lots[idx].area}</b> &nbsp; | &nbsp; Row: <b>${lots[idx].rowNumber}</b> &nbsp; | &nbsp; Lot No.: <b>${lots[idx].lotNumber}</b> &nbsp; | &nbsp; Type: <b>${lots[idx].type}</b> &nbsp; | &nbsp; Status: <b>${lots[idx].status}</b>`;
