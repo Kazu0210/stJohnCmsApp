@@ -6,8 +6,9 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Get lotId from URL
+// Get lotId and lotTypeId from URL
 $lotId = isset($_GET['lotId']) ? $_GET['lotId'] : null;
+$lotTypeId = isset($_GET['lotTypeId']) ? $_GET['lotTypeId'] : null;
 $reservationInfo = [];
 if ($lotId) {
     require_once __DIR__ . '/../../../../cms.api/db_connect.php';
@@ -20,10 +21,11 @@ if ($lotId) {
     if ($result && $result->num_rows > 0) {
         $row = $result->fetch_assoc();
         $amount_due = '';
-        // Fetch price from lot_types table using lotTypeId
-        if (!empty($row['lotTypeId'])) {
+        $finalLotTypeId = $lotTypeId ? $lotTypeId : $row['lotTypeId'];
+        // Fetch price from lot_types table using lotTypeId from URL if present, else from lots
+        if (!empty($finalLotTypeId)) {
             $typeStmt = $conn->prepare("SELECT price FROM lot_types WHERE lotTypeId = ?");
-            $typeStmt->bind_param("i", $row['lotTypeId']);
+            $typeStmt->bind_param("i", $finalLotTypeId);
             $typeStmt->execute();
             $typeResult = $typeStmt->get_result();
             if ($typeResult && $typeResult->num_rows > 0) {
