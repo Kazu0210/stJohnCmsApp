@@ -144,9 +144,9 @@ if ($lotId) {
                                         <option value="deferred">Deferred Amount</option>
                                     </select>
                                 </div>
-                                <div class="mb-3">
+                                <div class="mb-3" id="referenceField" style="display:none;">
                                     <label for="reference" class="form-label">Reference</label>
-                                    <input type="text" class="form-control" id="reference" name="reference" placeholder="Enter payment reference or transaction number" required>
+                                    <input type="text" class="form-control" id="reference" name="reference" placeholder="Enter payment reference or transaction number">
                                 </div>
                                 <div class="mb-3">
                                     <label for="proofFile" class="form-label">Upload Payment Receipt</label>
@@ -180,6 +180,26 @@ if ($lotId) {
     </main>
 </main>
 <script src="payment.js"></script>
+<script>
+// Show reference field only for bank or gcash
+document.addEventListener('DOMContentLoaded', function() {
+    var paymentMethod = document.getElementById('paymentMethod');
+    var referenceField = document.getElementById('referenceField');
+    var referenceInput = document.getElementById('reference');
+    function toggleReferenceField() {
+        if (paymentMethod.value === '1' || paymentMethod.value === '2') { // 1: GCash, 2: Bank
+            referenceField.style.display = '';
+            referenceInput.required = true;
+        } else {
+            referenceField.style.display = 'none';
+            referenceInput.required = false;
+            referenceInput.value = '';
+        }
+    }
+    paymentMethod.addEventListener('change', toggleReferenceField);
+    toggleReferenceField();
+});
+</script>
 <!-- Bootstrap JS Bundle (for modal and Toast support) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
