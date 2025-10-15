@@ -123,19 +123,27 @@ if ($lotId) {
                                     <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="paymentMethod" class="form-label">Payment Method</label>
-                                    <select class="form-select" id="paymentMethod" name="method" required>
+                                    <label for="paymentMethodId" class="form-label">Payment Method</label>
+                                    <select class="form-select" id="paymentMethod" name="paymentMethodId" required>
                                         <option value="">Select method</option>
-                                        <option value="bank">Bank Transfer</option>
-                                        <option value="gcash">GCash</option>
-                                        <option value="cash">Cash</option>
+                                        <option value="1">GCash</option>
+                                        <option value="2">Bank Transfer</option>
+                                        <option value="3">Cash</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="receipt" class="form-label">Upload Payment Receipt</label>
-                                    <input class="form-control" type="file" id="receipt" name="receipt" accept="image/*,application/pdf" required>
+                                    <label for="month" class="form-label">Month</label>
+                                    <input type="month" class="form-control" id="month" name="month" value="<?php echo date('Y-m'); ?>" required>
                                 </div>
-                                <input type="hidden" name="reservation_id" id="reservationIdInput" value="<?php echo htmlspecialchars($lotId); ?>">
+                                <div class="mb-3">
+                                    <label for="reference" class="form-label">Reference</label>
+                                    <input type="text" class="form-control" id="reference" name="reference" placeholder="Enter payment reference or transaction number" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="proofFile" class="form-label">Upload Payment Receipt</label>
+                                    <input class="form-control" type="file" id="proofFile" name="proofFile" accept="image/*,application/pdf" required>
+                                </div>
+                                <input type="hidden" name="reservationId" id="reservationIdInput" value="<?php echo htmlspecialchars($lotId); ?>">
                                 <button type="submit" class="btn btn-success w-100">Submit Payment</button>
                             </form>
                         </div>
