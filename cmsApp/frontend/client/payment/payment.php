@@ -76,18 +76,7 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                 </div>
             </div>
-
-            <div class="payment-section card mb-4 p-3 border-0">
-                <h3 class="h5 mb-3 text-center">Payment Options</h3>
-                <div class="form-group mb-3">
-                    <label for="lot-select" class="form-label">Select Lot:</label>
-                    <select id="lot-select" name="lot-select" class="form-select" required>
-                        <option value="">-- Select a Lot --</option>
-                    </select>
-                    <small class="form-text text-muted">Choose the lot you are paying for.</small>
-                </div>
-            </div>
-
+            <!-- Payment Method Section -->
             <div class="payment-section card mb-4 p-3 border-0">
                 <h3 class="h5 mb-3 text-center">Choose Payment Method</h3>
                 <div class="payment-methods d-flex flex-wrap justify-content-center gap-3">
@@ -105,9 +94,7 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                 </div>
             </div>
-
-            <div id="online-payment-fields" class="payment-section" style="display:none;">
-            <div id="cash-payment-fields" class="payment-section card p-4 mb-4" style="display:none;">
+            <!-- Payment options section removed as requested -->
                 <h3 class="h5 mb-3 text-center">Cash Payment</h3>
                 <div class="alert alert-info text-center">
                     Please pay the secretary directly at the office. The secretary will log your payment in the system and provide you with a receipt.<br>
