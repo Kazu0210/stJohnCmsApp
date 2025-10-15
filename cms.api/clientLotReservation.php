@@ -1,4 +1,8 @@
 <?php
+// DEBUG: Log all errors to a file for troubleshooting
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error_log.txt');
+error_reporting(E_ALL);
 require_once "db_connect.php";
 session_start();
 

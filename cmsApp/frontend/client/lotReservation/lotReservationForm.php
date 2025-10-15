@@ -3,27 +3,90 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
-    // User is not logged in, redirect to login page
     header("Location: ../../auth/login/login.php");
     exit();
 }
 
-/**
- * Retrieves the currently logged-in user's information from the database.
- *
- * - Includes the database connection file.
- * - Gets the user ID from the session.
- * - Prepares and executes a SQL statement to select the user's data by ID.
- * - If the user exists, fetches their data as an associative array.
- */
-// Fetch user info from API
-include_once(dirname(__DIR__, 4) . '/cms.api/fetchUserInfo.php');
+// Database connection
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "cmsdb";
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
+}
 
-// Optional: You can also check user role if needed
-// if ($_SESSION['role'] !== 'client') {
-//     header("Location: ../../auth/login/login.php");
-//     exit();
-// }
+// Handle form submission
+$reservationSuccess = false;
+$reservationError = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $userId = $_SESSION['user_id'];
+    $clientName = trim($_POST['client_name'] ?? '');
+    $address = trim($_POST['client_address'] ?? '');
+    $contactNumber = trim($_POST['client_contact'] ?? '');
+    $deceasedName = trim($_POST['deceased_name'] ?? '') ?: null;
+    $burialDate = trim($_POST['burial_date'] ?? '') ?: null;
+    $reservationDate = trim($_POST['reservation_date'] ?? '');
+    $area = trim($_POST['area'] ?? '');
+    $block = trim($_POST['block'] ?? '');
+    $rowNumber = trim($_POST['rowNumber'] ?? '');
+    $lotNumber = trim($_POST['lot_number'] ?? '');
+    $burialDepth = trim($_POST['burial_depth'] ?? '');
+    $notes = trim($_POST['additional_notes'] ?? '');
+    $lotTypeId = isset($_POST['lotTypeId']) && $_POST['lotTypeId'] !== '' ? (int)$_POST['lotTypeId'] : null;
+    $lotId = trim($_POST['lotId'] ?? '');
+
+    // Validate lotId
+    if (empty($lotId) || !ctype_digit($lotId)) {
+        $reservationError = 'You must select a valid lot before submitting the reservation.';
+    } else {
+        // File uploads
+        function saveFileLocal($fileInputName, $uploadDir) {
+            if (isset($_FILES[$fileInputName]) && $_FILES[$fileInputName]['error'] === UPLOAD_ERR_OK) {
+                $fileName = time() . '_' . preg_replace("/[^a-zA-Z0-9.\-_]/", "_", basename($_FILES[$fileInputName]['name']));
+                $targetPath = $uploadDir . $fileName;
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                if (move_uploaded_file($_FILES[$fileInputName]['tmp_name'], $targetPath)) {
+                    return "uploads/" . $fileName;
+                }
+            }
+            return null;
+        }
+        $uploadDir = dirname(__DIR__, 4) . '/cms.api/uploads/';
+        $clientValidId = saveFileLocal('client_id_upload', $uploadDir);
+        $deathCertificate = saveFileLocal('death_certificate_upload', $uploadDir);
+        $deceasedValidId = saveFileLocal('deceased_id_upload', $uploadDir);
+        $burialPermit = saveFileLocal('burial_permit_upload', $uploadDir);
+
+        if (empty($clientName) || empty($address) || empty($contactNumber) || empty($reservationDate) || $lotTypeId === null || empty($clientValidId)) {
+            $reservationError = 'Missing required fields or client valid ID.';
+        } else {
+            $reservationStatus = 'Pending';
+            $createdAt = date('Y-m-d H:i:s');
+            $stmt = $conn->prepare("INSERT INTO reservations (
+                userId, lotId, clientName, address, contactNumber, deceasedName, burialDate, reservationDate,
+                area, block, rowNumber, lotNumber, burialDepth, notes, clientValidId, deathCertificate, deceasedValidId,
+                burialPermit, status, createdAt, lotTypeId
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param(
+                "iissssssssssssssssssi",
+                $userId, $lotId, $clientName, $address, $contactNumber, $deceasedName, $burialDate,
+                $reservationDate, $area, $block, $rowNumber, $lotNumber, $burialDepth, $notes,
+                $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $reservationStatus, $createdAt, $lotTypeId
+            );
+            if ($stmt->execute()) {
+                $reservationSuccess = true;
+            } else {
+                $reservationError = 'Database error: ' . $stmt->error;
+            }
+            $stmt->close();
+        }
+    }
+}
+
+// Fetch user info from API (for pre-filling fields)
+include_once(dirname(__DIR__, 4) . '/cms.api/fetchUserInfo.php');
 
 // Get package details from URL parameters if available
 $selectedPackage = isset($_GET['package']) ? htmlspecialchars($_GET['package']) : '';
@@ -44,43 +107,17 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
     <!-- DataTables Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 </head>
-
 <body class="bg-light" style="min-height:100vh;">
 
     <?php include dirname(__DIR__) . '/clientNavbar.php'; ?>
 
-
     <main class="main-content container-fluid px-0 px-md-2">
         <div class="row justify-content-center mt-4 mx-0">
             <div class="col-12 col-md-11 col-lg-10 px-1 px-sm-2">
-                <?php if ($selectedPackage): ?>
-                <div class="alert alert-info mb-4 mx-1 mx-sm-0">
-                    <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Selected Package</h5>
-                    <p class="mb-2"><strong><?php echo $selectedPackage; ?></strong></p>
-                    <?php
-                    $typeLabel = '';
-                    $burialKeywords = ['Regular Lot', '4-Lot Package', 'Exhumation'];
-                    $mausoleumKeywords = ['Mausoleum'];
-                    foreach ($burialKeywords as $kw) {
-                        if (stripos($selectedPackage, $kw) !== false) {
-                            $typeLabel = 'Burial Lot';
-                            break;
-                        }
-                    }
-                    foreach ($mausoleumKeywords as $kw) {
-                        if (stripos($selectedPackage, $kw) !== false) {
-                            $typeLabel = 'Mausoleum';
-                            break;
-                        }
-                    }
-                    ?>
-                    <?php if ($typeLabel): ?>
-                    <p class="mb-2">Type: <span class="badge bg-primary"><?php echo $typeLabel; ?></span></p>
-                    <?php endif; ?>
-                    <p class="mb-2">Price: <strong><?php echo $selectedPrice; ?></strong></p>
-                    <p class="mb-2">Monthly Payment: <strong><?php echo $selectedMonthly; ?></strong></p>
-                    <p class="mb-0">Details: <?php echo $selectedDetails; ?></p>
-                </div>
+                <?php if (isset($reservationSuccess) && $reservationSuccess): ?>
+                    <div class="alert alert-success">Reservation submitted successfully!</div>
+                <?php elseif (isset($reservationError) && $reservationError): ?>
+                    <div class="alert alert-danger"><?php echo htmlspecialchars($reservationError); ?></div>
                 <?php endif; ?>
                 <div class="row g-4">
                     <div class="col-12 col-md-6">
@@ -106,7 +143,7 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                 </a>
                             </div>
                             <section class="lot-reservation-section card p-0 mb-0 border-0 shadow-none">
-                                <form class="lot-reservation-form row g-3" method="POST" action="http://localhost/stJohnCmsApp/cms.api/clientLotReservation.php" enctype="multipart/form-data">
+                                <form class="lot-reservation-form row g-3" method="POST" action="" enctype="multipart/form-data">
                                     <h3>Client Information</h3>
                                     <div class="col-md-6">
                                         <label for="client_name" class="form-label">Client Name: <span class="text-danger">*</span></label>
@@ -141,6 +178,28 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                     </div>
                                     <div class="col-md-6">
                                         <label for="client_id_upload" class="form-label">Upload Client's Valid ID: <span class="text-danger">*</span></label>
+                                        <style>
+                                        .file-input-wrapper { position: relative; display: flex; align-items: center; }
+                                        .file-upload-label {
+                                            background: #f8f9fa;
+                                            border: 1px solid #ced4da;
+                                            padding: 6px 12px;
+                                            border-radius: 4px;
+                                            cursor: pointer;
+                                            margin-right: 10px;
+                                        }
+                                        .file-input-wrapper input[type="file"] {
+                                            position: absolute;
+                                            left: 0;
+                                            top: 0;
+                                            width: 100%;
+                                            height: 100%;
+                                            opacity: 0;
+                                            cursor: pointer;
+                                            z-index: 2;
+                                        }
+                                        .file-name { margin-left: 8px; font-size: 0.95em; color: #6c757d; }
+                                        </style>
                                         <div class="file-input-wrapper">
                                             <label class="file-upload-label" for="client_id_upload">
                                                 <i class="fas fa-upload"></i> Choose File
@@ -289,14 +348,14 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                 const lots = data.data.filter(lot => lot.type === selectedType);
                 const container = document.getElementById('availableLotsContainer');
                 if (lots.length === 0) {
-                    container.innerHTML = `<div class="text-danger">No available lots found for type: <b>${selectedType || 'N/A'}</b>.</div>`;
+                    container.innerHTML = `<div class=\"text-danger\">No available lots found for type: <b>${selectedType || 'N/A'}</b>.</div>`;
                     return;
                 }
                 let html = '<table id="availableLotsTable" class="table table-bordered table-sm lot-table-enhanced"><thead><tr><th>Block</th><th>Area</th><th>Row</th><th>Lot No.</th><th>Type</th><th>Status</th></tr></thead><tbody>';
                 lots.forEach((lot, idx) => {
                     // Add a class if not available
                     const rowClass = lot.status !== 'Available' ? 'table-danger not-available' : '';
-                    html += `<tr data-idx="${idx}" class="${rowClass}"><td>${lot.block}</td><td>${lot.area}</td><td>${lot.rowNumber}</td><td>${lot.lotNumber}</td><td>${lot.type}</td><td>${lot.status}</td></tr>`;
+                    html += `<tr data-idx="${idx}" data-lotid="${lot.lotId}" class="${rowClass}"><td>${lot.block}</td><td>${lot.area}</td><td>${lot.rowNumber}</td><td>${lot.lotNumber}</td><td>${lot.type}</td><td>${lot.status}</td></tr>`;
                 });
                 html += '</tbody></table>';
                 container.innerHTML = html;
@@ -335,12 +394,16 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         document.getElementById('block').value = lots[idx].block;
                         document.getElementById('rowNumber').value = lots[idx].rowNumber;
                         document.getElementById('lot_number').value = lots[idx].lotNumber;
+                        // Set the hidden lotId input
+                        document.getElementById('lotId').value = lots[idx].lotId;
                     });
                 });
             })
             .catch(err => {
                 document.getElementById('availableLotsContainer').innerHTML = '<div class="text-danger">Error loading lots.</div>';
             });
+
+        // Reservation Form AJAX Submission removed. The form now submits directly to this PHP file.
     });
     </script>
 

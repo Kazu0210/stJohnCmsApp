@@ -391,7 +391,16 @@ document.addEventListener("DOMContentLoaded", () => {
             credentials: "include",
         });
 
-        const result = await res.json(); 
+        let result;
+        try {
+            result = await res.json();
+        } catch (jsonErr) {
+            // Log the raw response for debugging
+            const rawText = await res.text();
+            console.error("Failed to parse JSON. Raw response:", rawText);
+            alert("❌ Server returned an invalid response. Check the console for details.");
+            return;
+        }
 
         if (!res.ok) {
             throw new Error(`Server error (${res.status}): ${result.message || 'Unknown server error.'}`);
