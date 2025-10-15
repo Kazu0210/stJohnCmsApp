@@ -119,10 +119,6 @@ if ($lotId) {
                             </div>
                             <form id="paymentForm" action="../../../../cms.api/save_payment.php" method="POST" enctype="multipart/form-data">
                                 <div class="mb-3">
-                                    <label for="paymentAmount" class="form-label">Amount</label>
-                                    <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
-                                </div>
-                                <div class="mb-3">
                                     <label for="paymentMethodId" class="form-label">Payment Method</label>
                                     <select class="form-select" id="paymentMethod" name="paymentMethodId" required>
                                         <option value="">Select method</option>
@@ -132,10 +128,6 @@ if ($lotId) {
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="month" class="form-label">Month</label>
-                                    <input type="month" class="form-control" id="month" name="month" value="<?php echo date('Y-m'); ?>" required>
-                                </div>
-                                <div class="mb-3">
                                     <label for="paymentType" class="form-label">Payment Type</label>
                                     <select class="form-select" id="paymentType" name="paymentType" required>
                                         <option value="">Select payment type</option>
@@ -143,6 +135,10 @@ if ($lotId) {
                                         <option value="advance">Advance Payment</option>
                                         <option value="deferred">Deferred Amount</option>
                                     </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="paymentAmount" class="form-label">Amount</label>
+                                    <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
                                 </div>
                                 <div class="mb-3" id="referenceField" style="display:none;">
                                     <label for="reference" class="form-label">Reference</label>
