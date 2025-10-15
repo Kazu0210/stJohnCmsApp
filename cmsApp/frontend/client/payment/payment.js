@@ -1,10 +1,42 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Add event listener for payment method dropdown
     const paymentMethodSelect = document.getElementById('paymentMethod');
+    const gcashQrContainer = document.getElementById('gcashQrContainer');
+    const bankQrContainer = document.getElementById('bankQrContainer');
     if (paymentMethodSelect) {
         paymentMethodSelect.addEventListener('change', function() {
-            // You can replace this with any logic you want to trigger on change
-            console.log('Selected payment method:', this.value);
+            // Show/hide QR code containers based on selected method
+            if (gcashQrContainer) {
+                if (this.value === 'gcash') {
+                    gcashQrContainer.style.display = 'flex';
+                    // Show QR image and label
+                    const img = gcashQrContainer.querySelector('img');
+                    const label = gcashQrContainer.querySelector('div');
+                    if (img) img.style.display = 'block';
+                    if (label) label.style.display = 'block';
+                } else {
+                    gcashQrContainer.style.display = 'none';
+                    const img = gcashQrContainer.querySelector('img');
+                    const label = gcashQrContainer.querySelector('div');
+                    if (img) img.style.display = 'none';
+                    if (label) label.style.display = 'none';
+                }
+            }
+            if (bankQrContainer) {
+                if (this.value === 'bank') {
+                    bankQrContainer.style.display = 'flex';
+                    const img = bankQrContainer.querySelector('img');
+                    const label = bankQrContainer.querySelector('div');
+                    if (img) img.style.display = 'block';
+                    if (label) label.style.display = 'block';
+                } else {
+                    bankQrContainer.style.display = 'none';
+                    const img = bankQrContainer.querySelector('img');
+                    const label = bankQrContainer.querySelector('div');
+                    if (img) img.style.display = 'none';
+                    if (label) label.style.display = 'none';
+                }
+            }
         });
     }
     // --- Auto-select lot if lotId is in URL ---
