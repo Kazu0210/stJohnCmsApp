@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Auto-select lot if lotId is in URL ---
+    function getLotIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('lot') || params.get('reservationId') || null;
+    }
+    let autoSelectLotId = getLotIdFromUrl();
+
     // --- API Base URL ---
     const API_BASE_URL = "http://localhost/stJohnCmsApp/cms.api/";
 
@@ -97,6 +104,12 @@ const amountInput = document.getElementById("amountInput");
                     option.textContent = `${lot.clientName} - Area ${lot.area}, Block ${lot.block}, Row ${lot.rowNumber}, Lot ${lot.lotNumber}`;
                     lotSelect.appendChild(option);
                 });
+                // Auto-select lot if specified in URL
+                if (autoSelectLotId) {
+                    lotSelect.value = autoSelectLotId;
+                    // Trigger change event to update UI
+                    lotSelect.dispatchEvent(new Event('change'));
+                }
             } else {
                 lotSelect.innerHTML = '<option disabled>No lots reserved</option>';
             }
