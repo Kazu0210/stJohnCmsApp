@@ -81,8 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateLotStmt->bind_param("i", $lotId);
                 $updateLotStmt->execute();
                 $updateLotStmt->close();
-                // Redirect to payment page with lotId
-                header('Location: ../payment/payment.php?lotId=' . urlencode($lotId));
+                // Redirect to payment page with lotId and lotTypeId
+                header('Location: ../payment/payment.php?lotId=' . urlencode($lotId) . '&lotTypeId=' . urlencode($lotTypeId));
                 exit();
             } else {
                 $reservationError = 'Database error: ' . $stmt->error;

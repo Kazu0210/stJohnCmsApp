@@ -10,22 +10,35 @@ if (!isset($_SESSION['user_id'])) {
 $lotId = isset($_GET['lotId']) ? $_GET['lotId'] : null;
 $reservationInfo = [];
 if ($lotId) {
-    require_once __DIR__ . '/../../../../cms.api/db_connect.php'; // adjust path as needed
+    require_once __DIR__ . '/../../../../cms.api/db_connect.php';
 
-    $stmt = $conn->prepare("SELECT lotId, block, lotNumber, rowNumber, type FROM lots WHERE lotId = ?");
+    // Get lot info
+    $stmt = $conn->prepare("SELECT lotId, block, lotNumber, rowNumber, type, lotTypeId FROM lots WHERE lotId = ?");
     $stmt->bind_param("i", $lotId);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result && $result->num_rows > 0) {
         $row = $result->fetch_assoc();
+        $amount_due = '';
+        // Fetch price from lot_types table using lotTypeId
+        if (!empty($row['lotTypeId'])) {
+            $typeStmt = $conn->prepare("SELECT price FROM lot_types WHERE lotTypeId = ?");
+            $typeStmt->bind_param("i", $row['lotTypeId']);
+            $typeStmt->execute();
+            $typeResult = $typeStmt->get_result();
+            if ($typeResult && $typeResult->num_rows > 0) {
+                $typeRow = $typeResult->fetch_assoc();
+                $amount_due = $typeRow['price'];
+            }
+            $typeStmt->close();
+        }
         $reservationInfo = [
             'lotId' => $row['lotId'],
             'block' => $row['block'],
             'lotNumber' => $row['lotNumber'],
             'rowNumber' => $row['rowNumber'],
             'type' => $row['type'],
-            // You may need to fetch amount_due and reservation_ref from another table if needed
-            'amount_due' => '25000.00', // Placeholder, replace with actual value if available
+            'amount_due' => $amount_due,
             'reservation_ref' => 'RES-' . date('Y') . '-' . str_pad($row['lotId'], 5, '0', STR_PAD_LEFT)
         ];
     } else {
