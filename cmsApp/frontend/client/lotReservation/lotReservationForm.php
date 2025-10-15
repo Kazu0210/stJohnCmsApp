@@ -331,7 +331,10 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         msg.textContent = `Selected Lot: Block ${lots[idx].block}, Area ${lots[idx].area}, Row ${lots[idx].rowNumber}, Lot No. ${lots[idx].lotNumber}`;
                         msg.classList.remove('d-none', 'alert-danger');
                         msg.classList.add('alert-success');
-                        // TODO: Auto-fill form fields here if needed
+                        // Auto-fill form fields
+                        document.getElementById('block').value = lots[idx].block;
+                        document.getElementById('rowNumber').value = lots[idx].rowNumber;
+                        document.getElementById('lot_number').value = lots[idx].lotNumber;
                     });
                 });
             })
