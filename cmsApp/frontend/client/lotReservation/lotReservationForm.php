@@ -291,17 +291,9 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                         <input type="text" id="lot_number" name="lot_number" class="form-control">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="preferred_lot" class="form-label">Preferred Lot Type: <span class="text-danger">*</span></label>
-                                        <select id="preferred_lot" name="lotTypeId" class="form-select" required>
-                                            <option value="" selected disabled>-- Select Lot Type --</option>
-                                            <option value="1">Regular Lot (₱50,000)</option>
-                                            <option value="2">Regular Lot (₱60,000)</option>
-                                            <option value="3">Premium Lot (₱70,000)</option>
-                                            <option value="4">Mausoleum Inside (₱500,000)</option>
-                                            <option value="5">Mausoleum Roadside (₱600,000)</option>
-                                            <option value="6">4-Lot Package (₱300,000)</option>
-                                            <option value="7">Exhumation (₱15,000)</option>
-                                        </select>
+                                        <label for="preferred_lot_display" class="form-label">Preferred Lot Type: <span class="text-danger">*</span></label>
+                                        <input type="text" id="preferred_lot_display" class="form-control" value="<?php echo $selectedPackage; ?>" readonly required>
+                                        <input type="hidden" id="preferred_lot" name="lotTypeId" value="<?php echo $selectedLotType; ?>">
                                     </div>
                                     <div class="col-md-6" id="depth_option">
                                         <label for="burial_depth" class="form-label">Burial Depth: <span class="text-danger">*</span></label>
@@ -328,6 +320,16 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Set the preferred lot type display and hidden value if present
+        const lotTypeDisplay = document.getElementById('preferred_lot_display');
+        const lotTypeHidden = document.getElementById('preferred_lot');
+        if (lotTypeDisplay && lotTypeHidden) {
+            // If the display is empty, try to set from PHP variables
+            if (!lotTypeDisplay.value) {
+                lotTypeDisplay.value = '<?php echo $selectedPackage; ?>';
+            }
+            lotTypeHidden.value = '<?php echo $selectedLotType; ?>';
+        }
         // Determine the type from the selected package (PHP to JS)
         let selectedType = '';
         <?php
