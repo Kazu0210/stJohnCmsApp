@@ -51,20 +51,20 @@ if (!isset($_SESSION['user_id'])) {
 
     <main class="container py-4">
         <form id="payment-form" method="POST" action="save_payment.php" enctype="multipart/form-data" class="p-4 rounded-3">
+
             <h2 class="text-center mb-4">Payment Portal</h2>
 
             <div class="card mb-4 p-4 border-0">
                 <h3 class="h5 mb-3 text-center">Lot Payment Summary</h3>
                 <div class="row text-center">
                     <div class="col-md-3 mb-3"> 
-    <h5 class="text-muted mb-2">Monthly Payment</h5>
-    <strong id="monthly-payment" class="text-primary" style="font-size:1.8rem;">₱0.00</strong>
-<p id="monthly-payment-description" class="text-muted mt-1" style="font-size:0.9rem;"></p>
-</div>
-
+                        <h5 class="text-muted mb-2">Monthly Payment</h5>
+                        <strong id="monthly-payment" class="text-primary" style="font-size:1.8rem;">₱0.00</strong>
+                        <p id="monthly-payment-description" class="text-muted mt-1" style="font-size:0.9rem;"></p>
+                    </div>
                     <div class="col-md-3 mb-3">
                         <h5 class="text-muted mb-2">Total Lot Price</h5>
-   <strong id="lot-price" class="text-dark" style="font-size:1.8rem;">₱0.00</strong>
+                        <strong id="lot-price" class="text-dark" style="font-size:1.8rem;">₱0.00</strong>
                     </div>
                     <div class="col-md-3 mb-3">
                         <h5 class="text-muted mb-2">Total Paid</h5>
@@ -77,108 +77,116 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
             </div>
 
-            <!-- Payment Method Section -->
-            <div class="payment-section card mb-4 p-3 border-0">
-                <h3 class="h5 mb-3 text-center">Choose Payment Method</h3>
-                <div class="payment-methods d-flex flex-wrap justify-content-center gap-3">
-                    <div class="payment-method card p-3 flex-fill text-center" onclick="selectMethod(this,'gcash')">
-                        <i class="fas fa-mobile-alt fa-2x mb-2 text-primary"></i>
-                        <span>GCash</span>
-                    </div>
-                    <div class="payment-method card p-3 flex-fill text-center" onclick="selectMethod(this,'bank')">
-                        <i class="fas fa-university fa-2x mb-2 text-success"></i>
-                        <span>Bank Transfer</span>
-                    </div>
-                    <div class="payment-method card p-3 flex-fill text-center" onclick="selectMethod(this,'cash')">
-                        <i class="fas fa-money-bill-wave fa-2x mb-2 text-secondary"></i>
-                        <span>Cash (Secretary)</span>
-                    </div>
-                </div>
-            </div>
-            <!-- Payment options section removed as requested -->
-                <h3 class="h5 mb-3 text-center">Cash Payment</h3>
-                <div class="alert alert-info text-center">
-                    Please pay the secretary directly at the office. The secretary will log your payment in the system and provide you with a receipt.<br>
-                    <strong>Your reservation will be confirmed after secretary input.</strong>
-                </div>
-            </div>
-                <div id="gcash-details" class="card p-4 mb-4" style="display:none;">
-                    <h3 class="h5 mb-3 text-center">GCash Details</h3>
-                    <div class="qr-code-section mb-3 text-center">
-                        <img src="gcashqr.jpg" alt="GCash QR" class="payment-qr-code mb-3">
-                        <p class="qr-label">Scan to Pay</p>
-                    </div>
-                    <p class="text-center m-0"><strong>Blessed Saint John Memorial</strong></p>
-                    <p class="text-center"><strong>0997 844 2421</strong></p>
-                    <div class="form-group mb-3">
-                        <label for="gcash-ref" class="form-label">Transaction Reference Number</label>
-                        <input id="gcash-ref" name="gcash-ref" class="form-control" placeholder="Enter GCash reference number">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Upload Proof of Payment</label>
-                        <div class="custom-file-input-container">
-                            <input type="file" id="gcash-proof" name="gcash-proof" accept="image/*,application/pdf" hidden>
-                            <div class="file-input-display d-flex align-items-center gap-2 p-2 border rounded">
-                                <button type="button" class="btn btn-sm file-upload-icon flex-shrink-0" data-target="gcash-proof">Choose File</button>
-                                <span class="file-name flex-grow-1 text-muted" id="gcash-proof-filename">No file chosen</span>
-                                <button type="button" class="btn btn-sm view-icon flex-shrink-0" data-target="gcash-proof"><i class="fas fa-eye"></i></button>
+            <!-- Two-column layout for Payment Method and Payment Schedule -->
+            <div class="row g-4 mb-4">
+                <!-- Payment Method Column -->
+                <div class="col-md-6">
+                    <div class="payment-section card p-3 border-0 h-100">
+                        <h3 class="h5 mb-3 text-center">Choose Payment Method</h3>
+                        <div class="payment-methods d-flex flex-wrap justify-content-center gap-3">
+                            <div class="payment-method card p-3 flex-fill text-center" onclick="selectMethod(this,'gcash')">
+                                <i class="fas fa-mobile-alt fa-2x mb-2 text-primary"></i>
+                                <span>GCash</span>
                             </div>
-                            <small class="form-text text-muted mt-2 d-block">Accepted formats: PDF, JPG, PNG.</small>
+                            <div class="payment-method card p-3 flex-fill text-center" onclick="selectMethod(this,'bank')">
+                                <i class="fas fa-university fa-2x mb-2 text-success"></i>
+                                <span>Bank Transfer</span>
+                            </div>
+                            <div class="payment-method card p-3 flex-fill text-center" onclick="selectMethod(this,'cash')">
+                                <i class="fas fa-money-bill-wave fa-2x mb-2 text-secondary"></i>
+                                <span>Cash (Secretary)</span>
+                            </div>
+                        </div>
+                        <!-- Cash Payment Info -->
+                        <div id="cash-payment-fields" style="display:none;">
+                            <h3 class="h5 mb-3 text-center">Cash Payment</h3>
+                            <div class="alert alert-info text-center">
+                                Please pay the secretary directly at the office. The secretary will log your payment in the system and provide you with a receipt.<br>
+                                <strong>Your reservation will be confirmed after secretary input.</strong>
+                            </div>
+                        </div>
+                        <!-- GCash Details -->
+                        <div id="gcash-details" class="card p-4 mb-4" style="display:none;">
+                            <h3 class="h5 mb-3 text-center">GCash Details</h3>
+                            <div class="qr-code-section mb-3 text-center">
+                                <img src="gcashqr.jpg" alt="GCash QR" class="payment-qr-code mb-3">
+                                <p class="qr-label">Scan to Pay</p>
+                            </div>
+                            <p class="text-center m-0"><strong>Blessed Saint John Memorial</strong></p>
+                            <p class="text-center"><strong>0997 844 2421</strong></p>
+                            <div class="form-group mb-3">
+                                <label for="gcash-ref" class="form-label">Transaction Reference Number</label>
+                                <input id="gcash-ref" name="gcash-ref" class="form-control" placeholder="Enter GCash reference number">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Upload Proof of Payment</label>
+                                <div class="custom-file-input-container">
+                                    <input type="file" id="gcash-proof" name="gcash-proof" accept="image/*,application/pdf" hidden>
+                                    <div class="file-input-display d-flex align-items-center gap-2 p-2 border rounded">
+                                        <button type="button" class="btn btn-sm file-upload-icon flex-shrink-0" data-target="gcash-proof">Choose File</button>
+                                        <span class="file-name flex-grow-1 text-muted" id="gcash-proof-filename">No file chosen</span>
+                                        <button type="button" class="btn btn-sm view-icon flex-shrink-0" data-target="gcash-proof"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                    <small class="form-text text-muted mt-2 d-block">Accepted formats: PDF, JPG, PNG.</small>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Bank Details -->
+                        <div id="bank-details" class="card p-4 mb-4" style="display:none;">
+                            <h3 class="h5 mb-3 text-center">Bank Transfer Details</h3>
+                            <div class="qr-code-section mb-3 text-center">
+                                <img src="bankqr.jpg" alt="Bank QR" class="payment-qr-code mb-3">
+                                <p class="qr-label">Scan to Pay</p>
+                            </div>
+                            <p class="text-center m-0"><strong>Bank:</strong> BDO</p>
+                            <p class="text-center m-0"><strong>Account Name:</strong> Blessed Saint John Memorial</p>
+                            <p class="text-center"><strong>Account Number:</strong> 9876 5432 1098</p>
+                            <div class="form-group mb-3">
+                                <label for="bank-ref" class="form-label">Transaction Reference Number</label>
+                                <input id="bank-ref" name="bank-ref" class="form-control" placeholder="Enter bank reference number">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Upload Proof of Payment</label>
+                                <div class="custom-file-input-container">
+                                    <input type="file" id="bank-proof" name="bank-proof" accept="image/*,application/pdf" hidden>
+                                    <div class="file-input-display d-flex align-items-center gap-2 p-2 border rounded">
+                                        <button type="button" class="btn btn-sm file-upload-icon flex-shrink-0" data-target="bank-proof">Choose File</button>
+                                        <span class="file-name flex-grow-1 text-muted" id="bank-proof-filename">No file chosen</span>
+                                        <button type="button" class="btn btn-sm view-icon flex-shrink-0" data-target="bank-proof"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                    <small class="form-text text-muted mt-2 d-block">Accepted formats: PDF, JPG, PNG.</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div id="bank-details" class="card p-4 mb-4" style="display:none;">
-                    <h3 class="h5 mb-3 text-center">Bank Transfer Details</h3>
-                    <div class="qr-code-section mb-3 text-center">
-                        <img src="bankqr.jpg" alt="Bank QR" class="payment-qr-code mb-3">
-                        <p class="qr-label">Scan to Pay</p>
-                    </div>
-                    <p class="text-center m-0"><strong>Bank:</strong> BDO</p>
-                    <p class="text-center m-0"><strong>Account Name:</strong> Blessed Saint John Memorial</p>
-                    <p class="text-center"><strong>Account Number:</strong> 9876 5432 1098</p>
-                    <div class="form-group mb-3">
-                        <label for="bank-ref" class="form-label">Transaction Reference Number</label>
-                        <input id="bank-ref" name="bank-ref" class="form-control" placeholder="Enter bank reference number">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Upload Proof of Payment</label>
-                        <div class="custom-file-input-container">
-                            <input type="file" id="bank-proof" name="bank-proof" accept="image/*,application/pdf" hidden>
-                            <div class="file-input-display d-flex align-items-center gap-2 p-2 border rounded">
-                                <button type="button" class="btn btn-sm file-upload-icon flex-shrink-0" data-target="bank-proof">Choose File</button>
-                                <span class="file-name flex-grow-1 text-muted" id="bank-proof-filename">No file chosen</span>
-                                <button type="button" class="btn btn-sm view-icon flex-shrink-0" data-target="bank-proof"><i class="fas fa-eye"></i></button>
+                <!-- Payment Schedule Column -->
+                <div class="col-md-6">
+                    <div class="payment-section card p-4 h-100">
+                        <h3 class="h5 mb-3 text-center">Payment Schedule</h3>
+                        <div class="form-group mb-3">
+                            <label for="payment-type" class="form-label">Payment Type</label>
+                            <select id="payment-type" name="payment-type" class="form-select">
+                                <option value="exact">Exact Monthly Payment</option>
+                                <option value="advance">Advance Payment</option>
+                                <option value="unable">Unable to Pay</option>
+                            </select>
+                        </div>
+                        <div id="advance-payment-options" style="display:none;">
+                            <div id="months-to-pay-group" class="form-group mb-3">
+                                <label for="months-to-pay" class="form-label">Months to Pay</label>
+                                <input id="months-to-pay" name="months-to-pay" type="number" min="1" value="1" class="form-control">
                             </div>
-                            <small class="form-text text-muted mt-2 d-block">Accepted formats: PDF, JPG, PNG.</small>
+                            <div id="custom-amount-group" class="form-group mb-3">
+                                <label for="custom-amount" class="form-label">Custom Amount</label>
+                                <input id="custom-amount" name="custom-amount" type="number" step="0.01" class="form-control" placeholder="Optional">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="calculated-amount" class="form-label">Calculated Amount</label>
+                            <input id="calculated-amount" name="calculated-amount" type="text" class="form-control" readonly value="₱0.00">
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="payment-section card p-4 mb-4">
-                <h3 class="h5 mb-3 text-center">Payment Schedule</h3>
-                <div class="form-group mb-3">
-                    <label for="payment-type" class="form-label">Payment Type</label>
-                    <select id="payment-type" name="payment-type" class="form-select">
-                        <option value="exact">Exact Monthly Payment</option>
-                        <option value="advance">Advance Payment</option>
-                        <option value="unable">Unable to Pay</option>
-                    </select>
-                </div>
-                <div id="advance-payment-options" style="display:none;">
-                    <div id="months-to-pay-group" class="form-group mb-3">
-                        <label for="months-to-pay" class="form-label">Months to Pay</label>
-                        <input id="months-to-pay" name="months-to-pay" type="number" min="1" value="1" class="form-control">
-                    </div>
-                    <div id="custom-amount-group" class="form-group mb-3">
-                        <label for="custom-amount" class="form-label">Custom Amount</label>
-                        <input id="custom-amount" name="custom-amount" type="number" step="0.01" class="form-control" placeholder="Optional">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="calculated-amount" class="form-label">Calculated Amount</label>
-                    <input id="calculated-amount" name="calculated-amount" type="text" class="form-control" readonly value="₱0.00">
                 </div>
             </div>
 
