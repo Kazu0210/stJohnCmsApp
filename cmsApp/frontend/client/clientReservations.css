@@ -1,4 +1,21 @@
 /* clientReservations styles */
-body { padding-top: 70px; }
-.main-content { min-height: 60vh; }
+/* Ensure header + content + footer layout fills the viewport so footer can stick to bottom */
+html, body {
+	height: 100%;
+}
+body {
+	display: flex;
+	flex-direction: column;
+	padding-top: 70px; /* keeps space for fixed navbar if present */
+	margin: 0;
+}
+.main-content {
+	/* Grow to fill available space between header and footer */
+	flex: 1 0 auto;
+	min-height: 60vh;
+}
+.footer {
+	/* Push footer to bottom when content is short */
+	margin-top: auto;
+}
 .reservation-table td, .reservation-table th { vertical-align: middle; }

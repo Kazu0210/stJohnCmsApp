@@ -34,6 +34,16 @@ $userRole = getCurrentUserRole();
         </div>
     </main>
 
+    <footer class="footer bg-dark text-white py-3 mt-5">
+        <div class="container text-center">
+            <p class="m-0">
+                <strong>Blessed Saint John Memorial</strong> |
+                <i class="fas fa-envelope"></i> <a href="mailto:saintjohnmp123@gmail.com" class="text-white">saintjohnmp123@gmail.com</a> |
+                <i class="fas fa-phone"></i> <a href="tel:+639978442421" class="text-white">+63 997 844 2421</a>
+            </p>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="clientReservations.js"></script>
