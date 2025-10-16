@@ -37,6 +37,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lotTypeId = isset($_POST['lotTypeId']) && $_POST['lotTypeId'] !== '' ? (int)$_POST['lotTypeId'] : null;
     $lotId = trim($_POST['lotId'] ?? '');
     $paymentType = trim($_POST['paymentType'] ?? '');
+    // capture posted total amount (if provided). fallback to GET price if present, otherwise 0.0
+    $totalAmount = null;
+    if (isset($_POST['total_amount']) && $_POST['total_amount'] !== '') {
+        // remove any non-digit except dot and minus
+        $sanitized = preg_replace('/[^0-9.\-]/', '', $_POST['total_amount']);
+        $totalAmount = $sanitized !== '' ? (float)$sanitized : 0.0;
+    } elseif (isset($_GET['price']) && $_GET['price'] !== '') {
+        $sanitized = preg_replace('/[^0-9.\-]/', '', $_GET['price']);
+        $totalAmount = $sanitized !== '' ? (float)$sanitized : 0.0;
+    } else {
+        $totalAmount = 0.0;
+    }
 
     // Validate lotId
     if (empty($lotId) || !ctype_digit($lotId)) {
@@ -68,13 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO reservations (
                 userId, lotId, clientName, address, contactNumber, deceasedName, burialDate, reservationDate,
                 area, block, rowNumber, lotNumber, burialDepth, notes, clientValidId, deathCertificate, deceasedValidId,
-                burialPermit, payment_type, status, createdAt, lotTypeId
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                burialPermit, payment_type, total_amount, status, createdAt, lotTypeId
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param(
-                "iisssssssssssssssssssi",
+                "iisssssssssssssssssdssi",
                 $userId, $lotId, $clientName, $address, $contactNumber, $deceasedName, $burialDate,
                 $reservationDate, $area, $block, $rowNumber, $lotNumber, $burialDepth, $notes,
-                $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $paymentType, $reservationStatus, $createdAt, $lotTypeId
+                $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $paymentType, $totalAmount, $reservationStatus, $createdAt, $lotTypeId
             );
             if ($stmt->execute()) {
                 // Update lot status to 'Pending'
@@ -299,6 +311,7 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                         <label for="preferred_lot_display" class="form-label">Preferred Lot Type: <span class="text-danger">*</span></label>
                                         <input type="text" id="preferred_lot_display" class="form-control" value="<?php echo $selectedPackage; ?>" readonly required>
                                         <input type="hidden" id="preferred_lot" name="lotTypeId" value="<?php echo $selectedLotType; ?>">
+                                        <input type="hidden" id="total_amount" name="total_amount" value="<?php echo $selectedPrice; ?>">
                                     </div>
                                     <div class="col-md-6" id="depth_option">
                                         <label for="burial_depth" class="form-label">Burial Depth: <span class="text-danger">*</span></label>

@@ -129,8 +129,28 @@ if ($lotId) {
                                         <option value="3">Cash</option>
                                     </select>
                                 </div>
-                                <!-- Payment Type removed from UI. Preserve hidden field for backend compatibility -->
-                                <input type="hidden" id="paymentType" name="paymentType" value="<?php echo htmlspecialchars($paymentTypeFromGet ?? 'installment'); ?>">
+                                <!-- Display payment type (from URL) and keep hidden field for submission -->
+                                <?php
+                                // Map allowed values to human-readable labels
+                                $ptype = $paymentTypeFromGet ?? 'installment';
+                                $ptypeLabelMap = [
+                                    'full' => 'Full Payment',
+                                    'installment' => 'Exact Installment Amount',
+                                    'advance' => 'Advance Payment',
+                                    'deferred' => 'Deferred Amount'
+                                ];
+                                $displayLabel = isset($ptypeLabelMap[$ptype]) ? $ptypeLabelMap[$ptype] : ucfirst($ptype);
+                                ?>
+                                <div class="mb-3">
+                                    <label for="paymentTypeDisplay" class="form-label">Payment Type</label>
+                                    <select id="paymentTypeDisplay" class="form-select" disabled>
+                                        <option value="full" <?php echo $ptype === 'full' ? 'selected' : ''; ?>>Full Payment</option>
+                                        <option value="installment" <?php echo $ptype === 'installment' ? 'selected' : ''; ?>>Exact Installment Amount</option>
+                                        <option value="advance" <?php echo $ptype === 'advance' ? 'selected' : ''; ?>>Advance Payment</option>
+                                        <option value="deferred" <?php echo $ptype === 'deferred' ? 'selected' : ''; ?>>Deferred Amount</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" id="paymentType" name="paymentType" value="<?php echo htmlspecialchars($ptype); ?>">
                                 <div class="mb-3">
                                     <label for="paymentAmount" class="form-label">Amount</label>
                                     <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
