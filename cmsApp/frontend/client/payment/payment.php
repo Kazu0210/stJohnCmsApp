@@ -152,7 +152,7 @@ if ($lotId) {
                                 </div>
                                 <input type="hidden" id="paymentType" name="paymentType" value="<?php echo htmlspecialchars($ptype); ?>">
                                 <div class="mb-3">
-                                    <label for="paymentAmount" class="form-label">Amount</label>
+                                    <label for="paymentAmount" class="form-label">Total Amount</label>
                                     <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
                                 </div>
                                 <div class="mb-3" id="referenceField" style="display:none;">
