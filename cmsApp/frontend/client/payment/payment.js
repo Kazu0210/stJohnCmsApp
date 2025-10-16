@@ -435,4 +435,29 @@ if (typeof replaceFileInput !== 'undefined' && replaceFileInput) {
     // Initial calls
     loadUserName();
 
+    // --- Form validation: require payment method ---
+    (function enforcePaymentMethodSelection() {
+        // support both possible form ids
+        const form = document.getElementById('paymentForm') || document.getElementById('payment-form');
+        const methodSelect = document.getElementById('paymentMethod');
+        const alertsContainer = document.createElement('div');
+        alertsContainer.id = 'payment-alerts';
+        if (form) form.insertBefore(alertsContainer, form.firstChild);
+
+        if (!form || !methodSelect) return;
+
+        form.addEventListener('submit', function(e) {
+            if (!methodSelect.value || methodSelect.value === '') {
+                e.preventDefault();
+                // show inline Bootstrap alert
+                alertsContainer.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">Please select a payment method before submitting.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                methodSelect.focus();
+                return false;
+            }
+            // Clear any previous alerts
+            alertsContainer.innerHTML = '';
+            return true;
+        });
+    })();
+
 });
