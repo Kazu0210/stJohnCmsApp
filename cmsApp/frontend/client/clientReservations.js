@@ -1,102 +1,90 @@
-document.addEventListener('DOMContentLoaded', function() {
-  const container = document.getElementById('reservationsContainer');
-  const alerts = document.getElementById('alerts');
+$(document).ready(function() {
+    const $container = $('#reservationsContainer');
+    const $alerts = $('#alerts');
 
-  function showError(msg) {
-    alerts.innerHTML = `<div class="alert alert-danger">${msg}</div>`;
-  }
-
-  function renderTable(items) {
-    if (!items || items.length === 0) {
-      container.innerHTML = '<p class="text-muted">You have no reservations.</p>';
-      return;
+    function showAlert(message, type = 'danger') {
+        const html = `<div class="alert alert-${type} alert-dismissible" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+        $alerts.html(html);
     }
 
-    let html = `
-      <div class="d-flex justify-content-end mb-3">
-        <button id="refreshBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
-      </div>
-      <div class="table-responsive">
-      <table class="table table-striped reservation-table">
-        <thead>
-          <tr>
-            <th>Reservation ID</th>
-            <th>Lot</th>
-            <th>Type</th>
-            <th>Reserved On</th>
-            <th>Status</th>
-            <th>Amount</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    items.forEach(r => {
-      const lotLabel = `${r.area || '-'} / ${r.block || '-'} / ${r.rowNumber || '-'} / ${r.lotNumber || '-'}`;
-      const reservedOn = r.createdAt ? new Date(r.createdAt).toLocaleString() : '-';
-      html += `<tr>
-        <td>${r.reservationId || r.id || '-'}</td>
-        <td>${lotLabel}</td>
-        <td>${r.lotTypeName || '-'}</td>
-        <td>${reservedOn}</td>
-        <td>${r.status || '-'}</td>
-        <td>${r.total_amount ? '₱' + Number(r.total_amount).toLocaleString() : '-'}</td>
-        <td>
-          <a href="/stJohnCmsApp/cmsApp/frontend/client/lotReservation/lotReservationForm.php?lotId=${encodeURIComponent(r.lotId || '')}&price=${encodeURIComponent(r.total_amount || '')}" class="btn btn-sm btn-outline-primary me-1">View/Edit</a>
-        </td>
-      </tr>`;
-    });
-
-    html += '</tbody></table></div>';
-    container.innerHTML = html;
-
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) refreshBtn.addEventListener('click', () => fetchReservations());
-  }
-
-  async function fetchReservations() {
-    alerts.innerHTML = '';
-    container.innerHTML = '<p class="text-muted">Loading your reservations...</p>';
-    try {
-      // ensure cookies (PHP session) are sent with the request
-      const res = await fetch('/stJohnCmsApp/cms.api/fetchUserReservations.php', { credentials: 'include' });
-      // Log status for easier debugging
-      console.log('fetchUserReservations status:', res.status);
-
-      if (!res.ok) {
-        // try to read response text for debugging (server may return plain text or JSON)
-        let txt = '';
-        try { txt = await res.text(); } catch (e) { txt = '<unable to read response body>'; }
-        console.error('fetchUserReservations failed:', res.status, txt);
-        if (res.status === 401) {
-          showError('You are not authenticated. Please log in again.');
-        } else {
-          showError('Server error while fetching reservations.');
+    function renderTable(reservations) {
+        if (!reservations || reservations.length === 0) {
+            $container.html('<p class="text-muted">You have no reservations.</p>');
+            return;
         }
-        return;
-      }
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        console.error('Invalid JSON from fetchUserReservations:', e);
-        const txt = await res.text().catch(()=>'<no-body>');
-        console.error('Response body:', txt);
-        showError('Server returned an invalid response. Check server logs.');
-        return;
-      }
-      if (data.status === 'success') {
-        renderTable(data.data);
-      } else {
-        showError(data.message || 'Failed to load reservations');
-      }
-    } catch (err) {
-      showError('Network error while fetching reservations');
-      console.error(err);
+        let rows = reservations.map(r => {
+            return `
+                <tr>
+                    <td>${escapeHtml(r.reservationId)}</td>
+                    <td>${escapeHtml(r.area)}</td>
+                    <td>${escapeHtml(r.block)}</td>
+                    <td>${escapeHtml(r.lotNumber)}</td>
+                    <td>${escapeHtml(r.status || '')}</td>
+                    <td>${escapeHtml(r.createdAt)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const table = `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Reservation ID</th>
+                            <th>Area</th>
+                            <th>Block</th>
+                            <th>Lot Number</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        $container.html(table);
     }
-  }
 
-  fetchReservations();
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    // Fetch reservations from the API
+    $.ajax({
+        url: '/stJohnCmsApp/cms.api/fetchUserReservations.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(res) {
+            if (!res) {
+                showAlert('Empty response from server');
+                $container.html('');
+                return;
+            }
+
+            if (res.success) {
+                renderTable(res.data || []);
+            } else {
+                const err = res.error || 'Failed to fetch reservations';
+                showAlert(err);
+                $container.html('<p class="text-muted">Unable to load reservations.</p>');
+            }
+        },
+        error: function(xhr, status, err) {
+            showAlert('Request failed: ' + status + ' - ' + err);
+            $container.html('<p class="text-muted">Unable to load reservations.</p>');
+        }
+    });
 });

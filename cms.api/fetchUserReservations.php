@@ -1,68 +1,62 @@
 <?php
+require_once "db_connect.php";
+session_start();
+
 header('Content-Type: application/json');
-require 'db_connect.php';
-require 'auth_helper.php';
-
-if (!isAuthenticated()) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Not authenticated']);
-    exit;
-}
-
-$userId = getCurrentUserId();
 
 try {
-    $sql = "
-        SELECT r.*, lt.lotTypeName, lt.description AS lotTypeDescription
-        FROM reservations r
-        LEFT JOIN lot_types lt ON r.lotTypeId = lt.lotTypeId
-        WHERE r.userId = ?
-        ORDER BY r.createdAt DESC
-    ";
+    // Determine userId: prefer session, fallback to GET param
+    $userId = null;
+    if (isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id'])) {
+        $userId = (int)$_SESSION['user_id'];
+    } elseif (isset($_GET['userId']) && is_numeric($_GET['userId'])) {
+        $userId = (int)$_GET['userId'];
+    }
+
+    if ($userId === null) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Missing or invalid userId',
+            'totalCount' => 0,
+            'data' => []
+        ]);
+        exit;
+    }
+
+    $sql = "SELECT reservationId, area, block, lotNumber, userId, createdAt, status
+            FROM reservations
+            WHERE userId = ?
+            ORDER BY reservationId DESC";
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        $err = $conn->error;
-        // log error
-        @mkdir(__DIR__ . '/logs', 0755, true);
-        @file_put_contents(__DIR__ . '/logs/fetchUserReservations.log', date('c') . " | prepare_failed: $err\n", FILE_APPEND | LOCK_EX);
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Server error']);
-        exit;
+        throw new Exception('Prepare failed: ' . $conn->error);
     }
 
-    if (!$stmt->bind_param('i', $userId)) {
-        $err = $stmt->error;
-        @file_put_contents(__DIR__ . '/logs/fetchUserReservations.log', date('c') . " | bind_param_failed: $err\n", FILE_APPEND | LOCK_EX);
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Server error']);
-        exit;
-    }
-
-    if (!$stmt->execute()) {
-        $err = $stmt->error;
-        @file_put_contents(__DIR__ . '/logs/fetchUserReservations.log', date('c') . " | execute_failed: $err\n", FILE_APPEND | LOCK_EX);
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Server error']);
-        exit;
-    }
-
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
     $result = $stmt->get_result();
-    if ($result === false) {
-        $err = $stmt->error;
-        @file_put_contents(__DIR__ . '/logs/fetchUserReservations.log', date('c') . " | get_result_failed: $err\n", FILE_APPEND | LOCK_EX);
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Server error']);
-        exit;
-    }
 
-    $rows = [];
+    $reservations = [];
     while ($row = $result->fetch_assoc()) {
-        $rows[] = $row;
+        $reservations[] = $row;
     }
 
-    echo json_encode(['status' => 'success', 'data' => $rows]);
+    echo json_encode([
+        'success' => true,
+        'totalCount' => count($reservations),
+        'data' => $reservations
+    ]);
+
+    $stmt->close();
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Server error']);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'totalCount' => 0,
+        'data' => []
+    ]);
 }
+
+$conn->close();
+?>
