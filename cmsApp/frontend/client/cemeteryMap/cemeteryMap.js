@@ -252,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("selectedLotData", JSON.stringify(lotData));
 
         // Redirect to Reservation page
-        window.location.href = "../lotReservation/lotReservation.html";
+        window.location.href = "../lotReservation/lotReservation.php";
     });
 
     // ====== TOGGLE BURIAL DEPTH ======
