@@ -13,16 +13,21 @@ $lotTypeId = isset($_GET['lotTypeId']) ? $_GET['lotTypeId'] : null;
 // Accept optional paymentType from querystring to prefill hidden field
 $paymentTypeFromGet = isset($_GET['paymentType']) ? $_GET['paymentType'] : null;
 $reservationInfo = [];
-// If a reservationId was provided, resolve its lotId first
+// If a reservationId was provided, resolve its lotId and get amount_due from reservations
+$reservationAmountDue = null;
 if ($reservationIdFromGet) {
     require_once __DIR__ . '/../../../../cms.api/db_connect.php';
-    $rstmt = $conn->prepare("SELECT lotId FROM reservations WHERE reservationId = ? LIMIT 1");
+    $rstmt = $conn->prepare("SELECT lotId, amount_due FROM reservations WHERE reservationId = ? LIMIT 1");
     $rstmt->bind_param("i", $reservationIdFromGet);
     $rstmt->execute();
     $rres = $rstmt->get_result();
     if ($rres && $rres->num_rows > 0) {
         $rrow = $rres->fetch_assoc();
         $lotId = $rrow['lotId'];
+        // Store reservation's amount_due (if any) to take precedence over lot type price
+        if (isset($rrow['amount_due']) && $rrow['amount_due'] !== null && $rrow['amount_due'] !== '') {
+            $reservationAmountDue = $rrow['amount_due'];
+        }
     }
     $rstmt->close();
 }
@@ -51,6 +56,11 @@ if ($lotId) {
             }
             $typeStmt->close();
         }
+        // If reservation provides an amount_due, prefer it over the lot type price
+        if ($reservationAmountDue !== null && $reservationAmountDue !== '') {
+            $amount_due = $reservationAmountDue;
+        }
+
         $reservationInfo = [
             'lotId' => $row['lotId'],
             'block' => $row['block'],
@@ -177,7 +187,8 @@ if ($lotId) {
                                     <label for="proofFile" class="form-label">Upload Payment Receipt</label>
                                     <input class="form-control" type="file" id="proofFile" name="proofFile" accept="image/*,application/pdf" required>
                                 </div>
-                                <input type="hidden" name="reservationId" id="reservationIdInput" value="<?php echo htmlspecialchars($lotId); ?>">
+                                <input type="hidden" name="reservationId" id="reservationIdInput" value="<?php echo htmlspecialchars($reservationIdFromGet ? $reservationIdFromGet : ''); ?>">
+                                <input type="hidden" name="lotId" id="lotIdInput" value="<?php echo htmlspecialchars($lotId ? $lotId : ''); ?>">
                                 <button type="submit" class="btn btn-success w-100">Submit Payment</button>
                             </form>
                         </div>
