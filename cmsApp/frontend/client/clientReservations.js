@@ -17,16 +17,23 @@ $(document).ready(function() {
         }
 
         let rows = reservations.map(r => {
+            // Don't render Cancel button for reservations already cancelled
+            const statusText = (r.status || '').toString();
+            const isCancelled = statusText.toLowerCase() === 'cancelled' || statusText.toLowerCase() === 'cancel';
+            const actionButton = isCancelled
+                ? '<button class="btn btn-sm btn-secondary" disabled>Cancelled</button>'
+                : `<button class="btn btn-sm btn-outline-danger btn-cancel" data-id="${escapeHtml(r.reservationId)}">Cancel</button>`;
+
             return `
                 <tr>
                     <td>${escapeHtml(r.area)}</td>
                     <td>${escapeHtml(r.block)}</td>
                     <td>${escapeHtml(r.lotNumber)}</td>
-                    <td>${escapeHtml(r.status || '')}</td>
+                    <td class="reservation-status">${escapeHtml(r.status || '')}</td>
                     <td>${escapeHtml(r.createdAt)}</td>
                     <td>
                         <div class="btn-group" role="group" aria-label="Actions">
-                            <button class="btn btn-sm btn-outline-danger btn-cancel" data-id="${escapeHtml(r.reservationId)}">Cancel</button>
+                            ${actionButton}
                         </div>
                     </td>
                 </tr>
@@ -57,10 +64,14 @@ $(document).ready(function() {
 
         // Wire action buttons
         $container.find('.btn-cancel').on('click', function() {
-            const reservationId = $(this).data('id');
+            const $btn = $(this);
+            const reservationId = $btn.data('id');
             if (!reservationId) return;
 
             if (!confirm('Are you sure you want to cancel this reservation? This action cannot be undone.')) return;
+
+            // Immediately disable the button and show a pending state
+            $btn.prop('disabled', true).removeClass('btn-outline-danger').addClass('btn-warning').text('Cancelling…');
 
             // Send update request to set status = 'Cancelled' (status-only endpoint)
             fetch('/stJohnCmsApp/cms.api/updateReservationStatus.php', {
@@ -72,15 +83,20 @@ $(document).ready(function() {
             .then(data => {
                 if (data && data.status === 'success') {
                     showAlert('Reservation cancelled successfully.', 'success');
-                    // Refresh list
-                    loadReservations();
+                    // Update the row status text and replace the button with disabled 'Cancelled'
+                    const $row = $btn.closest('tr');
+                    $row.find('.reservation-status').text('Cancelled');
+                    $btn.replaceWith('<button class="btn btn-sm btn-secondary" disabled>Cancelled</button>');
                 } else {
                     const msg = (data && data.message) ? data.message : 'Failed to cancel reservation';
                     showAlert(msg, 'danger');
+                    // Restore button state
+                    $btn.prop('disabled', false).removeClass('btn-warning').addClass('btn-outline-danger').text('Cancel');
                 }
             })
             .catch(err => {
                 showAlert('Request failed: ' + err, 'danger');
+                $btn.prop('disabled', false).removeClass('btn-warning').addClass('btn-outline-danger').text('Cancel');
             });
         });
 
