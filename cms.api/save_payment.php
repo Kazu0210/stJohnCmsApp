@@ -130,6 +130,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // ✅ Prevent payment if reservation status indicates it's still 'For Reservation' / 'For Reserved'
+    $statusStmt = $conn->prepare("SELECT status FROM reservations WHERE reservationId = ? LIMIT 1");
+    if ($statusStmt) {
+        $statusStmt->bind_param("i", $reservationId);
+        $statusStmt->execute();
+        $statusRow = $statusStmt->get_result()->fetch_assoc();
+        if ($statusRow && isset($statusRow['status'])) {
+            $resStatus = trim($statusRow['status']);
+            $blockedStatuses = ['For Reservation', 'For Reserved'];
+            if (in_array($resStatus, $blockedStatuses, true)) {
+                echo json_encode(["status" => "error", "message" => "Payment not allowed while reservation status is '$resStatus'. Please wait until your reservation is confirmed." ]);
+                exit;
+            }
+        }
+        $statusStmt->close();
+    }
+
     // ✅ Handle file upload
     if (!empty($_FILES['proofFile']) && $_FILES['proofFile']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = __DIR__ . "/uploads/payments/";

@@ -20,11 +20,15 @@ $(document).ready(function() {
             // Don't render Cancel button for reservations already cancelled
             const statusText = (r.status || '').toString();
             const isCancelled = statusText.toLowerCase() === 'cancelled' || statusText.toLowerCase() === 'cancel';
-            // Determine Pay button (show only when there is an amount due > 0 and reservation is not cancelled)
+            // Determine Pay button (show only when there is an amount due > 0, reservation is not cancelled, and status allows payment)
             // Normalize amount fields and show Pay when amount_due > 0
             const amtDueRaw = r.amount_due ?? r.amountDue ?? r.amount_due ?? 0;
             const hasAmountDue = Number(amtDueRaw) > 0;
-            const payButton = (!isCancelled && hasAmountDue)
+            // Block payments when reservation is still in an unpayable state
+            const resStatusLower = statusText.trim().toLowerCase();
+            const blockedStatuses = ['for reservation', 'for reserved'];
+            const isBlocked = blockedStatuses.includes(resStatusLower);
+            const payButton = (!isCancelled && hasAmountDue && !isBlocked)
                 ? `<a class="btn btn-sm btn-outline-success btn-pay me-1" href="/stJohnCmsApp/cmsApp/frontend/client/payment/payment.php?lotId=${escapeHtml(r.lotId || r.reservationId)}&paymentType=installment">Pay</a>`
                 : '';
 
