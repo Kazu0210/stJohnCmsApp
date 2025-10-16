@@ -116,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $redirectUrl = '../cmsApp/frontend/admin/adminDashboard/adminDashboard.php';
                     break;
                 case 'Secretary':
-                    $redirectUrl = '../cmsApp/frontend/admin/adminDashboard/adminDashboard.php';
+                    $redirectUrl = '../cmsApp/frontend/secretary/secretary.php';
                     break;
                 case 'Client':
                 default:

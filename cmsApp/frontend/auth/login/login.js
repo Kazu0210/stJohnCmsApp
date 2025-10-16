@@ -58,7 +58,7 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
                     window.location.href = "../../admin/adminDashboard/adminDashboard.php";
                 } else if (userRole === "secretary") {
                     // Assuming secretary dashboard is at: stJohnCmsApp/cmsApp/frontend/secretary/secretaryDashboard.php
-                    window.location.href = "../../secretary/secretaryDashboard.php";
+                    window.location.href = "../../secretary/secretary.php";
                 } else if (userRole === "client") {
                     // Assuming client dashboard is at: stJohnCmsApp/cmsApp/frontend/client/clientDashboard.php
                     // Corrected path to clientDashboard.php
