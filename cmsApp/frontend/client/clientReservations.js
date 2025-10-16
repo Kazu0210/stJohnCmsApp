@@ -20,9 +20,19 @@ $(document).ready(function() {
             // Don't render Cancel button for reservations already cancelled
             const statusText = (r.status || '').toString();
             const isCancelled = statusText.toLowerCase() === 'cancelled' || statusText.toLowerCase() === 'cancel';
-            const actionButton = isCancelled
+            // Determine Pay button (show only when there is an amount due > 0 and reservation is not cancelled)
+            // Normalize amount fields and show Pay when amount_due > 0
+            const amtDueRaw = r.amount_due ?? r.amountDue ?? r.amount_due ?? 0;
+            const hasAmountDue = Number(amtDueRaw) > 0;
+            const payButton = (!isCancelled && hasAmountDue)
+                ? `<a class="btn btn-sm btn-outline-success btn-pay me-1" href="/stJohnCmsApp/cmsApp/frontend/client/payment/payment.php?lotId=${escapeHtml(r.lotId || r.reservationId)}&paymentType=installment">Pay</a>`
+                : '';
+
+            const cancelButton = isCancelled
                 ? '<button class="btn btn-sm btn-secondary" disabled>Cancelled</button>'
                 : `<button class="btn btn-sm btn-outline-danger btn-cancel" data-id="${escapeHtml(r.reservationId)}">Cancel</button>`;
+
+            const actionButton = `<div class="btn-group" role="group" aria-label="Actions">${payButton}${cancelButton}</div>`;
 
             return `
                 <tr>
@@ -35,9 +45,7 @@ $(document).ready(function() {
                     <td class="text-end">${formatCurrency(r.amount_paid)}</td>
                     <td class="text-end">${formatCurrency(r.amount_due)}</td>
                     <td>
-                        <div class="btn-group" role="group" aria-label="Actions">
-                            ${actionButton}
-                        </div>
+                        ${actionButton}
                     </td>
                 </tr>
             `;
