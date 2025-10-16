@@ -23,7 +23,18 @@ $userRole = getCurrentUserRole();
             <h1 class="h4">My Reservations</h1>
         </div>
 
-        <div id="alerts"></div>
+        <div id="alerts"> 
+            <?php 
+            // Show a short message when redirected after a payment 
+            if (isset($_GET['payment']) && $_GET['payment'] === 'success') { 
+                $pid = isset($_GET['id']) ? htmlspecialchars($_GET['id']) : ''; 
+                echo "<div class='alert alert-success alert-dismissible fade show' role='alert'>Payment submitted successfully." . ($pid ? " (Ref: #$pid)" : "") . "<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>"; 
+            } elseif (isset($_GET['payment']) && $_GET['payment'] === 'error') { 
+                $msg = isset($_GET['msg']) ? htmlspecialchars($_GET['msg']) : 'Payment failed.'; 
+                echo "<div class='alert alert-danger alert-dismissible fade show' role='alert'>" . $msg . "<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>"; 
+            } 
+            ?> 
+        </div>
 
         <div class="card">
             <div class="card-body">

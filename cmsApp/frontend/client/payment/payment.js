@@ -446,18 +446,46 @@ if (typeof replaceFileInput !== 'undefined' && replaceFileInput) {
 
         if (!form || !methodSelect) return;
 
-        form.addEventListener('submit', function(e) {
-            if (!methodSelect.value || methodSelect.value === '') {
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                // show inline Bootstrap alert
-                alertsContainer.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">Please select a payment method before submitting.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
-                methodSelect.focus();
-                return false;
-            }
-            // Clear any previous alerts
-            alertsContainer.innerHTML = '';
-            return true;
-        });
+                if (!methodSelect.value || methodSelect.value === '') {
+                    // show inline Bootstrap alert
+                    alertsContainer.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">Please select a payment method before submitting.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                    methodSelect.focus();
+                    return false;
+                }
+
+                // Clear any previous alerts
+                alertsContainer.innerHTML = '';
+
+                // Build FormData and POST via fetch so we can handle JSON response and redirect on success
+                const fd = new FormData(form);
+
+                try {
+                    submitBtn.disabled = true;
+                    const res = await fetch('../../../../cms.api/save_payment.php', {
+                        method: 'POST',
+                        body: fd,
+                        credentials: 'include'
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        // Redirect back to client reservations after successful payment
+                        window.location.href = '../clientReservations.php';
+                        return true;
+                    } else {
+                        // show error message
+                        alertsContainer.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">${data.message || 'Payment failed. Please try again.'}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                        submitBtn.disabled = false;
+                        return false;
+                    }
+                } catch (err) {
+                    console.error('Payment request failed', err);
+                    alertsContainer.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">Network error. Please try again later.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                    submitBtn.disabled = false;
+                    return false;
+                }
+            });
     })();
 
 });
