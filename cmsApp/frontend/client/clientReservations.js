@@ -16,7 +16,7 @@ $(document).ready(function() {
             return;
         }
 
-        let rows = reservations.map(r => {
+    let rows = reservations.map(r => {
             // Don't render Cancel button for reservations already cancelled
             const statusText = (r.status || '').toString();
             const isCancelled = statusText.toLowerCase() === 'cancelled' || statusText.toLowerCase() === 'cancel';
@@ -31,6 +31,9 @@ $(document).ready(function() {
                     <td>${escapeHtml(r.lotNumber)}</td>
                     <td class="reservation-status">${escapeHtml(r.status || '')}</td>
                     <td>${escapeHtml(r.createdAt)}</td>
+                    <td class="text-end">${formatCurrency(r.total_amount)}</td>
+                    <td class="text-end">${formatCurrency(r.amount_paid)}</td>
+                    <td class="text-end">${formatCurrency(r.amount_due)}</td>
                     <td>
                         <div class="btn-group" role="group" aria-label="Actions">
                             ${actionButton}
@@ -48,8 +51,11 @@ $(document).ready(function() {
                             <th>Area</th>
                             <th>Block</th>
                             <th>Lot Number</th>
-                            <th>Status</th>
-                            <th>Created At</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                            <th class="text-end">Total Amount</th>
+                            <th class="text-end">Amount Paid</th>
+                            <th class="text-end">Amount Due</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -111,6 +117,18 @@ $(document).ready(function() {
             .replace(/'/g, '&#39;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
+    }
+
+    function formatCurrency(value) {
+        if (value === null || value === undefined || value === '') return '';
+        const num = Number(value);
+        if (isNaN(num)) return '';
+        // Use Philippine Peso formatting; fallback to en-US if Intl not supported
+        try {
+            return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(num);
+        } catch (e) {
+            return '₱' + num.toFixed(2);
+        }
     }
 
     // Load reservations helper (allows reload after delete)
