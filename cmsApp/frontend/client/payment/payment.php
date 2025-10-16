@@ -10,8 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 $lotId = isset($_GET['lotId']) ? $_GET['lotId'] : null;
 $reservationIdFromGet = isset($_GET['reservationId']) ? $_GET['reservationId'] : null;
 $lotTypeId = isset($_GET['lotTypeId']) ? $_GET['lotTypeId'] : null;
-// Accept optional paymentType from querystring to prefill hidden field
-$paymentTypeFromGet = isset($_GET['paymentType']) ? $_GET['paymentType'] : null;
+// paymentType querystring removed — not used in this form
 $reservationInfo = [];
 // If a reservationId was provided, resolve its lotId and get amount_due from reservations
 $reservationAmountDue = null;
@@ -154,31 +153,14 @@ if ($lotId) {
                                     </select>
                                 </div>
                                 <!-- Display payment type (from URL) and keep hidden field for submission -->
-                                <?php
-                                // Map allowed values to human-readable labels
-                                $ptype = $paymentTypeFromGet ?? 'installment';
-                                $ptypeLabelMap = [
-                                    'full' => 'Full Payment',
-                                    'installment' => 'Exact Installment Amount',
-                                    'advance' => 'Advance Payment',
-                                    'deferred' => 'Deferred Amount'
-                                ];
-                                $displayLabel = isset($ptypeLabelMap[$ptype]) ? $ptypeLabelMap[$ptype] : ucfirst($ptype);
-                                ?>
-                                <div class="mb-3">
-                                    <label for="paymentTypeDisplay" class="form-label">Payment Type</label>
-                                    <select id="paymentTypeDisplay" class="form-select" disabled>
-                                        <option value="full" <?php echo $ptype === 'full' ? 'selected' : ''; ?>>Full Payment</option>
-                                        <option value="installment" <?php echo $ptype === 'installment' ? 'selected' : ''; ?>>Exact Installment Amount</option>
-                                        <option value="advance" <?php echo $ptype === 'advance' ? 'selected' : ''; ?>>Advance Payment</option>
-                                        <option value="deferred" <?php echo $ptype === 'deferred' ? 'selected' : ''; ?>>Deferred Amount</option>
-                                    </select>
-                                </div>
-                                <input type="hidden" id="paymentType" name="paymentType" value="<?php echo htmlspecialchars($ptype); ?>">
+                                <!-- Payment type removed from form submission as requested -->
                                 <div class="mb-3">
                                     <label for="paymentAmount" class="form-label">Total Amount</label>
-                                    <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">
+                                    <!-- Use dot decimal and no thousands separator so it posts a clean decimal value -->
+                                    <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2, '.', '') : ''; ?>">
                                 </div>
+                                <!-- Send a month label (varchar(20)) to match payments table structure -->
+                                <input type="hidden" name="month" value="<?php echo date('F Y'); ?>">
                                 <div class="mb-3" id="referenceField" style="display:none;">
                                     <label for="reference" class="form-label">Reference</label>
                                     <input type="text" class="form-control" id="reference" name="reference" placeholder="Enter payment reference or transaction number">

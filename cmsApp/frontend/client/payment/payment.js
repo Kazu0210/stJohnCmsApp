@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthlyPaymentDesc = document.getElementById('monthly-payment-description');
     const totalPaidDisplay = document.getElementById('total-paid');
     const remainingBalanceDisplay = document.getElementById('remaining-balance');
-    const paymentTypeSelect = document.getElementById('payment-type');
+    const paymentTypeSelect = document.getElementById('payment-type'); // may be absent after removing from form
     const advancePaymentOptions = document.getElementById('advance-payment-options');
     const monthsToPayInput = document.getElementById('months-to-pay');
     const customAmountInput = document.getElementById('custom-amount');
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCalculatedAmount() {
         if (!currentSelectedLot) return;
 
-        const paymentType = paymentTypeSelect.value;
+    const paymentType = (paymentTypeSelect && paymentTypeSelect.value) ? paymentTypeSelect.value : 'exact';
         let calculatedAmount = 0;
 
         advancePaymentOptions.style.display = 'none';
