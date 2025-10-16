@@ -160,9 +160,14 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                         <div class="card p-3 p-md-4 h-100">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h2 class="mb-0">Lot Reservation Form</h2>
-                                <a href="lotReservation.php" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i>Back to Packages
-                                </a>
+                                <div>
+                                    <button type="button" id="chooseAnotherLotBtn" class="btn btn-outline-primary me-2" title="Choose another lot on the map">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Choose another lot
+                                    </button>
+                                    <a href="lotReservation.php" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Packages
+                                    </a>
+                                </div>
                             </div>
                             <section class="lot-reservation-section card p-0 mb-0 border-0 shadow-none">
                                 <form class="lot-reservation-form row g-3" method="POST" action="" enctype="multipart/form-data">
@@ -356,7 +361,7 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
             }
             lotTypeHidden.value = '<?php echo $selectedLotType; ?>';
         }
-        // Determine the type from the selected package (PHP to JS)
+    // Determine the type from the selected package (PHP to JS)
         let selectedType = '';
         <?php
         $typeLabel = '';
@@ -376,6 +381,101 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
         }
         ?>
         selectedType = '<?php echo $typeLabel; ?>';
+
+        // ====== AUTOFILL: Populate form from cemeteryMap selection ======
+        try {
+            const raw = localStorage.getItem('selectedLotData');
+            if (raw) {
+                const sel = JSON.parse(raw);
+                // Fill basic fields if present
+                if (sel.lotId) document.getElementById('lotId').value = sel.lotId;
+                if (sel.area) document.getElementById('area').value = sel.area;
+                if (sel.block) document.getElementById('block').value = sel.block;
+                if (sel.rowNumber) document.getElementById('rowNumber').value = sel.rowNumber;
+                if (sel.lotNumber) document.getElementById('lot_number').value = sel.lotNumber;
+                // Map lotTypeId into hidden preferred lot input if available
+                if (sel.lotTypeId) {
+                    const prefHidden = document.getElementById('preferred_lot');
+                    if (prefHidden) prefHidden.value = sel.lotTypeId;
+                }
+                // Burial depth
+                const depthVal = sel.buryDepth || sel.burialDepth;
+                if (depthVal) {
+                    const depthEl = document.getElementById('burial_depth');
+                    if (depthEl) {
+                        try { depthEl.value = depthVal; } catch (e) { /* ignore */ }
+                    }
+                }
+                // Display a selected lot message
+                const msg = document.getElementById('selectedLotMsg');
+                if (msg) {
+                    msg.textContent = `Selected Lot: Block ${sel.block || ''}, Area ${sel.area || ''}, Row ${sel.rowNumber || ''}, Lot No. ${sel.lotNumber || ''}`;
+                    msg.classList.remove('d-none', 'alert-danger');
+                    msg.classList.add('alert-success');
+                }
+            }
+        } catch (err) {
+            console.error('Failed to apply selectedLotData autofill:', err);
+        }
+
+        // Remove saved selection when the form is submitted so it doesn't persist
+        const reservationFormEl = document.querySelector('.lot-reservation-form');
+        if (reservationFormEl) {
+            reservationFormEl.addEventListener('submit', function() {
+                try { localStorage.removeItem('selectedLotData'); } catch (e) { /* ignore */ }
+            });
+        }
+
+        // ====== DRAFT SAVE / BACK TO MAP ======
+        // Restore draft if present (so user can navigate back and forth without losing inputs)
+        try {
+            const draftRaw = localStorage.getItem('reservationDraft');
+            if (draftRaw) {
+                const draft = JSON.parse(draftRaw);
+                // Common fields - only set if element exists
+                const setIf = (id, val) => { const el = document.getElementById(id); if (el && (el.value === '' || el.value == null)) el.value = val; };
+                setIf('client_name', draft.client_name || '');
+                setIf('client_address', draft.client_address || '');
+                setIf('client_contact', draft.client_contact || '');
+                setIf('deceased_name', draft.deceased_name || '');
+                setIf('burial_date', draft.burial_date || '');
+                setIf('reservation_date', draft.reservation_date || '');
+                setIf('area', draft.area || '');
+                setIf('block', draft.block || '');
+                setIf('rowNumber', draft.rowNumber || '');
+                setIf('lot_number', draft.lot_number || '');
+                setIf('preferred_lot', draft.lotTypeId || '');
+                setIf('burial_depth', draft.burial_depth || '');
+                setIf('additional_notes', draft.additional_notes || '');
+                setIf('paymentType', draft.paymentType || '');
+                // After restoring, remove the draft so it doesn't reapply unintentionally
+                try { localStorage.removeItem('reservationDraft'); } catch (e) { /* ignore */ }
+            }
+        } catch (e) {
+            console.error('Failed to restore reservationDraft:', e);
+        }
+
+        // Wire the Choose another lot button to save current form values and navigate back to the map
+        const chooseAnotherBtn = document.getElementById('chooseAnotherLotBtn');
+        if (chooseAnotherBtn) {
+            chooseAnotherBtn.addEventListener('click', function() {
+                try {
+                    const formEl = document.querySelector('.lot-reservation-form');
+                    if (!formEl) return window.location.href = '../cemeteryMap/cemeteryMap.php';
+                    const formData = new FormData(formEl);
+                    const draft = {};
+                    for (const [k, v] of formData.entries()) {
+                        draft[k] = v;
+                    }
+                    // Save the draft
+                    localStorage.setItem('reservationDraft', JSON.stringify(draft));
+                } catch (err) {
+                    console.error('Failed to save reservation draft:', err);
+                }
+                // Navigate to the client cemetery map
+                window.location.href = '../cemeteryMap/cemeteryMap.php';
+            });
+        }
         fetch('/stJohnCmsApp/cms.api/get_lots.php?limit=1000')
             .then(res => res.json())
             .then(data => {
