@@ -27,6 +27,9 @@ if ($reservationID <= 0 || $status === null) {
 }
 
 try {
+    // Start a transaction so we update reservation and lot atomically
+    $conn->begin_transaction();
+
     $sql = "UPDATE reservations SET status = ?, updatedAt = NOW() WHERE reservationID = ?";
     $stmt = $conn->prepare($sql);
     if ($stmt === false) {
@@ -37,16 +40,45 @@ try {
 
     $affected = $stmt->affected_rows;
     $stmt->close();
+
+    // If reservation was updated, and new status is cancelled, free the lot
+    $statusLower = strtolower(trim($status));
+    if ($affected > 0 && ($statusLower === 'cancelled' || $statusLower === 'cancel')) {
+        // Find lotId associated with this reservation
+        $sel = $conn->prepare("SELECT lotId FROM reservations WHERE reservationID = ? LIMIT 1");
+        if ($sel) {
+            $sel->bind_param('i', $reservationID);
+            $sel->execute();
+            $res = $sel->get_result();
+            $row = $res->fetch_assoc();
+            $sel->close();
+            if ($row && isset($row['lotId']) && is_numeric($row['lotId'])) {
+                $lotId = (int)$row['lotId'];
+                $upd = $conn->prepare("UPDATE lots SET status = 'Available' WHERE lotId = ?");
+                if ($upd) {
+                    $upd->bind_param('i', $lotId);
+                    $upd->execute();
+                    $upd->close();
+                }
+            }
+        }
+    }
+
+    $conn->commit();
     $conn->close();
 
     if ($affected > 0) {
         echo json_encode(['status' => 'success', 'message' => 'Status updated']);
     } else {
-        // If no rows affected, still return success but indicate no change
         echo json_encode(['status' => 'success', 'message' => 'No changes made (maybe already set)']);
     }
 
 } catch (Exception $e) {
+    if ($conn && $conn->connect_errno === 0) {
+        // Attempt rollback if in transaction
+        try { $conn->rollback(); } catch (Exception $_) { }
+        $conn->close();
+    }
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }

@@ -36,17 +36,41 @@ try {
     $stmt = $conn->prepare($sql);
     
     // 4. Execute the statement
-    if ($stmt->execute([$newStatus, $reservationID])) {
-        if ($stmt->affected_rows > 0) {
-            echo json_encode(['status' => 'success', 'message' => 'Reservation successfully cancelled.']);
-        } else {
-            // This is likely caused by the reservation not existing or already being cancelled
-            http_response_code(404);
-            echo json_encode(['status' => 'error', 'message' => 'Reservation not found or status already cancelled.']);
+    // Use transaction to update reservation and free the lot
+    $conn->begin_transaction();
+
+    if ($stmt === false) {
+        throw new Exception('Prepare failed: ' . $conn->error);
+    }
+    $stmt->bind_param('si', $newStatus, $reservationID);
+    $stmt->execute();
+
+    if ($stmt->affected_rows > 0) {
+        // find the lotId for this reservation
+        $sel = $conn->prepare("SELECT lotId FROM reservations WHERE reservationID = ? LIMIT 1");
+        if ($sel) {
+            $sel->bind_param('i', $reservationID);
+            $sel->execute();
+            $res = $sel->get_result();
+            $row = $res->fetch_assoc();
+            $sel->close();
+            if ($row && isset($row['lotId']) && is_numeric($row['lotId'])) {
+                $lotId = (int)$row['lotId'];
+                $upd = $conn->prepare("UPDATE lots SET status = 'Available' WHERE lotId = ?");
+                if ($upd) {
+                    $upd->bind_param('i', $lotId);
+                    $upd->execute();
+                    $upd->close();
+                }
+            }
         }
+        $conn->commit();
+        echo json_encode(['status' => 'success', 'message' => 'Reservation successfully cancelled.']);
     } else {
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Failed to execute database update.']);
+        $conn->rollback();
+        // This is likely caused by the reservation not existing or already being cancelled
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Reservation not found or status already cancelled.']);
     }
 
 } catch (Exception $e) {
