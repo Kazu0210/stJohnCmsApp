@@ -260,6 +260,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
                             <th>Preferred Lot Type</th>
                             <th>Amount</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
