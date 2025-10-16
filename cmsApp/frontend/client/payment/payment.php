@@ -126,7 +126,6 @@ if ($lotId) {
                                         <option value="">Select method</option>
                                         <option value="1">GCash</option>
                                         <option value="2">Bank Transfer</option>
-                                        <option value="3">Cash</option>
                                     </select>
                                 </div>
                                 <!-- Display payment type (from URL) and keep hidden field for submission -->
