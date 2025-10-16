@@ -18,7 +18,7 @@ if (session_status() === PHP_SESSION_NONE) {
         <li class="nav-item"><a class="nav-link active" aria-current="page" href="/stJohnCmsApp/cmsApp/frontend/client/clientDashboard/clientDashboard.php">Home</a></li>
         <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/cemeteryMap/cemeteryMap.php">Cemetery Map</a></li>
         <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/lotReservation/lotReservation.php">Lot Reservation</a></li>
-        <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/payment/payment.php">Payment</a></li>
+        <!-- <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/payment/payment.php">Payment</a></li> -->
         <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/burialRecord/burialRecord.php">Burial Record</a></li>
         <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/maintenanceServiceRequest/maintenanceServiceRequest.php">Maintenance Request</a></li>
       </ul>
