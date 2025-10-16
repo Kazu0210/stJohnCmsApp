@@ -311,9 +311,34 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                         <input type="text" id="lot_number" name="lot_number" class="form-control">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="preferred_lot_display" class="form-label">Preferred Lot Type: <span class="text-danger">*</span></label>
-                                        <input type="text" id="preferred_lot_display" class="form-control" value="<?php echo $selectedPackage; ?>" readonly required>
-                                        <input type="hidden" id="preferred_lot" name="lotTypeId" value="<?php echo $selectedLotType; ?>">
+                                        <label for="preferred_lot" class="form-label">Preferred Lot Type: <span class="text-danger">*</span></label>
+                                        <?php
+                                        // Fetch lot types to populate the select
+                                        $lotTypes = [];
+                                        // Include price so the option data-price can be populated for JS to read
+                                        $typeQuery = $conn->prepare("SELECT lotTypeId, typeName, price FROM lot_types ORDER BY typeName ASC");
+                                        if ($typeQuery) {
+                                            $typeQuery->execute();
+                                            $typeRes = $typeQuery->get_result();
+                                            while ($r = $typeRes->fetch_assoc()) {
+                                                $lotTypes[] = $r;
+                                            }
+                                            $typeQuery->close();
+                                        }
+                                        ?>
+                                        <select id="preferred_lot" name="lotTypeId" class="form-select" required>
+                                            <option value="">Select preferred lot type</option>
+                                                <?php foreach ($lotTypes as $lt):
+                                                    $optVal = htmlspecialchars($lt['lotTypeId']);
+                                                    $optText = htmlspecialchars($lt['typeName']);
+                                                    // try to include price if available
+                                                    $optPrice = isset($lt['price']) ? htmlspecialchars($lt['price']) : '';
+                                                    $sel = ($selectedLotType !== '' && (string)$selectedLotType === (string)$lt['lotTypeId']) ? 'selected' : '';
+                                                ?>
+                                                <option value="<?php echo $optVal; ?>" data-price="<?php echo $optPrice; ?>" <?php echo $sel; ?>><?php echo $optText; ?></option>
+                                                <?php endforeach; ?>
+                                        </select>
+                                        <input type="text" id="preferred_lot_display" class="form-control mt-2" value="<?php echo htmlspecialchars($selectedPackage); ?>" readonly required>
                                         <input type="hidden" id="total_amount" name="total_amount" value="<?php echo $selectedPrice; ?>">
                                     </div>
                                     <div class="col-md-6" id="depth_option">
@@ -351,15 +376,50 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Set the preferred lot type display and hidden value if present
+        // Set the preferred lot type select and sync a readonly display
         const lotTypeDisplay = document.getElementById('preferred_lot_display');
-        const lotTypeHidden = document.getElementById('preferred_lot');
-        if (lotTypeDisplay && lotTypeHidden) {
+        const lotTypeSelect = document.getElementById('preferred_lot');
+        if (lotTypeDisplay && lotTypeSelect) {
             // If the display is empty, try to set from PHP variables
             if (!lotTypeDisplay.value) {
                 lotTypeDisplay.value = '<?php echo $selectedPackage; ?>';
             }
-            lotTypeHidden.value = '<?php echo $selectedLotType; ?>';
+            // If PHP passed a selected lot type ID, set the select value
+            try {
+                const phpSelected = '<?php echo $selectedLotType; ?>';
+                if (phpSelected && lotTypeSelect.querySelector(`option[value="${phpSelected}"]`)) {
+                    lotTypeSelect.value = phpSelected;
+                }
+            } catch (e) { /* ignore */ }
+
+            // Helper: set total_amount from selected option (data-price)
+            const setTotalFromOption = (opt) => {
+                try {
+                    const totalInput = document.getElementById('total_amount');
+                    if (!totalInput || !opt) return;
+                    const p = opt.getAttribute('data-price') || '';
+                    // Keep the existing value if data-price is empty; otherwise set it
+                    if (p !== '') {
+                        totalInput.value = p;
+                    }
+                } catch (e) { /* ignore */ }
+            };
+
+            // Sync display and total on change
+            lotTypeSelect.addEventListener('change', () => {
+                const opt = lotTypeSelect.options[lotTypeSelect.selectedIndex];
+                if (opt) {
+                    lotTypeDisplay.value = opt.text || opt.value || '';
+                    setTotalFromOption(opt);
+                }
+                toggleDepthOption?.();
+            });
+            // Initialize display and total to selected option text/price if any
+            const initOpt = lotTypeSelect.options[lotTypeSelect.selectedIndex];
+            if (initOpt && initOpt.value) {
+                lotTypeDisplay.value = initOpt.text || initOpt.value;
+                setTotalFromOption(initOpt);
+            }
         }
     // Determine the type from the selected package (PHP to JS)
         let selectedType = '';
@@ -393,10 +453,16 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                 if (sel.block) document.getElementById('block').value = sel.block;
                 if (sel.rowNumber) document.getElementById('rowNumber').value = sel.rowNumber;
                 if (sel.lotNumber) document.getElementById('lot_number').value = sel.lotNumber;
-                // Map lotTypeId into hidden preferred lot input if available
+                // Map lotTypeId into the preferred lot select if available and trigger change
                 if (sel.lotTypeId) {
-                    const prefHidden = document.getElementById('preferred_lot');
-                    if (prefHidden) prefHidden.value = sel.lotTypeId;
+                    const prefEl = document.getElementById('preferred_lot');
+                    if (prefEl) {
+                        try {
+                            prefEl.value = sel.lotTypeId;
+                            // dispatch change so the price/total and depth toggle logic run
+                            prefEl.dispatchEvent(new Event('change'));
+                        } catch (e) { /* ignore */ }
+                    }
                 }
                 // Burial depth
                 const depthVal = sel.buryDepth || sel.burialDepth;
@@ -451,6 +517,13 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                 // After restoring, remove the draft so it doesn't reapply unintentionally
                 try { localStorage.removeItem('reservationDraft'); } catch (e) { /* ignore */ }
             }
+            // If the draft included a preferred lot, trigger change so price and depth logic run
+            try {
+                if (draft && draft.lotTypeId) {
+                    const prefEl = document.getElementById('preferred_lot');
+                    if (prefEl) prefEl.dispatchEvent(new Event('change'));
+                }
+            } catch (e) { /* ignore */ }
         } catch (e) {
             console.error('Failed to restore reservationDraft:', e);
         }
