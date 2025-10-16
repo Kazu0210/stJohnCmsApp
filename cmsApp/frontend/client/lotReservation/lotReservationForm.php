@@ -77,16 +77,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $reservationStatus = 'For Reservation';
             $createdAt = date('Y-m-d H:i:s');
+            // Lookup monthlyPayment for the selected lot type and set amount_due
+            $amountDue = 0.0;
+            if ($lotTypeId !== null) {
+                $typeStmt = $conn->prepare("SELECT monthlyPayment FROM lot_types WHERE lotTypeId = ? LIMIT 1");
+                if ($typeStmt) {
+                    $typeStmt->bind_param('i', $lotTypeId);
+                    $typeStmt->execute();
+                    $typeRes = $typeStmt->get_result()->fetch_assoc();
+                    if ($typeRes && isset($typeRes['monthlyPayment'])) {
+                        $amountDue = (float)$typeRes['monthlyPayment'];
+                    }
+                    $typeStmt->close();
+                }
+            }
             $stmt = $conn->prepare("INSERT INTO reservations (
                 userId, lotId, clientName, address, contactNumber, deceasedName, burialDate, reservationDate,
                 area, block, rowNumber, lotNumber, burialDepth, notes, clientValidId, deathCertificate, deceasedValidId,
-                burialPermit, payment_type, total_amount, status, createdAt, lotTypeId
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                burialPermit, payment_type, total_amount, status, createdAt, lotTypeId, amount_due
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param(
-                "iisssssssssssssssssdssi",
+                "iisssssssssssssssssdssid",
                 $userId, $lotId, $clientName, $address, $contactNumber, $deceasedName, $burialDate,
                 $reservationDate, $area, $block, $rowNumber, $lotNumber, $burialDepth, $notes,
-                $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $paymentType, $totalAmount, $reservationStatus, $createdAt, $lotTypeId
+                $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $paymentType, $totalAmount, $reservationStatus, $createdAt, $lotTypeId, $amountDue
             );
             if ($stmt->execute()) {
                 // Update lot status to 'Pending'
