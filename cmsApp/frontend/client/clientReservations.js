@@ -40,12 +40,13 @@ $(document).ready(function() {
 
             return `
                 <tr>
-                    <td>${escapeHtml(r.area)}</td>
-                    <td>${escapeHtml(r.block)}</td>
-                    <td>${escapeHtml(r.lotNumber)}</td>
-                    <td class="reservation-status">${escapeHtml(r.status || '')}</td>
+                    <td>${escapeHtml(String(r.area || '').trim().split(/\s+/).map(s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '').join(' '))}</td>
+                    <td>${escapeHtml(String(r.block || '').trim().split(/\s+/).map(s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '').join(' '))}</td>
+                    <td>${escapeHtml(String(r.lotNumber || '').trim())}</td>
+                    <td class="reservation-status">${escapeHtml(String(r.status || '').trim().split(/\s+/).map(s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '').join(' '))}</td>
                     <td>${escapeHtml(r.createdAt)}</td>
                     <td class="text-end">${formatCurrency(r.total_amount)}</td>
+                    <td>${escapeHtml(String(r.payment_type || '').trim().split(/\s+/).map(s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '').join(' '))}</td>
                     <td class="text-end">${formatCurrency(r.amount_paid)}</td>
                     <td class="text-end">${formatCurrency(r.amount_due)}</td>
                     <td>
@@ -63,9 +64,10 @@ $(document).ready(function() {
                             <th>Area</th>
                             <th>Block</th>
                             <th>Lot Number</th>
-                        <th>Status</th>
-                        <th>Created At</th>
+                            <th>Status</th>
+                            <th>Created At</th>
                             <th class="text-end">Total Amount</th>
+                            <th>Payment Type</th>
                             <th class="text-end">Amount Paid</th>
                             <th class="text-end">Amount Due</th>
                             <th>Actions</th>

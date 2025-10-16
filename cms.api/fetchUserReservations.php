@@ -24,7 +24,7 @@ try {
     }
 
     // Include total price for the lot (totalAmount) and totalPaid from payments table
-    $sql = "SELECT r.reservationId, r.area, r.block, r.lotNumber, r.userId, r.createdAt, r.status,
+    $sql = "SELECT r.reservationId, r.area, r.block, r.lotNumber, r.userId, r.createdAt, r.status, r.payment_type,
                    COALESCE(r.total_amount, lt.price, 0) AS total_amount,
                    (
                        SELECT COALESCE(SUM(p.amount), 0) FROM payments p
