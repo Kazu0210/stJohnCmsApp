@@ -9,6 +9,8 @@ if (!isset($_SESSION['user_id'])) {
 // Get lotId and lotTypeId from URL
 $lotId = isset($_GET['lotId']) ? $_GET['lotId'] : null;
 $lotTypeId = isset($_GET['lotTypeId']) ? $_GET['lotTypeId'] : null;
+// Accept optional paymentType from querystring to prefill hidden field
+$paymentTypeFromGet = isset($_GET['paymentType']) ? $_GET['paymentType'] : null;
 $reservationInfo = [];
 if ($lotId) {
     require_once __DIR__ . '/../../../../cms.api/db_connect.php';
@@ -127,15 +129,8 @@ if ($lotId) {
                                         <option value="3">Cash</option>
                                     </select>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="paymentType" class="form-label">Payment Type</label>
-                                    <select class="form-select" id="paymentType" name="paymentType" required>
-                                        <option value="">Select payment type</option>
-                                        <option value="exact">Exact Installment Amount</option>
-                                        <option value="advance">Advance Payment</option>
-                                        <option value="deferred">Deferred Amount</option>
-                                    </select>
-                                </div>
+                                <!-- Payment Type removed from UI. Preserve hidden field for backend compatibility -->
+                                <input type="hidden" id="paymentType" name="paymentType" value="<?php echo htmlspecialchars($paymentTypeFromGet ?? 'installment'); ?>">
                                 <div class="mb-3">
                                     <label for="paymentAmount" class="form-label">Amount</label>
                                     <input type="text" class="form-control" id="paymentAmount" name="amount" required readonly value="<?php echo isset($reservationInfo['amount_due']) ? number_format((float)$reservationInfo['amount_due'], 2) : ''; ?>">

@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notes = trim($_POST['additional_notes'] ?? '');
     $lotTypeId = isset($_POST['lotTypeId']) && $_POST['lotTypeId'] !== '' ? (int)$_POST['lotTypeId'] : null;
     $lotId = trim($_POST['lotId'] ?? '');
+    $paymentType = trim($_POST['paymentType'] ?? '');
 
     // Validate lotId
     if (empty($lotId) || !ctype_digit($lotId)) {
@@ -67,13 +68,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO reservations (
                 userId, lotId, clientName, address, contactNumber, deceasedName, burialDate, reservationDate,
                 area, block, rowNumber, lotNumber, burialDepth, notes, clientValidId, deathCertificate, deceasedValidId,
-                burialPermit, status, createdAt, lotTypeId
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                burialPermit, payment_type, status, createdAt, lotTypeId
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param(
-                "iissssssssssssssssssi",
+                "iisssssssssssssssssssi",
                 $userId, $lotId, $clientName, $address, $contactNumber, $deceasedName, $burialDate,
                 $reservationDate, $area, $block, $rowNumber, $lotNumber, $burialDepth, $notes,
-                $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $reservationStatus, $createdAt, $lotTypeId
+                $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $paymentType, $reservationStatus, $createdAt, $lotTypeId
             );
             if ($stmt->execute()) {
                 // Update lot status to 'Pending'
@@ -81,8 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateLotStmt->bind_param("i", $lotId);
                 $updateLotStmt->execute();
                 $updateLotStmt->close();
-                // Redirect to payment page with lotId and lotTypeId
-                header('Location: ../payment/payment.php?lotId=' . urlencode($lotId) . '&lotTypeId=' . urlencode($lotTypeId));
+                // Redirect to payment page with lotId, lotTypeId, and optional paymentType
+                $redirectUrl = '../payment/payment.php?lotId=' . urlencode($lotId) . '&lotTypeId=' . urlencode($lotTypeId);
+                if (!empty($paymentType)) {
+                    $redirectUrl .= '&paymentType=' . urlencode($paymentType);
+                }
+                header('Location: ' . $redirectUrl);
                 exit();
             } else {
                 $reservationError = 'Database error: ' . $stmt->error;
@@ -305,6 +310,16 @@ $selectedLotType = isset($_GET['lotType']) ? htmlspecialchars($_GET['lotType']) 
                                     <div class="col-12">
                                         <label for="additional_notes" class="form-label">Additional Notes:</label>
                                         <textarea id="additional_notes" name="additional_notes" rows="3" class="form-control"></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="paymentType" class="form-label">Payment Type</label>
+                                        <select id="paymentType" name="paymentType" class="form-select">
+                                            <option value="">Select payment type</option>
+                                            <option value="full">Full Payment</option>
+                                            <option value="installment">Exact Installment Amount</option>
+                                            <option value="advance">Advance Payment</option>
+                                            <option value="deferred">Deferred Amount</option>
+                                        </select>
                                     </div>
                                     <div class="col-12 text-center">
                                         <button type="submit" class="submit-btn btn">Submit Reservation Request</button>
