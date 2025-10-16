@@ -28,8 +28,13 @@ $(document).ready(function() {
             const resStatusLower = statusText.trim().toLowerCase();
             const blockedStatuses = ['for reservation', 'for reserved'];
             const isBlocked = blockedStatuses.includes(resStatusLower);
+            // Build payment URL: include reservationId explicitly and lotId if available
+            let payUrl = '/stJohnCmsApp/cmsApp/frontend/client/payment/payment.php?paymentType=installment';
+            if (r.lotId) payUrl += `&lotId=${encodeURIComponent(r.lotId)}`;
+            if (r.reservationId) payUrl += `&reservationId=${encodeURIComponent(r.reservationId)}`;
+
             const payButton = (!isCancelled && hasAmountDue && !isBlocked)
-                ? `<a class="btn btn-sm btn-outline-success btn-pay me-1" href="/stJohnCmsApp/cmsApp/frontend/client/payment/payment.php?lotId=${escapeHtml(r.lotId || r.reservationId)}&paymentType=installment">Pay</a>`
+                ? `<a class="btn btn-sm btn-outline-success btn-pay me-1" href="${payUrl}">Pay</a>`
                 : '';
 
             const cancelButton = isCancelled

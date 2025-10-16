@@ -6,12 +6,27 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Get lotId and lotTypeId from URL
+// Get lotId/reservationId and lotTypeId from URL
 $lotId = isset($_GET['lotId']) ? $_GET['lotId'] : null;
+$reservationIdFromGet = isset($_GET['reservationId']) ? $_GET['reservationId'] : null;
 $lotTypeId = isset($_GET['lotTypeId']) ? $_GET['lotTypeId'] : null;
 // Accept optional paymentType from querystring to prefill hidden field
 $paymentTypeFromGet = isset($_GET['paymentType']) ? $_GET['paymentType'] : null;
 $reservationInfo = [];
+// If a reservationId was provided, resolve its lotId first
+if ($reservationIdFromGet) {
+    require_once __DIR__ . '/../../../../cms.api/db_connect.php';
+    $rstmt = $conn->prepare("SELECT lotId FROM reservations WHERE reservationId = ? LIMIT 1");
+    $rstmt->bind_param("i", $reservationIdFromGet);
+    $rstmt->execute();
+    $rres = $rstmt->get_result();
+    if ($rres && $rres->num_rows > 0) {
+        $rrow = $rres->fetch_assoc();
+        $lotId = $rrow['lotId'];
+    }
+    $rstmt->close();
+}
+
 if ($lotId) {
     require_once __DIR__ . '/../../../../cms.api/db_connect.php';
 

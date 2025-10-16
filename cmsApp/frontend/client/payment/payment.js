@@ -5,11 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const bankQrContainer = document.getElementById('bankQrContainer');
     if (paymentMethodSelect) {
         paymentMethodSelect.addEventListener('change', function() {
-            // Show/hide QR code containers based on selected method
+            // Show/hide QR code containers based on selected numeric method id
+            // 1 = GCash, 2 = Bank Transfer
             if (gcashQrContainer) {
-                if (this.value === 'gcash') {
+                if (this.value === '1') {
                     gcashQrContainer.style.display = 'flex';
-                    // Show QR image and label
                     const img = gcashQrContainer.querySelector('img');
                     const label = gcashQrContainer.querySelector('div');
                     if (img) img.style.display = 'block';
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (bankQrContainer) {
-                if (this.value === 'bank') {
+                if (this.value === '2') {
                     bankQrContainer.style.display = 'flex';
                     const img = bankQrContainer.querySelector('img');
                     const label = bankQrContainer.querySelector('div');
@@ -150,13 +150,15 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.add('active');
         if (onlinePaymentFields) onlinePaymentFields.style.display = 'block';
 
-        if (method === 'gcash') {
-            if (gcashDetails) gcashDetails.style.display = 'block';
-            if (bankDetails) bankDetails.style.display = 'none';
-        } else if (method === 'bank') {
-            if (gcashDetails) gcashDetails.style.display = 'none';
-            if (bankDetails) bankDetails.style.display = 'block';
-        }
+            // normalize method: accept 'gcash'/'bank' or numeric ids 1 and 2
+            const m = String(method).toLowerCase();
+            if (m === 'gcash' || m === '1') {
+                if (gcashDetails) gcashDetails.style.display = 'block';
+                if (bankDetails) bankDetails.style.display = 'none';
+            } else if (m === 'bank' || m === '2') {
+                if (gcashDetails) gcashDetails.style.display = 'none';
+                if (bankDetails) bankDetails.style.display = 'block';
+            }
     };
 
      function formatCurrency(num) {
