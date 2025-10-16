@@ -94,11 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateLotStmt->bind_param("i", $lotId);
                 $updateLotStmt->execute();
                 $updateLotStmt->close();
-                // Redirect to payment page with lotId, lotTypeId, and optional paymentType
-                $redirectUrl = '../payment/payment.php?lotId=' . urlencode($lotId) . '&lotTypeId=' . urlencode($lotTypeId);
-                if (!empty($paymentType)) {
-                    $redirectUrl .= '&paymentType=' . urlencode($paymentType);
-                }
+                // Redirect back to lotReservation listing after successful reservation
+                // Add a success flag so the listing page can show feedback if desired
+                $redirectUrl = '../lotReservation/lotReservation.php?success=1&lotId=' . urlencode($lotId);
                 header('Location: ' . $redirectUrl);
                 exit();
             } else {

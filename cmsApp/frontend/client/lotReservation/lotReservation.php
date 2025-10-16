@@ -32,6 +32,9 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
         <div class="row">
             <div class="col-lg-12">
                 <div class="pricing-container card p-4 mb-4">
+                    <?php if (isset($_GET['success']) && $_GET['success'] == '1'): ?>
+                        <div class="alert alert-success">Reservation submitted successfully!<?php if (isset($_GET['lotId'])) echo ' (Lot ID: ' . htmlspecialchars($_GET['lotId']) . ')'; ?></div>
+                    <?php endif; ?>
                     <h2>Cemetery Lot and Mausoleum Options</h2>
                     <p class="payment-terms">All lots are payable within 4 years and 2 months (50 months) and can be paid monthly or in advance.</p>
                 
