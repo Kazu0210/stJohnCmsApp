@@ -128,13 +128,6 @@ $userRole = getCurrentUserRole();
                 </div>
             </div>
         </div>
-        
-        <div class="card mb-5 shadow">
-            <div class="card-header"><i class="fas fa-chart-line me-2"></i>Monthly Income Trends</div>
-            <div class="card-body">
-                <canvas id="monthlyIncomeChart"></canvas>
-            </div>
-        </div>
 
         <!-- Payments Table -->
         <div class="card shadow mb-5">
