@@ -1,4 +1,51 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Add event listener for payment method dropdown
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const gcashQrContainer = document.getElementById('gcashQrContainer');
+    const bankQrContainer = document.getElementById('bankQrContainer');
+    if (paymentMethodSelect) {
+        paymentMethodSelect.addEventListener('change', function() {
+            // Show/hide QR code containers based on selected numeric method id
+            // 1 = GCash, 2 = Bank Transfer
+            if (gcashQrContainer) {
+                if (this.value === '1') {
+                    gcashQrContainer.style.display = 'flex';
+                    const img = gcashQrContainer.querySelector('img');
+                    const label = gcashQrContainer.querySelector('div');
+                    if (img) img.style.display = 'block';
+                    if (label) label.style.display = 'block';
+                } else {
+                    gcashQrContainer.style.display = 'none';
+                    const img = gcashQrContainer.querySelector('img');
+                    const label = gcashQrContainer.querySelector('div');
+                    if (img) img.style.display = 'none';
+                    if (label) label.style.display = 'none';
+                }
+            }
+            if (bankQrContainer) {
+                if (this.value === '2') {
+                    bankQrContainer.style.display = 'flex';
+                    const img = bankQrContainer.querySelector('img');
+                    const label = bankQrContainer.querySelector('div');
+                    if (img) img.style.display = 'block';
+                    if (label) label.style.display = 'block';
+                } else {
+                    bankQrContainer.style.display = 'none';
+                    const img = bankQrContainer.querySelector('img');
+                    const label = bankQrContainer.querySelector('div');
+                    if (img) img.style.display = 'none';
+                    if (label) label.style.display = 'none';
+                }
+            }
+        });
+    }
+    // --- Auto-select lot if lotId is in URL ---
+    function getLotIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('lot') || params.get('reservationId') || null;
+    }
+    let autoSelectLotId = getLotIdFromUrl();
+
     // --- API Base URL ---
     const API_BASE_URL = "http://localhost/stJohnCmsApp/cms.api/";
 
@@ -8,12 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthlyPaymentDesc = document.getElementById('monthly-payment-description');
     const totalPaidDisplay = document.getElementById('total-paid');
     const remainingBalanceDisplay = document.getElementById('remaining-balance');
-    const paymentTypeSelect = document.getElementById('payment-type');
+    const paymentTypeSelect = document.getElementById('payment-type'); // may be absent after removing from form
     const advancePaymentOptions = document.getElementById('advance-payment-options');
     const monthsToPayInput = document.getElementById('months-to-pay');
     const customAmountInput = document.getElementById('custom-amount');
     const calculatedAmountInput = document.getElementById('calculated-amount');
-    const paymentHistoryBody = document.getElementById('paymentHistoryBody');
+
     const gcashDetails = document.getElementById('gcash-details');
     const bankDetails = document.getElementById('bank-details');
     const onlinePaymentFields = document.getElementById('online-payment-fields');
@@ -21,14 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutLinks = document.querySelectorAll('#logoutLinkDesktop, #logoutLinkMobile');
     const submitBtn = document.querySelector('button[type="submit"]');
     const lotSelect = document.getElementById("lot-select");
-    const toastElement = document.getElementById("liveToast");
-    const toastBody = toastElement.querySelector(".toast-body");
-    const toastTime = toastElement.querySelector("small");
-    const reservationSelect = document.getElementById("reservationSelect");
-const amountInput = document.getElementById("amountInput");
+    // Removed toast and reservation/payment history related DOM elements
     
     // --- Modal Elements ---
-     const docModal = new bootstrap.Modal(document.getElementById('docModal'));
+    let docModal = null;
+    const docModalElem = document.getElementById('docModal');
+    if (docModalElem && window.bootstrap && bootstrap.Modal) {
+        docModal = new bootstrap.Modal(docModalElem);
+    }
     const docFilename = document.getElementById('docFilename');
     const imgPreview = document.getElementById('img-preview');
     const pdfCanvas = document.getElementById('pdf-canvas');
@@ -42,30 +89,23 @@ const amountInput = document.getElementById("amountInput");
     const replaceFileInput = document.getElementById('replaceFileInput');
 
 
-    // --- Toast ---
-    const toast = new bootstrap.Toast(toastElement, {
-        delay: 24 * 60 * 60 * 1000, // 24 hours
-        autohide: false
-    });
+
 
     
 
     // --- Global State ---
-    let countdownInterval = null;
     let currentSelectedLot = null;
     let pdfDoc = null;
     let pageNum = 1;
-    const TOTAL_MONTHS = 50;
-    let allLots = [];
-    let paymentHistoryData = {};
-    const CONTRACT_START_DATE = new Date();
     let currentFileInput = null;
+
 
     // --- Logout ---
     logoutLinks.forEach(link => link.addEventListener('click', e => {
         e.preventDefault();
         window.location.href = '../../auth/login/login.php';
     }));
+
 
     // --- Load User Name ---
     async function loadUserName() {
@@ -80,31 +120,7 @@ const amountInput = document.getElementById("amountInput");
     }
     
 
-    // --- Load Reserved Lots ---
-   async function loadReservedLots() {
-        try {
-            lotSelect.innerHTML = '<option>Loading lots...</option>';
-            const res = await fetch(`${API_BASE_URL}getReservedLots.php`, { credentials: "include" });
-            const result = await res.json();
-            const data = result.data || [];
-            allLots = data;
 
-            lotSelect.innerHTML = '<option value="">-- Select a Lot --</option>';
-            if (data.length > 0) {
-                data.forEach(lot => {
-                    const option = document.createElement("option");
-                    option.value = lot.reservationId; // ✅ sends correct ID
-                    option.textContent = `${lot.clientName} - Area ${lot.area}, Block ${lot.block}, Row ${lot.rowNumber}, Lot ${lot.lotNumber}`;
-                    lotSelect.appendChild(option);
-                });
-            } else {
-                lotSelect.innerHTML = '<option disabled>No lots reserved</option>';
-            }
-        } catch (err) {
-            console.error("❌ Error loading lots:", err);
-            lotSelect.innerHTML = '<option disabled>Error loading lots</option>';
-        }
-    }
 
     // --- Update Reservation Status ---
     async function updateReservationStatus(reservationId, newStatus) {
@@ -127,50 +143,22 @@ const amountInput = document.getElementById("amountInput");
         }
     }
 
-    // --- Countdown Toast ---
-    function startPaymentCountdown(reservationId) {
-        const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-        if (countdownInterval) clearInterval(countdownInterval);
-
-        function updateCountdown() {
-            const now = new Date();
-            const diff = deadline - now;
-
-            if (diff <= 0) {
-                toastBody.textContent = "Your payment time has expired!";
-                toastTime.textContent = "Now";
-                clearInterval(countdownInterval);
-                updateReservationStatus(reservationId, "Cancelled");
-                if (typeof loadReservationHistory === "function") loadReservationHistory();
-                return;
-            }
-
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            toastBody.textContent = `You have ${hours}h ${minutes}m ${seconds}s left to pay this reservation!`;
-            toastTime.textContent = "Counting down...";
-        }
-
-        updateCountdown();
-        toast.show();
-        countdownInterval = setInterval(updateCountdown, 1000);
-    }
 
      window.selectMethod = function(element, method) {
         document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
-        onlinePaymentFields.style.display = 'block';
+        if (onlinePaymentFields) onlinePaymentFields.style.display = 'block';
 
-        if (method === 'gcash') {
-            gcashDetails.style.display = 'block';
-            bankDetails.style.display = 'none';
-        } else if (method === 'bank') {
-            gcashDetails.style.display = 'none';
-            bankDetails.style.display = 'block';
-        }
+            // normalize method: accept 'gcash'/'bank' or numeric ids 1 and 2
+            const m = String(method).toLowerCase();
+            if (m === 'gcash' || m === '1') {
+                if (gcashDetails) gcashDetails.style.display = 'block';
+                if (bankDetails) bankDetails.style.display = 'none';
+            } else if (m === 'bank' || m === '2') {
+                if (gcashDetails) gcashDetails.style.display = 'none';
+                if (bankDetails) bankDetails.style.display = 'block';
+            }
     };
 
      function formatCurrency(num) {
@@ -178,58 +166,15 @@ const amountInput = document.getElementById("amountInput");
     }
 
 
-    // --- Lot Selection Change ---
-    lotSelect.addEventListener("change", async () => {
-        const selectedId = lotSelect.value;
-        const selectedLot = allLots.find(lot => String(lot.reservationId) === String(selectedId));
 
-        if (!selectedLot) {
-            currentSelectedLot = null;
-            lotPriceDisplay.textContent = "₱0.00";
-            monthlyPaymentDisplay.textContent = "₱0.00";
-            monthlyPaymentDesc.textContent = "";
-            totalPaidDisplay.textContent = "₱0.00";
-            remainingBalanceDisplay.textContent = "₱0.00";
-            return;
-        }
-
-        currentSelectedLot = selectedLot;
-
-        lotPriceDisplay.textContent = formatCurrency(selectedLot.price || 0);
-        monthlyPaymentDisplay.textContent = formatCurrency(selectedLot.monthlyPayment || 0);
-        monthlyPaymentDesc.textContent = selectedLot.paymentDescription || "";
-
-        updatePaymentSummary();
-
-        // Update backend & start countdown
-        await updateReservationStatus(selectedId, "For Reservation");
-        startPaymentCountdown(selectedId);
-    });
 
     // --- Payment Summary + Other Functions ---
-    function updatePaymentSummary() {
-        if (!currentSelectedLot) {
-            totalPaidDisplay.textContent = formatCurrency(0);
-            remainingBalanceDisplay.textContent = formatCurrency(0);
-            paymentHistoryBody.innerHTML =
-                '<tr><td colspan="7" class="text-center text-muted">Please select a lot to view its payment history.</td></tr>';
-            return;
-        }
- const reservationId = currentSelectedLot.reservationId;
-        const history = paymentHistoryData[reservationId] || [];
-        const totalPaid = history.reduce((sum, payment) => sum + payment.amount, 0);
-        const remainingBalance = Math.max(0, currentSelectedLot.price - totalPaid);
 
-        totalPaidDisplay.textContent = formatCurrency(totalPaid);
-        remainingBalanceDisplay.textContent = formatCurrency(remainingBalance);
-
-        updateCalculatedAmount();
-    }
 
     function updateCalculatedAmount() {
         if (!currentSelectedLot) return;
 
-        const paymentType = paymentTypeSelect.value;
+    const paymentType = (paymentTypeSelect && paymentTypeSelect.value) ? paymentTypeSelect.value : 'exact';
         let calculatedAmount = 0;
 
         advancePaymentOptions.style.display = 'none';
@@ -269,79 +214,7 @@ const amountInput = document.getElementById("amountInput");
         }
     }
 
-   async function renderPaymentSchedule(paymentId = null) {
-    try {
-        let url = `${API_BASE_URL}save_payment.php?mode=getPayments`;
-        if (paymentId) url += `&paymentId=${paymentId}`;
 
-        const response = await fetch(url, { method: "GET", credentials: "include" });
-        const data = await response.json();
-
-        console.log("📜 Payment history data:", data);
-
-        if (data.status !== "success" || !Array.isArray(data.data) || data.data.length === 0) {
-            paymentHistoryBody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center text-muted">
-                        No payment history found.
-                    </td>
-                </tr>`;
-            return;
-        }
-
-        let html = "";
-        data.data.forEach(payment => {
-            const datePaid = payment.datePaid
-                ? new Date(payment.datePaid).toLocaleDateString()
-                : "N/A";
-
-            const amount = payment.amount ? formatCurrency(payment.amount) : "₱0.00";
-            const method = payment.methodName || "N/A";
-            const reference = payment.reference || "N/A";
-            const status = payment.status || "Pending";
-
-            const statusClass =
-                status === "Confirmed"
-                    ? "paid"
-                    : status === "Pending"
-                    ? "pending"
-                    : "unpaid";
-
-            const docButton = payment.document
-                ? `<button type="button" class="btn btn-sm btn-info view-doc-btn"
-                    data-file-url="${payment.document}"
-                    data-file-name="${payment.document.split('/').pop()}">
-                    View
-                </button>`
-                : "N/A";
-
-            html += `
-                <tr>
-                    <td>${payment.month}</td>
-                    <td>${datePaid}</td>
-                    <td>${amount}</td>
-                    <td>${method}</td>
-                    <td>${reference}</td>
-                    <td><span class="status ${statusClass}">${status}</span></td>
-                    <td>${docButton}</td>
-                </tr>
-            `;
-        });
-
-        paymentHistoryBody.innerHTML = html;
-
-    } catch (err) {
-        console.error("Fetch error:", err);
-        paymentHistoryBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center text-danger">
-                    Error loading payment data.
-                </td>
-            </tr>`;
-    }
-}
-
-    renderPaymentSchedule();
     
     // --- Modal and File Preview Functions ---
    function renderPage(num) {
@@ -489,204 +362,130 @@ document.querySelectorAll(".view-icon").forEach(btn => {
     });
 });
 
-
-
-    // View button in the payment history table
-  paymentHistoryBody.addEventListener("click", async (e) => {
-    if (e.target.classList.contains("view-doc-btn")) {
-        const fileURL = e.target.dataset.fileUrl;
-        const fileName = e.target.dataset.fileName || "document";
-
-        if (!fileURL) {
-            alert("⚠️ No document available to view.");
-            return;
-        }
-
-        try {
-            // Detect file type by extension if possible
-            const fileExt = fileURL.split('.').pop().toLowerCase();
-            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt);
-            const isPdf = fileExt === "pdf";
-
-            // Directly preview without fetch for images/PDFs
-            if (isImage || isPdf) {
-                showDocument({ 
-                    name: fileName, 
-                    type: isPdf ? "application/pdf" : `image/${fileExt}`,
-                    url: fileURL 
-                }, null, true);
-                return;
-            }
-
-            // Otherwise, fallback to fetch (for unknown types)
-            const response = await fetch(fileURL);
-            if (!response.ok) throw new Error("File not found");
-
-            const blob = await response.blob();
-            const file = new File([blob], fileName, { type: blob.type });
-            showDocument(file, null, true);
-
-        } catch (err) {
-            console.error("Error fetching file:", err);
-            alert("❌ Failed to load document preview.");
-        }
-    }
-});
-
-
     // PDF Navigation
- prevPageBtn.addEventListener("click", () => {
-    if (pageNum <= 1) return;
-    pageNum--;
-    renderPage(pageNum);
-});
 
-nextPageBtn.addEventListener("click", () => {
-    if (pageNum >= pdfDoc.numPages) return;
-    pageNum++;
-    renderPage(pageNum);
-});
+if (typeof prevPageBtn !== 'undefined' && prevPageBtn) {
+    prevPageBtn.addEventListener("click", () => {
+        if (pageNum <= 1) return;
+        pageNum--;
+        renderPage(pageNum);
+    });
+}
 
+if (typeof nextPageBtn !== 'undefined' && nextPageBtn) {
+    nextPageBtn.addEventListener("click", () => {
+        if (pageNum >= pdfDoc.numPages) return;
+        pageNum++;
+        renderPage(pageNum);
+    });
+}
 
-    // Modal Action Buttons (for files from local input)
-  replaceFileInput.addEventListener('change', e => {
-    if (!currentFileInput) return;
-    const file = e.target.files[0];
-    if (file) {
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        currentFileInput.files = dt.files;
+// Modal Action Buttons (for files from local input)
+if (typeof replaceFileInput !== 'undefined' && replaceFileInput) {
+    replaceFileInput.addEventListener('change', e => {
+        if (!currentFileInput) return;
+        const file = e.target.files[0];
+        if (file) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            currentFileInput.files = dt.files;
 
-        const fileNameSpan = document.getElementById(currentFileInput.id + '-filename');
-        fileNameSpan.textContent = file.name;
+            const fileNameSpan = document.getElementById(currentFileInput.id + '-filename');
+            fileNameSpan.textContent = file.name;
 
-        docModal.hide();
-        replaceFileInput.value = '';
-    }
-});
-
-  deleteBtn.addEventListener('click', () => {
-    if (!currentFileInput) return;
-
-    currentFileInput.value = null;
-    const fileNameSpan = document.getElementById(currentFileInput.id + '-filename');
-    fileNameSpan.textContent = 'No file chosen';
-
-    const viewBtn = document.querySelector(`.view-icon[data-target="${currentFileInput.id}"]`);
-    if (viewBtn) viewBtn.style.display = 'none';
-
-    docModal.hide();
-    currentFileInput = null;
-});
-
-
-    // --- Form Submission (PHP Connection) ---
-   paymentForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const reservationId = lotSelect?.value || "";
-    if (!reservationId) {
-        alert("⚠️ Please select a reserved lot.");
-        return;
-    }
-
-    const selectedMethodElement = document.querySelector(".payment-method.active span");
-    let paymentMethodId = "";
-    if (selectedMethodElement) {
-        const methodText = selectedMethodElement.textContent.trim().toLowerCase();
-        if (methodText.includes("gcash")) paymentMethodId = "1";
-        else if (methodText.includes("bank")) paymentMethodId = "2";
-        else if (methodText.includes("cash")) paymentMethodId = "3";
-    }
-
-    const currentMonth = new Date().toLocaleString("default", { month: "long" });
-    const amountValue = parseFloat(calculatedAmountInput?.value?.replace(/[₱,]/g, "") || amountInput?.value || 0);
-    const proofInput =
-        document.getElementById("gcash-proof")?.files[0] ||
-        document.getElementById("bank-proof")?.files[0] ||
-        null;
-
-    let referenceInput = null;
-    if (paymentMethodId === "1") referenceInput = document.getElementById("gcash-ref");
-    else if (paymentMethodId === "2") referenceInput = document.getElementById("bank-ref");
-    else if (paymentMethodId === "3") referenceInput = document.getElementById("cash-ref");
-
-    const referenceValue = referenceInput?.value.trim() || "";
-
-    if (!paymentMethodId) return alert("⚠️ Please select a payment method.");
-    if (isNaN(amountValue) || amountValue <= 0)
-        return alert("⚠️ Please enter a valid payment amount.");
-    if (paymentMethodId !== "3" && !proofInput)
-        return alert("⚠️ Please upload proof for GCash or Bank Transfer.");
-
-    const formData = new FormData();
-    formData.append("reservationId", reservationId);
-    formData.append("paymentMethodId", paymentMethodId);
-    formData.append("month", currentMonth);
-    formData.append("amount", amountValue);
-    formData.append("reference", referenceValue);
-    if (proofInput) formData.append("proofFile", proofInput);
-
-    try {
-        const response = await fetch(`${API_BASE_URL}save_payment.php`, {
-            method: "POST",
-            body: formData,
-            credentials: "include"
-        });
-
-        const result = await response.json();
-        console.log("📩 Payment Response:", result);
-
-        if (result.status === "success") {
-            alert("✅ Payment submitted successfully!");
-            paymentForm.reset();
-            loadReservedLots();
-
-            // 🔄 Call renderPaymentSchedule using paymentId instead of reservationId
-            if (result.paymentId && typeof renderPaymentSchedule === "function") {
-                renderPaymentSchedule(result.paymentId);
-            }
-
-        } else {
-            alert("⚠️ " + (result.message || "Failed to submit payment."));
+            docModal.hide();
+            replaceFileInput.value = '';
         }
-    } catch (error) {
-        console.error("❌ Submission error:", error);
-        alert("❌ An error occurred while submitting your payment.");
-    }
-});
+    });
+}
+   // --- Form Submission (PHP Connection) ---
 
 
 
 
 
     function selectMethod(element, method) {
-    document.querySelectorAll('.payment-method').forEach(card => card.classList.remove('selected'));
-    element.classList.add('selected');
+        document.querySelectorAll('.payment-method').forEach(card => card.classList.remove('selected'));
+        element.classList.add('selected');
 
-    document.getElementById('online-payment-fields').style.display = 'block';
-    document.getElementById('gcash-details').style.display = (method === 'gcash') ? 'block' : 'none';
-    document.getElementById('bank-details').style.display = (method === 'bank') ? 'block' : 'none';
-}
+        var onlinePaymentFields = document.getElementById('online-payment-fields');
+        var gcashDetails = document.getElementById('gcash-details');
+        var bankDetails = document.getElementById('bank-details');
+        if (onlinePaymentFields) onlinePaymentFields.style.display = 'block';
+        if (gcashDetails) gcashDetails.style.display = (method === 'gcash') ? 'block' : 'none';
+        if (bankDetails) bankDetails.style.display = (method === 'bank') ? 'block' : 'none';
+    }
     
     function fetchPaymentData() {
         updatePaymentSummary();
     }
 
     // Event listeners
-    lotSelect.addEventListener('change', updatePaymentSummary);
-    paymentTypeSelect.addEventListener('change', updateCalculatedAmount);
-    monthsToPayInput.addEventListener('input', () => {
-        customAmountInput.value = '';
+    if (typeof lotSelect !== 'undefined' && lotSelect) lotSelect.addEventListener('change', updatePaymentSummary);
+    if (typeof paymentTypeSelect !== 'undefined' && paymentTypeSelect) paymentTypeSelect.addEventListener('change', updateCalculatedAmount);
+    if (typeof monthsToPayInput !== 'undefined' && monthsToPayInput) monthsToPayInput.addEventListener('input', () => {
+        if (typeof customAmountInput !== 'undefined' && customAmountInput) customAmountInput.value = '';
         updateCalculatedAmount();
     });
-    customAmountInput.addEventListener('input', () => {
-        monthsToPayInput.value = '';
+    if (typeof customAmountInput !== 'undefined' && customAmountInput) customAmountInput.addEventListener('input', () => {
+        if (typeof monthsToPayInput !== 'undefined' && monthsToPayInput) monthsToPayInput.value = '';
         updateCalculatedAmount();
     });
     
     // Initial calls
     loadUserName();
-    loadReservedLots();
-     updatePaymentSummary();
+
+    // --- Form validation: require payment method ---
+    (function enforcePaymentMethodSelection() {
+        // support both possible form ids
+        const form = document.getElementById('paymentForm') || document.getElementById('payment-form');
+        const methodSelect = document.getElementById('paymentMethod');
+        const alertsContainer = document.createElement('div');
+        alertsContainer.id = 'payment-alerts';
+        if (form) form.insertBefore(alertsContainer, form.firstChild);
+
+        if (!form || !methodSelect) return;
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                if (!methodSelect.value || methodSelect.value === '') {
+                    // show inline Bootstrap alert
+                    alertsContainer.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">Please select a payment method before submitting.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                    methodSelect.focus();
+                    return false;
+                }
+
+                // Clear any previous alerts
+                alertsContainer.innerHTML = '';
+
+                // Build FormData and POST via fetch so we can handle JSON response and redirect on success
+                const fd = new FormData(form);
+
+                try {
+                    submitBtn.disabled = true;
+                    const res = await fetch('../../../../cms.api/save_payment.php', {
+                        method: 'POST',
+                        body: fd,
+                        credentials: 'include'
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        // Redirect back to client reservations after successful payment
+                        window.location.href = '../clientReservations.php';
+                        return true;
+                    } else {
+                        // show error message
+                        alertsContainer.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">${data.message || 'Payment failed. Please try again.'}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                        submitBtn.disabled = false;
+                        return false;
+                    }
+                } catch (err) {
+                    console.error('Payment request failed', err);
+                    alertsContainer.innerHTML = `<div class="alert alert-danger alert-dismissible" role="alert">Network error. Please try again later.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                    submitBtn.disabled = false;
+                    return false;
+                }
+            });
+    })();
+
 });

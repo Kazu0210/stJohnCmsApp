@@ -1,3 +1,78 @@
+// --- Add Payment Modal Logic ---
+const addPaymentBtn = document.getElementById('addPaymentBtn');
+const addPaymentModal = document.getElementById('addPaymentModal');
+const addPaymentForm = document.getElementById('addPaymentForm');
+const addClientReservation = document.getElementById('addClientReservation');
+const addMonthDue = document.getElementById('addMonthDue');
+const addAmountPaid = document.getElementById('addAmountPaid');
+const addPaymentMethod = document.getElementById('addPaymentMethod');
+const addReference = document.getElementById('addReference');
+
+// Fetch reservations for dropdown
+async function populateReservationDropdown() {
+    addClientReservation.innerHTML = '<option value="">Select Reservation</option>';
+    try {
+        const res = await fetch('/stJohnCmsApp/cms.api/fetchReservations.php');
+        const data = await res.json();
+        if (data.success && data.data) {
+            data.data.forEach(r => {
+                const label = `ID:${r.reservationId} | Lot: ${r.area}-${r.block}-${r.lotNumber} | User: ${r.userId}`;
+                const opt = document.createElement('option');
+                opt.value = r.reservationId;
+                opt.textContent = label;
+                addClientReservation.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        addClientReservation.innerHTML = '<option value="">Error loading reservations</option>';
+    }
+}
+
+if (addPaymentBtn) {
+    addPaymentBtn.addEventListener('click', () => {
+        populateReservationDropdown();
+        // Set default month to current month
+        const now = new Date();
+        addMonthDue.value = now.toLocaleString('default', { month: 'long' });
+        addAmountPaid.value = '';
+        addPaymentMethod.value = '3'; // Cash
+        addReference.value = '';
+    });
+}
+
+if (addPaymentForm) {
+    addPaymentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+    const formData = new FormData(addPaymentForm);
+    // Map paymentMethodId to backend values (1: GCash, 2: Bank, 3: Cash)
+    const paymentMethodId = formData.get('paymentMethodId');
+    formData.set('paymentMethodId', paymentMethodId);
+    // Add paymentType to backend
+    const paymentType = formData.get('paymentType');
+    formData.set('paymentType', paymentType);
+    // Add dummy userId if needed (handled by backend session)
+        try {
+            const res = await fetch('/stJohnCmsApp/cms.api/save_payment.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert('Payment added successfully!');
+                addPaymentForm.reset();
+                var modal = bootstrap.Modal.getInstance(addPaymentModal);
+                modal && modal.hide();
+                // Optionally reload payment records table
+                location.reload();
+            } else {
+                alert(result.message || 'Failed to add payment.');
+            }
+        } catch (err) {
+            alert('Error submitting payment.');
+        }
+    });
+}
 // adminFinancial.js
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -15,59 +90,39 @@ document.addEventListener('DOMContentLoaded', function () {
     const mockFile = { name: 'GCash-05-2024.jpg', type: 'image/jpeg', dataURL: 'mock-image-data-url' };
     const mockPDF = { name: 'BankTransfer-04-2024.pdf', type: 'application/pdf', dataURL: 'mock-pdf-data-url' };
     
-    // MOCK PDF.js implementation for demonstration. 
-    // In a real app, you would load the PDF.js library.
-    if (typeof window.pdfjsLib === 'undefined') {
-        window.pdfjsLib = {
-            getDocument: (url) => ({
-                promise: new Promise(resolve => {
-                    console.log(`Simulating PDF.js loading for: ${url}`);
-                    // Simulate a simplified PDF object
-                    resolve({
-                        getPage: (pageNo) => ({
-                            then: (callback) => {
-                                callback({
-                                    getViewport: (options) => ({ height: 500, width: 700 }),
-                                    render: (context) => ({ promise: Promise.resolve() })
-                                });
-                            }
-                        })
-                    });
-                })
-            }),
-            GlobalWorkerOptions: { workerSrc: 'path/to/pdf.worker.js' }
-        };
-    }
-
-    // Mock payment records using the specified status conditions:
-    let paymentRecords = [
-        // Pending Digital Payment (Needs Validation)
-        { id: 100, clientName: "Jane M. Smith", lot: "A-12-03-04", monthDue: months[0], amountPaid: 1500.00, method: 'GCash', reference: 'GC-REF-1001', status: 'Pending', proof: mockFile, date: new Date(today.getFullYear(), today.getMonth(), 5) },
-        // Deferred Status (Client chose to skip payment)
-        { id: 101, clientName: "Peter Jones", lot: "B-05-01-01", monthDue: months[0], amountPaid: 0.00, method: 'N/A', reference: 'N/A', status: 'Deferred', proof: null, date: new Date(today.getFullYear(), today.getMonth(), 1) },
-        // Paid Status (Exact Installment) - PDF Example
-        { id: 102, clientName: "Mary Williams", lot: "C-18-02-02", monthDue: months[1], amountPaid: 1500.00, method: 'Bank Transfer', reference: 'BT-REF-9005', status: 'Paid', proof: mockPDF, date: new Date(today.getFullYear(), today.getMonth() - 1, 10) },
-        // Pending Payment (Overdue)
-        { id: 103, clientName: "Overdue Client", lot: "E-07-04-05", monthDue: months[5], amountPaid: 0.00, method: 'N/A', reference: 'N/A', status: 'Pending', proof: null, date: new Date(today.getFullYear(), today.getMonth() - 5, 1) },
-        // Partially Paid Status (Advance Payment)
-        { id: 104, clientName: "Advance Client", lot: "D-01-01-01", monthDue: months[2], amountPaid: 3000.00, method: 'GCash', reference: 'ADV-REF-500', status: 'Partially Paid', proof: mockFile, date: new Date(today.getFullYear(), today.getMonth() - 2, 10) },
-        // Completed Status (Final payment)
-        { id: 105, clientName: "Completed Client", lot: "F-10-01-02", monthDue: months[11], amountPaid: 1500.00, method: 'Cash', reference: 'OR-5501', status: 'Completed', proof: null, date: new Date(today.getFullYear(), today.getMonth() - 11, 15) },
-        // More mock data for chart representation
-        ...Array(15).fill(null).map((_, i) => ({ 
-            id: i + 107, clientName: `Client ${i + 7}`, lot: `Z-${(i % 5).toString().padStart(2, '0')}-${(i % 10).toString().padStart(2, '0')}-${(i % 3).toString().padStart(2, '0')}`, monthDue: months[(i % 12)], 
-            amountPaid: (i % 3 === 0 ? 1500 : (i % 3 === 1 ? 3000 : 0)), 
-            method: i % 3 === 0 ? 'GCash' : (i % 3 === 1 ? 'Bank Transfer' : 'Cash'), 
-            reference: `REF-${i + 107}`, 
-            status: i % 5 === 0 ? 'Pending' : (i % 5 === 1 ? 'Paid' : (i % 5 === 2 ? 'Partially Paid' : (i % 5 === 3 ? 'Deferred' : 'Completed'))),
-            proof: (i % 5 === 0 || i % 5 === 1) ? mockFile : null,
-            date: new Date(today.getFullYear(), today.getMonth() - (i % 12), (i % 20) + 1)
-        }))
-    ].map((record, index) => ({ ...record, id: record.id || index + 1 })); // Ensure all records have an ID
-
+    let paymentRecords = [];
     let currentPage = 1;
     const recordsPerPage = 10;
-    let currentFilteredRecords = paymentRecords;
+    let currentFilteredRecords = [];
+
+    // Helper to convert paymentMethodId to readable name
+    function getMethodName(id) {
+        switch (parseInt(id)) {
+            case 1: return 'GCash';
+            case 2: return 'Bank Transfer';
+            case 3: return 'Cash';
+            default: return 'N/A';
+        }
+    }
+
+    // ...existing code...
+
+    // Initialize empty payments DataTable
+    if (window.jQuery && $('#paymentsTable').length) {
+        $('#paymentsTable').DataTable({
+            data: [], // Empty data
+            columns: [
+                { title: 'Client Name' },
+                { title: 'Lot' },
+                { title: 'Amount Paid' },
+                { title: 'Status' },
+                { title: 'Payment Method' },
+                { title: 'Reference/OR No.' },
+                { title: 'Date Paid' },
+                { title: 'Actions', orderable: false, searchable: false }
+            ]
+        });
+    }
     
     // --- 2. DOM ELEMENTS & MODALS ---
     const tableBody = document.getElementById('paymentTableBody');
@@ -226,90 +281,90 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- 6. TABLE RENDERING & FILTERING ---
 
-    function populateMonthFilter() {
-        monthFilter.innerHTML = '<option value="all">Filter by Month (All)</option>';
-        months.forEach(month => {
-            const option = document.createElement('option');
-            option.value = month;
-            option.textContent = month;
-            monthFilter.appendChild(option);
-        });
-    }
+    // function populateMonthFilter() {
+    //     monthFilter.innerHTML = '<option value="all">Filter by Month (All)</option>';
+    //     months.forEach(month => {
+    //         const option = document.createElement('option');
+    //         option.value = month;
+    //         option.textContent = month;
+    //         monthFilter.appendChild(option);
+    //     });
+    // }
 
-    function renderTable(data) {
-        tableBody.innerHTML = '';
-        const start = (currentPage - 1) * recordsPerPage;
-        const end = start + recordsPerPage;
-        const pageRecords = data.slice(start, end);
+    // function renderTable(data) {
+    //     tableBody.innerHTML = '';
+    //     const start = (currentPage - 1) * recordsPerPage;
+    //     const end = start + recordsPerPage;
+    //     const pageRecords = data.slice(start, end);
 
-        const noMessage = document.getElementById('noPaymentsMessage');
-        const totalPages = Math.ceil(data.length / recordsPerPage);
+    //     const noMessage = document.getElementById('noPaymentsMessage');
+    //     const totalPages = Math.ceil(data.length / recordsPerPage);
 
-        noMessage.classList.add('d-none');
-        // Check if the table-responsive element exists before trying to access its style
-        const tableContainer = tableBody.closest('.table-responsive');
-        if (tableContainer) {
-            tableContainer.style.display = 'block';
-        }
+    //     noMessage.classList.add('d-none');
+    //     // Check if the table-responsive element exists before trying to access its style
+    //     const tableContainer = tableBody.closest('.table-responsive');
+    //     if (tableContainer) {
+    //         tableContainer.style.display = 'block';
+    //     }
 
-        if (pageRecords.length === 0) {
-            if (tableContainer) {
-                tableContainer.style.display = 'none';
-            }
-            noMessage.classList.remove('d-none');
-            document.getElementById('pageInfo').textContent = `Page 0 of ${totalPages || 1}`;
-            prevPageBtn.disabled = true;
-            nextPageBtn.disabled = true;
-            return;
-        }
+    //     if (pageRecords.length === 0) {
+    //         if (tableContainer) {
+    //             tableContainer.style.display = 'none';
+    //         }
+    //         noMessage.classList.remove('d-none');
+    //         document.getElementById('pageInfo').textContent = `Page 0 of ${totalPages || 1}`;
+    //         prevPageBtn.disabled = true;
+    //         nextPageBtn.disabled = true;
+    //         return;
+    //     }
 
-        pageRecords.forEach(record => {
-            const row = tableBody.insertRow();
-            row.dataset.recordId = record.id;
+    //     pageRecords.forEach(record => {
+    //         const row = tableBody.insertRow();
+    //         row.dataset.recordId = record.id;
             
-            row.innerHTML = `
-                <td>${record.clientName}</td>
-                <td>${record.lot}</td>
-                <td>${record.monthDue}</td>
-                <td>₱${record.amountPaid.toFixed(2).toLocaleString('en-US')}</td>
-                <td>${record.method}</td>
-                <td>${record.reference}</td>
-                <td><span class="${getStatusClass(record.status)}">${record.status}</span></td>
-                <td class="text-center">
-                    <button class="action-btn btn-view-proof" title="View Proof" data-id="${record.id}" ${record.method === 'Cash' || !record.proof || record.method === 'N/A' ? 'disabled' : ''}><i class="fas fa-eye"></i></button>
-                    <button class="action-btn btn-edit-payment" title="Edit/Validate Payment" data-id="${record.id}"><i class="fas fa-edit"></i></button>
-                </td>
-            `;
-        });
+    //         row.innerHTML = `
+    //             <td>${record.clientName}</td>
+    //             <td>${record.lot}</td>
+    //             <td>${record.monthDue}</td>
+    //             <td>₱${record.amountPaid.toFixed(2).toLocaleString('en-US')}</td>
+    //             <td>${record.method}</td>
+    //             <td>${record.reference}</td>
+    //             <td><span class="${getStatusClass(record.status)}">${record.status}</span></td>
+    //             <td class="text-center">
+    //                 <button class="action-btn btn-view-proof" title="View Proof" data-id="${record.id}" ${record.method === 'Cash' || !record.proof || record.method === 'N/A' ? 'disabled' : ''}><i class="fas fa-eye"></i></button>
+    //                 <button class="action-btn btn-edit-payment" title="Edit/Validate Payment" data-id="${record.id}"><i class="fas fa-edit"></i></button>
+    //             </td>
+    //         `;
+    //     });
         
-        attachTableListeners();
+    //     attachTableListeners();
         
-        // Update Pagination Controls
-        document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
-        prevPageBtn.disabled = currentPage === 1;
-        nextPageBtn.disabled = currentPage >= totalPages;
-    }
+    //     // Update Pagination Controls
+    //     document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+    //     prevPageBtn.disabled = currentPage === 1;
+    //     nextPageBtn.disabled = currentPage >= totalPages;
+    // }
 
-    function applyFilters() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const status = statusFilter.value;
-        const month = monthFilter.value;
+    // function applyFilters() {
+    //     const searchTerm = searchInput.value.toLowerCase();
+    //     const status = statusFilter.value;
+    //     const month = monthFilter.value;
 
-        const filtered = paymentRecords.filter(r => {
-            const matchesSearch = r.clientName.toLowerCase().includes(searchTerm) || 
-                                     r.lot.toLowerCase().includes(searchTerm) ||
-                                     r.reference.toLowerCase().includes(searchTerm);
+    //     const filtered = paymentRecords.filter(r => {
+    //         const matchesSearch = r.clientName.toLowerCase().includes(searchTerm) || 
+    //                                  r.lot.toLowerCase().includes(searchTerm) ||
+    //                                  r.reference.toLowerCase().includes(searchTerm);
             
-            const matchesStatus = status === 'all' || r.status === status;
-            const matchesMonth = month === 'all' || r.monthDue === month;
+    //         const matchesStatus = status === 'all' || r.status === status;
+    //         const matchesMonth = month === 'all' || r.monthDue === month;
 
-            return matchesSearch && matchesStatus && matchesMonth;
-        });
+    //         return matchesSearch && matchesStatus && matchesMonth;
+    //     });
 
-        currentFilteredRecords = filtered;
-        currentPage = 1;
-        renderTable(currentFilteredRecords);
-    }
+    //     currentFilteredRecords = filtered;
+    //     currentPage = 1;
+    //     renderTable(currentFilteredRecords);
+    // }
     
     // --- 7. MODAL HANDLERS ---
     
@@ -466,23 +521,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Filter and Pagination Listeners
-    searchInput.addEventListener('input', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
-    monthFilter.addEventListener('change', applyFilters);
-    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-        searchInput.value = '';
-        statusFilter.value = 'all';
-        monthFilter.value = 'all';
-        applyFilters();
-    });
+    // searchInput.addEventListener('input', applyFilters);
+    // statusFilter.addEventListener('change', applyFilters);
+    // monthFilter.addEventListener('change', applyFilters);
+    // document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+    //     searchInput.value = '';
+    //     statusFilter.value = 'all';
+    //     monthFilter.value = 'all';
+    //     applyFilters();
+    // });
 
-    document.getElementById('prevPageBtn').addEventListener('click', () => {
-        if (currentPage > 1) { currentPage--; renderTable(currentFilteredRecords); }
-    });
-    document.getElementById('nextPageBtn').addEventListener('click', () => {
-        const totalPages = Math.ceil(currentFilteredRecords.length / recordsPerPage);
-        if (currentPage < totalPages) { currentPage++; renderTable(currentFilteredRecords); }
-    });
+    // document.getElementById('prevPageBtn').addEventListener('click', () => {
+    //     if (currentPage > 1) { currentPage--; renderTable(currentFilteredRecords); }
+    // });
+    // document.getElementById('nextPageBtn').addEventListener('click', () => {
+    //     const totalPages = Math.ceil(currentFilteredRecords.length / recordsPerPage);
+    //     if (currentPage < totalPages) { currentPage++; renderTable(currentFilteredRecords); }
+    // });
 
     document.getElementById('paymentForm').addEventListener('submit', savePaymentChanges);
     
@@ -494,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // --- 10. INITIALIZATION ---
-    populateMonthFilter();
-    updateSummary();
-    applyFilters();
+    // populateMonthFilter();
+    // updateSummary();
+    // applyFilters();
 });

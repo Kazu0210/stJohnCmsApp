@@ -26,53 +26,15 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg fixed-top shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-                <span class="fw-bold">Blessed Saint John Memorial</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="../clientDashboard/clientDashboard.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../cemeteryMap/cemeteryMap.html">Cemetery Map</a></li>
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="lotReservation.html">Lot Reservation</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../payment/payment.html">Payment</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../burialRecord/burialRecord.html">Burial Record</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../maintenanceServiceRequest/maintenanceServiceRequest.html">Maintenance Request</a></li>
-                </ul>
-            
-            <div class="dropdown d-none d-lg-block">
-                <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span id="user-name-display-desktop">
-                        <?php 
-                        // Display user name from session, fallback to email if name not available
-                        if (isset($_SESSION['firstName']) && isset($_SESSION['lastName'])) {
-                            echo htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']);
-                        } elseif (isset($_SESSION['username'])) {
-                            echo htmlspecialchars($_SESSION['username']);
-                        } else {
-                            echo htmlspecialchars($_SESSION['email']);
-                        }
-                        ?>
-                    </span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" href="../../../../cms.api/logout.php" id="logoutLinkDesktop">
-
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                    </a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <?php include dirname(__DIR__) . '/clientNavbar.php'; ?>
 
     <main class="main-content container-fluid">
         <div class="row">
             <div class="col-lg-12">
                 <div class="pricing-container card p-4 mb-4">
+                    <?php if (isset($_GET['success']) && $_GET['success'] == '1'): ?>
+                        <div class="alert alert-success">Reservation submitted successfully!<?php if (isset($_GET['lotId'])) echo ' (Lot ID: ' . htmlspecialchars($_GET['lotId']) . ')'; ?></div>
+                    <?php endif; ?>
                     <h2>Cemetery Lot and Mausoleum Options</h2>
                     <p class="payment-terms">All lots are payable within 4 years and 2 months (50 months) and can be paid monthly or in advance.</p>
                 
@@ -282,146 +244,6 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
             </div>
         </div>
 
-        <section class="lot-reservation-section card p-4 mb-4">
-            <!-- ✅ FIXED: Corrected the form action URL -->
-            <form class="lot-reservation-form row g-3" method="POST" action="http://localhost/stJohnCmsApp/cms.api/clientLotReservation.php" enctype="multipart/form-data">
-                <h3>Client Information</h3>
-                <div class="col-md-6">
-                    <label for="client_name" class="form-label">Client Name: <span class="text-danger">*</span></label>
-                    <input type="text" id="client_name" name="client_name" class="form-control" required 
-                           value="<?php 
-                           // Pre-populate with session user name
-                           if (isset($_SESSION['firstName']) && isset($_SESSION['lastName'])) {
-                               echo htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']);
-                           } elseif (isset($_SESSION['username'])) {
-                               echo htmlspecialchars($_SESSION['username']);
-                           } else {
-                               echo htmlspecialchars($_SESSION['email']);
-                           }
-                           ?>">
-                </div>
-                <div class="col-md-6">
-                    <label for="client_address" class="form-label">Address: <span class="text-danger">*</span></label>
-                    <input type="text" id="client_address" name="client_address" class="form-control" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="client_contact" class="form-label">Contact Number: <span class="text-danger">*</span></label>
-                    <input type="text" id="client_contact" name="client_contact" class="form-control" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="client_id_upload" class="form-label">Upload Client's Valid ID: <span class="text-danger">*</span></label>
-                    <div class="file-input-wrapper">
-                        <label class="file-upload-label" for="client_id_upload">
-                            <i class="fas fa-upload"></i> Choose File
-                        </label>
-                        <input type="file" id="client_id_upload" name="client_id_upload" accept="image/*,application/pdf" required>
-                        <span class="file-name" id="client_id_upload_filename">No file chosen</span>
-                        <div class="file-actions" data-target="client_id_upload">
-                            <i class="fas fa-eye view-icon" title="View"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <h3>Deceased Person's Information (Optional for advance reservation)</h3>
-                <div class="col-md-6">
-                    <label for="deceased_name" class="form-label">Deceased Person's Name:</label>
-                    <input type="text" id="deceased_name" name="deceased_name" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label for="burial_date" class="form-label">Burial Date:</label>
-                    <input type="date" id="burial_date" name="burial_date" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label for="death_certificate_upload" class="form-label">Upload Death Certificate:</label>
-                    <div class="file-input-wrapper">
-                        <label class="file-upload-label" for="death_certificate_upload">
-                            <i class="fas fa-upload"></i> Choose File
-                        </label>
-                        <input type="file" id="death_certificate_upload" name="death_certificate_upload" accept="image/*,application/pdf">
-                        <span class="file-name" id="death_certificate_upload_filename">No file chosen</span>
-                        <div class="file-actions" data-target="death_certificate_upload">
-                            <i class="fas fa-eye view-icon" title="View"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label for="deceased_id_upload" class="form-label">Upload Deceased's Valid ID (optional):</label>
-                    <div class="file-input-wrapper">
-                        <label class="file-upload-label" for="deceased_id_upload">
-                            <i class="fas fa-upload"></i> Choose File
-                        </label>
-                        <input type="file" id="deceased_id_upload" name="deceased_id_upload" accept="image/*,application/pdf">
-                        <span class="file-name" id="deceased_id_upload_filename">No file chosen</span>
-                        <div class="file-actions" data-target="deceased_id_upload">
-                            <i class="fas fa-eye view-icon" title="View"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label for="burial_permit_upload" class="form-label">Upload Burial Permit:</label>
-                    <div class="file-input-wrapper">
-                        <label class="file-upload-label" for="burial_permit_upload">
-                            <i class="fas fa-upload"></i> Choose File
-                        </label>
-                        <input type="file" id="burial_permit_upload" name="burial_permit_upload" accept="image/*,application/pdf">
-                        <span class="file-name" id="burial_permit_upload_filename">No file chosen</span>
-                        <div class="file-actions" data-target="burial_permit_upload">
-                            <i class="fas fa-eye view-icon" title="View"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <h3>Reservation Details</h3>
-                <div class="col-md-6">
-                    <label for="reservation_date" class="form-label">Date of Reservation: <span class="text-danger">*</span></label>
-                    <input type="date" id="reservation_date" name="reservation_date" class="form-control" required>
-                </div>
-                <input type="hidden" id="lotId" name="lotId" value="">
-                <div class="col-md-6">
-                    <label for="area" class="form-label">Area: </label>
-                    <input type="text" id="area" name="area" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label for="block" class="form-label">Block:</label>
-                    <input type="text" id="block" name="block" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label for="rowNumber" class="form-label">Row Number:</label>
-                    <input type="text" id="rowNumber" name="rowNumber" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label for="lot_number" class="form-label">Lot Number:</label>
-                    <input type="text" id="lot_number" name="lot_number" class="form-control">
-                </div>
-                <div class="col-md-6">
-                    <label for="preferred_lot" class="form-label">Preferred Lot Type: <span class="text-danger">*</span></label>
-                    <select id="preferred_lot" name="lotTypeId" class="form-select" required>
-                        <option value="" selected disabled>-- Select Lot Type --</option>
-                        <option value="1">Regular Lot (₱50,000)</option>
-                        <option value="2">Regular Lot (₱60,000)</option>
-                        <option value="3">Premium Lot (₱70,000)</option>
-                        <option value="4">Mausoleum Inside (₱500,000)</option>
-                        <option value="5">Mausoleum Roadside (₱600,000)</option>
-                        <option value="6">4-Lot Package (₱300,000)</option>
-                        <option value="7">Exhumation (₱15,000)</option>
-                    </select>
-                </div>
-                <div class="col-md-6" id="depth_option">
-                    <label for="burial_depth" class="form-label">Burial Depth: <span class="text-danger">*</span></label>
-                    <select id="burial_depth" name="burial_depth" class="form-select">
-                        <option value="4ft" selected>4 feet</option>
-                        <option value="6ft">6 feet</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <label for="additional_notes" class="form-label">Additional Notes:</label>
-                    <textarea id="additional_notes" name="additional_notes" rows="3" class="form-control"></textarea>
-                </div>
-                <div class="col-12 text-center">
-                    <button type="submit" class="submit-btn btn">Submit Reservation Request</button>
-                </div>
-            </form>
-        </section>
 
         <section class="lot-history-section card p-4">
             <h3>Lot Reservation History</h3>
@@ -441,6 +263,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
                             <th>Preferred Lot Type</th>
                             <th>Amount</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>

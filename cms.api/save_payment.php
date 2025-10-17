@@ -105,11 +105,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reservationId   = trim($_POST['reservationId'] ?? '');
     $paymentMethodId = trim($_POST['paymentMethodId'] ?? '');
     $month           = trim($_POST['month'] ?? date('F'));
-    $amount          = trim($_POST['amount'] ?? '');
+        $amount_raw      = trim($_POST['amount'] ?? '');
     $reference       = trim($_POST['reference'] ?? '');
+        // paymentType removed per frontend requirement; do not read it from POST
     $status          = "Pending";
     $datePaid        = date("Y-m-d H:i:s");
     $filePath        = null;
+    
+        // Normalize amount to a decimal value (remove commas, ensure dot decimal)
+        $amount_normalized = str_replace(',', '', $amount_raw);
+        if (!is_numeric($amount_normalized)) {
+            echo json_encode(["status" => "error", "message" => "Invalid amount format"]);
+            exit;
+        }
+        // Format to 2 decimal places for storage
+        $amount = number_format((float)$amount_normalized, 2, '.', '');
 
     // ✅ Validate required fields
     if (empty($reservationId) || empty($paymentMethodId) || empty($amount)) {
@@ -125,6 +135,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($res->num_rows === 0) {
         echo json_encode(["status" => "error", "message" => "Invalid reservation ID"]);
         exit;
+    }
+
+    // ✅ Prevent payment if reservation status indicates it's still 'For Reservation' / 'For Reserved'
+    $statusStmt = $conn->prepare("SELECT status FROM reservations WHERE reservationId = ? LIMIT 1");
+    if ($statusStmt) {
+        $statusStmt->bind_param("i", $reservationId);
+        $statusStmt->execute();
+        $statusRow = $statusStmt->get_result()->fetch_assoc();
+        if ($statusRow && isset($statusRow['status'])) {
+            $resStatus = trim($statusRow['status']);
+            $blockedStatuses = ['For Reservation', 'For Reserved'];
+            if (in_array($resStatus, $blockedStatuses, true)) {
+                echo json_encode(["status" => "error", "message" => "Payment not allowed while reservation status is '$resStatus'. Please wait until your reservation is confirmed." ]);
+                exit;
+            }
+        }
+        $statusStmt->close();
     }
 
     // ✅ Handle file upload
@@ -148,23 +175,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ✅ Insert payment record
     try {
-        $stmt = $conn->prepare("
-            INSERT INTO payments 
-            (reservationId, userId, paymentMethodId, month, amount, datePaid, reference, document, status, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        ");
-        $stmt->bind_param(
-            "iiissssss",
-            $reservationId,
-            $userId,
-            $paymentMethodId,
-            $month,
-            $amount,
-            $datePaid,
-            $reference,
-            $filePath,
-            $status
-        );
+          // Prepare INSERT and bind parameters (amount as decimal)
+          $stmt = $conn->prepare("\n            INSERT INTO payments \n            (reservationId, userId, paymentMethodId, month, amount, datePaid, reference, document, status, createdAt, updatedAt)\n               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())\n        ");
+                     // Bind types: i=integer, d=double (for decimal), s=string
+                     // Order: reservationId(i), userId(i), paymentMethodId(i), month(s), amount(d), datePaid(s), reference(s), document(s), status(s)
+                         $stmt->bind_param(
+                              "iiisdssss",
+                          $reservationId,
+                          $userId,
+                          $paymentMethodId,
+                          $month,
+                          $amount,
+                          $datePaid,
+                          $reference,
+                          $filePath,
+                              $status
+                     );
 
         if ($stmt->execute()) {
             echo json_encode([

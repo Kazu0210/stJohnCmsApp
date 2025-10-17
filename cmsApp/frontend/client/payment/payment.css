@@ -288,8 +288,10 @@ main {
     }
 
     .payment-qr-code {
-        max-width: 150px; /* Reduces QR code size on small screens */
-        height: auto;
+        max-width: 150px;
+        height: 150px;
+        width: auto;
+        object-fit: contain;
     }
 
     .footer { font-size: 0.85rem; }

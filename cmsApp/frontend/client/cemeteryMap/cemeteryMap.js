@@ -251,8 +251,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // ====== Save to localStorage for lotReservation page auto-populate ======
         localStorage.setItem("selectedLotData", JSON.stringify(lotData));
 
-        // Redirect to Reservation page
-        window.location.href = "../lotReservation/lotReservation.html";
+    // Redirect to Reservation Form page
+    window.location.href = "../lotReservation/lotReservationForm.php";
     });
 
     // ====== TOGGLE BURIAL DEPTH ======

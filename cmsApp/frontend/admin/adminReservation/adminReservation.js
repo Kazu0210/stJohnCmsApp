@@ -102,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 reservationDate: r.reservationDate,
                 area: r.area,
                 block: r.block,
-                rowNumber: r.row,
+                    rowNumber: r.row,
+                    lotId: r.lotId,
                 lotNumber: r.lotNumber,
                 lotTypeID: r.lotType,
                 typeName: r.lotTypeName,
@@ -173,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageData = filteredReservations.slice(startIndex, endIndex);
 
         pageData.forEach(rec => {
+            const normalizedStatus = (rec.status || '').toLowerCase().trim();
             // Determine button state and text for Archive/Restore
             let archiveButtonHtml = '';
             if (rec.status.toLowerCase() === 'archived') {
@@ -180,6 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 archiveButtonHtml = `<button class="btn btn-sm btn-secondary btn-archive-delete" title="Archive / Delete"><i class="fas fa-archive"></i> Options</button>`;
             }
+            // Determine whether to show "Confirm" button: show for any status that is NOT reserved/cancelled/archived
+            // This is intentionally permissive to catch various status string variants.
+            const showConfirmBtn = normalizedStatus !== '' && !/(reserved|cancelled|canceled|archived)/.test(normalizedStatus);
 
             tableBody.insertAdjacentHTML('beforeend', `
                 <tr data-id="${rec.reservationId}">
@@ -209,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="btn btn-sm btn-danger btn-cancel" title="Cancel Reservation">
                             <i class="fas fa-times-circle"></i>
                         </button>
+                        ${showConfirmBtn ? `<button class="btn btn-sm btn-success btn-confirm text-white ms-1" title="Confirm Reservation"><i class="fas fa-check-circle"></i></button>` : ''}
                         ${archiveButtonHtml}
                     </td>
                 </tr>`);
@@ -240,6 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
             prepareArchiveDeleteModal(id);
         } else if (e.target.closest('.btn-restore')) {
             updateReservationStatus(id, 'pending', 'Restoring reservation to Pending status.');
+        } else if (e.target.closest('.btn-confirm')) {
+            // Confirm reservation: change reservation status to Reserved and mark lot as Reserved
+            const rec = reservations.find(r => String(r.reservationId) === String(id));
+            if (!rec) return showToast('Reservation not found', 'danger');
+            if (!confirm(`Confirm reservation for ${rec.clientName} (Lot ${rec.lotNumber}) and mark lot as Reserved?`)) return;
+            confirmReservation(id);
         } else if (e.target.closest('.btn-view-doc')) {
             openDocModal(id);
         }
@@ -539,6 +551,35 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error(err);
             showToast('Network error during status update', 'danger');
+        }
+    }
+
+    // -------------------------
+    // Confirm Reservation (update reservation + lot status)
+    // -------------------------
+    async function confirmReservation(reservationId) {
+        const rec = reservations.find(r => String(r.reservationId) === String(reservationId));
+        if (!rec) return showToast('Reservation not found', 'danger');
+
+        showToast('Confirming reservation...', 'info');
+
+        try {
+            const res = await fetch(API_BASE + 'confirmReservation.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ reservationID: parseInt(reservationId, 10), lotId: rec.lotId || null })
+            });
+            const json = await res.json();
+            if (json.status === 'success') {
+                showToast(json.message || 'Reservation confirmed and lot reserved', 'success');
+                await fetchReservations();
+            } else {
+                showToast(json.message || 'Failed to confirm reservation', 'danger');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Network error during confirmation', 'danger');
         }
     }
 

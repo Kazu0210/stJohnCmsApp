@@ -144,6 +144,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (dataForPage.length > 0) {
             dataForPage.forEach(row => {
                 const tr = document.createElement("tr");
+                // Determine if reservation is already cancelled (case-insensitive)
+                const isCancelled = row.status && String(row.status).toLowerCase() === 'cancelled';
+                // Robust id lookup: try common field names used in API/DB
+                const rowId = row.id || row.reservationID || row.reservationId || '';
+
+                const cancelBtnHtml = isCancelled
+                    ? `<button class="btn btn-sm btn-secondary cancel-reservation" data-id="${rowId}" title="Cancel" disabled><i class="fas fa-times"></i></button>`
+                    : `<button class="btn btn-sm btn-danger cancel-reservation" data-id="${rowId}" title="Cancel"><i class="fas fa-times"></i></button>`;
+
                 tr.innerHTML = `
                     <td>${row.clientName || "-"}</td>
                     <td>${row.address || "-"}</td>
@@ -162,12 +171,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${row.lotNumber || "-"}</td>
                     <td>${row.lotType || "N/A"}</td>
                     <td>${row.price ? "₱" + Number(row.price).toLocaleString() : "-"}</td>
-                    <td>${row.status || "N/A"}</span></td>
+                    <td>${row.status || "N/A"}</td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group" aria-label="Actions">
+                            ${cancelBtnHtml}
+                        </div>
+                    </td>
                 `;
                 historyTableBody.appendChild(tr);
             });
         } else {
-            historyTableBody.innerHTML = `<tr><td colspan="12" class="text-center">No reservation history found.</td></tr>`;
+            historyTableBody.innerHTML = `<tr><td colspan="13" class="text-center">No reservation history found.</td></tr>`;
         }
     }
 
@@ -278,6 +292,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 // The 'true' here signifies this is from the history view, hiding unnecessary buttons
                 openFileInModal(null, docUrl, null, true); 
             }
+            return;
+        }
+
+        const cancelBtn = e.target.closest('.cancel-reservation');
+        if (cancelBtn) {
+            const id = cancelBtn.dataset.id;
+            if (!id) return alert('Unable to determine reservation id for cancellation.');
+            if (!confirm('Are you sure you want to cancel this reservation?')) return;
+            // Call cancelReservation API
+            (async () => {
+                try {
+                    const res = await fetch(`${API_BASE_URL}cancelReservation.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        // API expects key named reservationID (capital D)
+                        body: JSON.stringify({ reservationID: id }),
+                        credentials: 'include'
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.status === 'success') {
+                        alert('Reservation cancelled.');
+                        // Refresh history
+                        fullReservationData = [];
+                        loadReservationHistory();
+                    } else {
+                        alert('Failed to cancel reservation: ' + (data.message || 'Unknown error'));
+                    }
+                } catch (err) {
+                    console.error('Cancel request failed', err);
+                    alert('An error occurred while cancelling.');
+                }
+            })();
+            return;
         }
     });
 
@@ -391,7 +438,16 @@ document.addEventListener("DOMContentLoaded", () => {
             credentials: "include",
         });
 
-        const result = await res.json(); 
+        let result;
+        try {
+            result = await res.json();
+        } catch (jsonErr) {
+            // Log the raw response for debugging
+            const rawText = await res.text();
+            console.error("Failed to parse JSON. Raw response:", rawText);
+            alert("❌ Server returned an invalid response. Check the console for details.");
+            return;
+        }
 
         if (!res.ok) {
             throw new Error(`Server error (${res.status}): ${result.message || 'Unknown server error.'}`);

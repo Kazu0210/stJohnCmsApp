@@ -47,28 +47,27 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
             document.getElementById("serverMessage").style.color = "green";
             document.getElementById("serverMessage").textContent = data.message;
 
-            setTimeout(() => {
-                // Convert the role from PHP to lowercase for consistent comparison
-                const userRole = data.role ? data.role.toLowerCase() : '';
+      setTimeout(() => {
+        // If server provided an absolute redirect URL, use it (preferred)
+        if (data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
 
-                if (userRole === "admin") {
-                    // Path from login.php to adminDashboard.php
-                    // login.php: stJohnCmsApp/cmsApp/frontend/auth/login/login.php
-                    // adminDashboard.php: stJohnCmsApp/cmsApp/frontend/admin/adminDashboard/adminDashboard.php
-                    window.location.href = "../../admin/adminDashboard/adminDashboard.php";
-                } else if (userRole === "secretary") {
-                    // Assuming secretary dashboard is at: stJohnCmsApp/cmsApp/frontend/secretary/secretaryDashboard.php
-                    window.location.href = "../../secretary/secretaryDashboard.php";
-                } else if (userRole === "client") {
-                    // Assuming client dashboard is at: stJohnCmsApp/cmsApp/frontend/client/clientDashboard.php
-                    // Corrected path to clientDashboard.php
-                    window.location.href = "../../client/clientDashboard/clientDashboard.php";
-                } else {
-                    // Fallback or error if role is not recognized
-                    console.error("Unknown user role:", data.role);
-                    alert("Unknown user role. Cannot redirect.");
-                }
-            }, 1000);
+        // Otherwise fall back to role-based redirects (relative paths)
+        const userRole = data.role ? data.role.toLowerCase() : '';
+
+        if (userRole === "admin") {
+          window.location.href = "../../admin/adminDashboard/adminDashboard.php";
+        } else if (userRole === "secretary") {
+          window.location.href = "../../secretary/secretary.php";
+        } else if (userRole === "client") {
+          window.location.href = "../../client/clientDashboard/clientDashboard.php";
+        } else {
+          console.error("Unknown user role:", data.role);
+          alert("Unknown user role. Cannot redirect.");
+        }
+      }, 1000);
         } else {
             document.getElementById("serverMessage").style.color = "red";
             document.getElementById("serverMessage").textContent = data.message;

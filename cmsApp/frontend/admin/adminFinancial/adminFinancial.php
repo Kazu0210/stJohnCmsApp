@@ -21,7 +21,12 @@ $userRole = getCurrentUserRole();
     <title>Financial Tracking | Admin Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- jQuery and DataTables CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
     <link rel="stylesheet" href="adminFinancial.css">
     
     <style>
@@ -124,69 +129,28 @@ $userRole = getCurrentUserRole();
                 </div>
             </div>
         </div>
-        
-        <div class="card mb-5 shadow">
-            <div class="card-header"><i class="fas fa-chart-line me-2"></i>Monthly Income Trends</div>
-            <div class="card-body">
-                <canvas id="monthlyIncomeChart"></canvas>
-            </div>
-        </div>
 
-        <div class="card shadow">
-            <div class="card-header"><i class="fas fa-table me-2"></i>Payment Records</div>
-            
+        <!-- Payments Table -->
+        <div class="card shadow mb-5">
+            <div class="card-header"><i class="fas fa-money-check-alt me-2"></i>Payments</div>
             <div class="card-body">
-                <div class="row mb-4 g-3">
-                    <div class="col-lg-4 col-md-6">
-                        <input type="text" class="form-control" id="paymentSearch" placeholder="Search by Client/Lot/Reference No.">
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <select class="form-select" id="paymentStatusFilter">
-                            <option value="all">Filter by Status (All)</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Paid">Paid</option>
-                            <option value="Partially Paid">Partially Paid</option>
-                            <option value="Deferred">Deferred</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <select class="form-select" id="paymentMonthFilter">
-                            <option value="all">Filter by Month (All)</option>
-                        </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <button class="btn btn-outline-info w-100" id="clearFiltersBtn">
-                            <i class="fas fa-redo"></i> Clear
-                        </button>
-                    </div>
-                </div>
-
-                <div class="table-responsive rounded">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Client Name</th>
-                                <th>Area-Block-Row-Lot</th>
-                                <th>Month Due</th>
-                                <th>Amount Paid (₱)</th>
-                                <th>Method</th>
-                                <th>Reference/OR No.</th>
-                                <th>Status</th>
-                                <th class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="paymentTableBody">
-                            </tbody>
-                    </table>
-                    <p id="noPaymentsMessage" class="text-center p-4 d-none">No payment records found matching your filters.</p>
-                </div>
-                
-                <div class="d-flex justify-content-center align-items-center p-3">
-                    <button class="btn btn-sm btn-outline-info me-3" id="prevPageBtn">Previous</button>
-                    <span id="pageInfo" class="align-self-center fw-bold">Page 1 of 1</span>
-                    <button class="btn btn-sm btn-outline-info ms-3" id="nextPageBtn">Next </button>
-                </div>
+                <table id="paymentsTable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Client Name</th>
+                            <th>Lot</th>
+                            <th>Amount Paid</th>
+                            <th>Status</th>
+                            <th>Payment Method</th>
+                            <th>Reference/OR No.</th>
+                            <th>Date Paid</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Empty table, will be populated by DataTables -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
@@ -329,5 +293,6 @@ $userRole = getCurrentUserRole();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="adminFinancial.js"></script>
+    <script src="fetchPayments.js"></script>
 </body>
 </html>

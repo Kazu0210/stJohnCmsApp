@@ -109,18 +109,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Regenerate session ID for security
             session_regenerate_id(true);
 
-            // Determine redirect URL based on role
+            // Determine redirect URL based on role (use absolute paths from web root)
+            // This ensures the frontend can navigate reliably regardless of current file location
+            $base = '/stJohnCmsApp/cmsApp/frontend';
             $redirectUrl = '';
             switch ($row['role']) {
                 case 'Admin':
-                    $redirectUrl = '../cmsApp/frontend/admin/adminDashboard/adminDashboard.php';
+                    $redirectUrl = $base . '/admin/adminDashboard/adminDashboard.php';
                     break;
                 case 'Secretary':
-                    $redirectUrl = '../cmsApp/frontend/admin/adminDashboard/adminDashboard.php';
+                    $redirectUrl = $base . '/secretary/secretary.php';
                     break;
                 case 'Client':
                 default:
-                    $redirectUrl = '../cmsApp/frontend/client/clientDashboard/clientDashboard.php';
+                    $redirectUrl = $base . '/client/clientDashboard/clientDashboard.php';
                     break;
             }
 
@@ -131,6 +133,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "fullName" => $_SESSION['name'],
                 "redirect" => $redirectUrl
             ]);
+
+            // --- Logging: record redirect info for debugging legacy redirects ---
+            try {
+                $logDir = __DIR__ . '/logs';
+                if (!is_dir($logDir)) {
+                    mkdir($logDir, 0755, true);
+                }
+                $logFile = $logDir . '/login_redirects.log';
+
+                $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+                $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+                // redact email locally to preserve privacy (keep domain only)
+                $emailParts = explode('@', $row['email']);
+                $redactedEmail = (count($emailParts) === 2) ? ('***@' . $emailParts[1]) : '***@unknown';
+
+                $logEntry = sprintf(
+                    "%s | ip=%s | role=%s | email=%s | redirect=%s | ua=%s\n",
+                    date('c'),
+                    $ip,
+                    $row['role'],
+                    $redactedEmail,
+                    $redirectUrl,
+                    str_replace(["\r", "\n"], ['',''], $ua)
+                );
+
+                file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+            } catch (Exception $e) {
+                // Don't block login on logging errors; optionally you can log to error_log
+                error_log('Login redirect logging failed: ' . $e->getMessage());
+            }
         } else {
             echo json_encode([
                 "status" => "error",

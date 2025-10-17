@@ -1,4 +1,8 @@
 <?php
+// DEBUG: Log all errors to a file for troubleshooting
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error_log.txt');
+error_reporting(E_ALL);
 require_once "db_connect.php";
 session_start();
 
@@ -111,14 +115,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $reservationStatus = "Pending"; 
     $createdAt = date("Y-m-d H:i:s");
 
+    // --- 4b. Lookup monthlyPayment from lot_types if lotTypeId provided ---
+    // Default to 0.0 if no monthlyPayment found
+    $amountDue = 0.0;
+    if ($lotTypeId !== null) {
+        $sqlLotType = "SELECT monthlyPayment FROM lot_types WHERE lotTypeId = ? LIMIT 1";
+        $stmtLotType = $conn->prepare($sqlLotType);
+        if ($stmtLotType) {
+            $stmtLotType->bind_param("i", $lotTypeId);
+            $stmtLotType->execute();
+            $resLotType = $stmtLotType->get_result()->fetch_assoc();
+            if ($resLotType && isset($resLotType['monthlyPayment'])) {
+                // Cast to float to ensure numeric type for DB binding
+                $amountDue = (float) $resLotType['monthlyPayment'];
+            }
+            $stmtLotType->close();
+        }
+    }
+
     // --- 5. Prepare Database Statements ---
 
     // A. Reservation Insertion
     $sql = "INSERT INTO reservations (
         userId, lotId, clientName, address, contactNumber, deceasedName, burialDate, reservationDate,
         area, block, rowNumber, lotNumber, burialDepth, notes, clientValidId, deathCertificate, deceasedValidId,
-        burialPermit, status, createdAt, lotTypeId
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        burialPermit, status, createdAt, lotTypeId, amount_due
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $conn->prepare($sql);
 
@@ -162,11 +184,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // --- 6. Bind Parameters and Execute ---
     // Note: lotId is now passed as an integer 'i'
+    // Bind with amount_due as double 'd'. Use 'd' for floating point values.
     $stmt->bind_param(
-        "iissssssssssssssssssi",
+        "iissssssssssssssssssid",
         $userId, $lotId, $clientName, $address, $contactNumber, $deceasedName, $burialDate,
         $reservationDate, $area, $block, $rowNumber, $lotNumber, $burialDepth, $notes,
-        $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $reservationStatus, $createdAt, $lotTypeId
+        $clientValidId, $deathCertificate, $deceasedValidId, $burialPermit, $reservationStatus, $createdAt, $lotTypeId, $amountDue
     );
     
     // Begin transaction for data consistency
