@@ -44,15 +44,15 @@ $(document).ready(function() {
                                     var paymentMethod = methodMap[payment.paymentMethodId] || 'N/A';
                                     // Get client name from userId
                                     var clientName = userMap[payment.userId] || payment.userId || '';
-                                    return [
-                                        clientName,
-                                        lotNumber,
-                                        amountPaid,
-                                        payment.status || '',
-                                        paymentMethod,
-                                        payment.reference || '',
-                                        payment.datePaid || '',
-                                        '' // Actions column (empty)
+                                        return [
+                                            clientName,
+                                            lotNumber,
+                                            amountPaid,
+                                            payment.status || '',
+                                            paymentMethod,
+                                            payment.reference || '',
+                                            payment.datePaid || '',
+                                            `<button class="btn btn-success btn-sm confirm-payment" data-id="${payment.paymentId}" title="Confirm Payment"><i class="bi bi-check-circle"></i></button> <button class="btn btn-danger btn-sm reject-payment" data-id="${payment.paymentId}" title="Reject Payment"><i class="bi bi-x-circle"></i></button>`
                                     ];
                                 });
                                 table.clear();
