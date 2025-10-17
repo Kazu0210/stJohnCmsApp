@@ -143,7 +143,6 @@ $userRole = getCurrentUserRole();
                 <table id="paymentsTable" class="table table-striped table-bordered" style="width:100%">
                     <thead>
                         <tr>
-                            <th>Payment ID</th>
                             <th>Client Name</th>
                             <th>Lot</th>
                             <th>Amount Paid</th>
@@ -151,6 +150,7 @@ $userRole = getCurrentUserRole();
                             <th>Payment Method</th>
                             <th>Reference/OR No.</th>
                             <th>Date Paid</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>

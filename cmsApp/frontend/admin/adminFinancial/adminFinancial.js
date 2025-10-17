@@ -112,14 +112,14 @@ document.addEventListener('DOMContentLoaded', function () {
         $('#paymentsTable').DataTable({
             data: [], // Empty data
             columns: [
-                { title: 'Payment ID' },
                 { title: 'Client Name' },
                 { title: 'Lot' },
                 { title: 'Amount Paid' },
                 { title: 'Status' },
                 { title: 'Payment Method' },
                 { title: 'Reference/OR No.' },
-                { title: 'Date Paid' }
+                { title: 'Date Paid' },
+                { title: 'Actions', orderable: false, searchable: false }
             ]
         });
     }
