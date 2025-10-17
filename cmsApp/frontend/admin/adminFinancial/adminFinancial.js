@@ -90,59 +90,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const mockFile = { name: 'GCash-05-2024.jpg', type: 'image/jpeg', dataURL: 'mock-image-data-url' };
     const mockPDF = { name: 'BankTransfer-04-2024.pdf', type: 'application/pdf', dataURL: 'mock-pdf-data-url' };
     
-    // MOCK PDF.js implementation for demonstration. 
-    // In a real app, you would load the PDF.js library.
-    if (typeof window.pdfjsLib === 'undefined') {
-        window.pdfjsLib = {
-            getDocument: (url) => ({
-                promise: new Promise(resolve => {
-                    console.log(`Simulating PDF.js loading for: ${url}`);
-                    // Simulate a simplified PDF object
-                    resolve({
-                        getPage: (pageNo) => ({
-                            then: (callback) => {
-                                callback({
-                                    getViewport: (options) => ({ height: 500, width: 700 }),
-                                    render: (context) => ({ promise: Promise.resolve() })
-                                });
-                            }
-                        })
-                    });
-                })
-            }),
-            GlobalWorkerOptions: { workerSrc: 'path/to/pdf.worker.js' }
-        };
-    }
-
-    // Mock payment records using the specified status conditions:
-    let paymentRecords = [
-        // Pending Digital Payment (Needs Validation)
-        { id: 100, clientName: "Jane M. Smith", lot: "A-12-03-04", monthDue: months[0], amountPaid: 1500.00, method: 'GCash', reference: 'GC-REF-1001', status: 'Pending', proof: mockFile, date: new Date(today.getFullYear(), today.getMonth(), 5) },
-        // Deferred Status (Client chose to skip payment)
-        { id: 101, clientName: "Peter Jones", lot: "B-05-01-01", monthDue: months[0], amountPaid: 0.00, method: 'N/A', reference: 'N/A', status: 'Deferred', proof: null, date: new Date(today.getFullYear(), today.getMonth(), 1) },
-        // Paid Status (Exact Installment) - PDF Example
-        { id: 102, clientName: "Mary Williams", lot: "C-18-02-02", monthDue: months[1], amountPaid: 1500.00, method: 'Bank Transfer', reference: 'BT-REF-9005', status: 'Paid', proof: mockPDF, date: new Date(today.getFullYear(), today.getMonth() - 1, 10) },
-        // Pending Payment (Overdue)
-        { id: 103, clientName: "Overdue Client", lot: "E-07-04-05", monthDue: months[5], amountPaid: 0.00, method: 'N/A', reference: 'N/A', status: 'Pending', proof: null, date: new Date(today.getFullYear(), today.getMonth() - 5, 1) },
-        // Partially Paid Status (Advance Payment)
-        { id: 104, clientName: "Advance Client", lot: "D-01-01-01", monthDue: months[2], amountPaid: 3000.00, method: 'GCash', reference: 'ADV-REF-500', status: 'Partially Paid', proof: mockFile, date: new Date(today.getFullYear(), today.getMonth() - 2, 10) },
-        // Completed Status (Final payment)
-        { id: 105, clientName: "Completed Client", lot: "F-10-01-02", monthDue: months[11], amountPaid: 1500.00, method: 'Cash', reference: 'OR-5501', status: 'Completed', proof: null, date: new Date(today.getFullYear(), today.getMonth() - 11, 15) },
-        // More mock data for chart representation
-        ...Array(15).fill(null).map((_, i) => ({ 
-            id: i + 107, clientName: `Client ${i + 7}`, lot: `Z-${(i % 5).toString().padStart(2, '0')}-${(i % 10).toString().padStart(2, '0')}-${(i % 3).toString().padStart(2, '0')}`, monthDue: months[(i % 12)], 
-            amountPaid: (i % 3 === 0 ? 1500 : (i % 3 === 1 ? 3000 : 0)), 
-            method: i % 3 === 0 ? 'GCash' : (i % 3 === 1 ? 'Bank Transfer' : 'Cash'), 
-            reference: `REF-${i + 107}`, 
-            status: i % 5 === 0 ? 'Pending' : (i % 5 === 1 ? 'Paid' : (i % 5 === 2 ? 'Partially Paid' : (i % 5 === 3 ? 'Deferred' : 'Completed'))),
-            proof: (i % 5 === 0 || i % 5 === 1) ? mockFile : null,
-            date: new Date(today.getFullYear(), today.getMonth() - (i % 12), (i % 20) + 1)
-        }))
-    ].map((record, index) => ({ ...record, id: record.id || index + 1 })); // Ensure all records have an ID
-
+    let paymentRecords = [];
     let currentPage = 1;
     const recordsPerPage = 10;
-    let currentFilteredRecords = paymentRecords;
+    let currentFilteredRecords = [];
+
+    // Helper to convert paymentMethodId to readable name
+    function getMethodName(id) {
+        switch (parseInt(id)) {
+            case 1: return 'GCash';
+            case 2: return 'Bank Transfer';
+            case 3: return 'Cash';
+            default: return 'N/A';
+        }
+    }
+
+    // ...existing code...
     
     // --- 2. DOM ELEMENTS & MODALS ---
     const tableBody = document.getElementById('paymentTableBody');
