@@ -44,6 +44,10 @@ $(document).ready(function() {
                                     var paymentMethod = methodMap[payment.paymentMethodId] || 'N/A';
                                     // Get client name from userId
                                     var clientName = userMap[payment.userId] || payment.userId || '';
+                                        let actions = '';
+                                        if ((payment.status || '').toLowerCase() !== 'rejected') {
+                                            actions = `<button class="btn btn-success btn-sm confirm-payment" data-id="${payment.paymentId}" title="Confirm Payment"><i class="bi bi-check-circle"></i></button> <button class="btn btn-danger btn-sm reject-payment" data-id="${payment.paymentId}" title="Reject Payment"><i class="bi bi-x-circle"></i></button>`;
+                                        }
                                         return [
                                             clientName,
                                             lotNumber,
@@ -52,11 +56,35 @@ $(document).ready(function() {
                                             paymentMethod,
                                             payment.reference || '',
                                             payment.datePaid || '',
-                                            `<button class="btn btn-success btn-sm confirm-payment" data-id="${payment.paymentId}" title="Confirm Payment"><i class="bi bi-check-circle"></i></button> <button class="btn btn-danger btn-sm reject-payment" data-id="${payment.paymentId}" title="Reject Payment"><i class="bi bi-x-circle"></i></button>`
-                                    ];
+                                            actions
+                                        ];
                                 });
                                 table.clear();
                                 table.rows.add(rows).draw();
+                                // Add click handler for reject button
+                                $('#paymentsTable').off('click', '.reject-payment').on('click', '.reject-payment', function() {
+                                    var paymentId = $(this).data('id');
+                                    if (confirm('Are you sure you want to reject this payment?')) {
+                                        $.ajax({
+                                            url: '/stJohnCmsApp/cms.api/updatePaymentStatus.php',
+                                            method: 'POST',
+                                            data: { paymentId: paymentId, status: 'Rejected' },
+                                            dataType: 'json',
+                                            success: function(res) {
+                                                if (res.success) {
+                                                    alert('Payment rejected successfully.');
+                                                    // Optionally reload the table
+                                                    location.reload();
+                                                } else {
+                                                    alert(res.message || 'Failed to reject payment.');
+                                                }
+                                            },
+                                            error: function() {
+                                                alert('Error updating payment status.');
+                                            }
+                                        });
+                                    }
+                                });
                                 // Hide Payment ID column and add Actions column if not already set
                                 if (!table.settings()[0].aoColumns || table.settings()[0].aoColumns.length !== 8) {
                                     table.destroy();
