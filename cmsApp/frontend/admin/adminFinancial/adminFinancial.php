@@ -132,7 +132,29 @@ $userRole = getCurrentUserRole();
             </div>
         </div>
 
-        <div class="card shadow">
+        <!-- Payments Table -->
+        <div class="card shadow mb-5">
+            <div class="card-header"><i class="fas fa-money-check-alt me-2"></i>Payments</div>
+            <div class="card-body">
+                <table id="paymentsTable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Payment ID</th>
+                            <th>Client Name</th>
+                            <th>Lot</th>
+                            <th>Amount Paid</th>
+                            <th>Status</th>
+                            <th>Payment Method</th>
+                            <th>Reference/OR No.</th>
+                            <th>Date Paid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Empty table, will be populated by DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
 
     <footer class="footer text-center">
@@ -273,13 +295,5 @@ $userRole = getCurrentUserRole();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="adminFinancial.js"></script>
-    <script>
-    // Show Add Payment Modal
-    document.getElementById('addPaymentBtn').addEventListener('click', function() {
-        var modal = new bootstrap.Modal(document.getElementById('addPaymentModal'));
-        modal.show();
-        // TODO: Populate reservation/client dropdown via AJAX
-    });
-    </script>
 </body>
 </html>

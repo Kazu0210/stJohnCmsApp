@@ -1,5 +1,3 @@
-
-
 <?php
 // TEMPORARY: Enable error reporting for debugging
 error_reporting(E_ALL);
@@ -13,13 +11,10 @@ if (!$conn) {
     exit;
 }
 
-$sql = "SELECT p.paymentId, p.reservationId, p.userId, p.paymentMethodId, p.month, p.amount, p.datePaid, p.reference, p.document, p.status, p.createdAt, p.updatedAt,
-              u.displayName AS clientName,
-              r.area, r.block, r.row, r.lotNumber
-        FROM payments p
-        LEFT JOIN users u ON p.userId = u.userId
-        LEFT JOIN reservations r ON p.reservationId = r.reservationId
-        ORDER BY p.createdAt DESC";
+
+$sql = "SELECT paymentId, reservationId, userId, paymentMethodId, month, amount, datePaid, reference, document, status, createdAt, updatedAt
+    FROM payments
+    ORDER BY createdAt DESC";
 
 $result = $conn->query($sql);
 if (!$result) {
@@ -29,16 +24,13 @@ if (!$result) {
 }
 
 $payments = [];
+
 while ($row = $result->fetch_assoc()) {
     $payments[] = [
         'paymentId' => $row['paymentId'],
         'reservationId' => $row['reservationId'],
         'userId' => $row['userId'],
-        'clientName' => $row['clientName'] ?? '',
-        'area' => $row['area'] ?? '',
-        'block' => $row['block'] ?? '',
-        'row' => $row['row'] ?? '',
-        'lotNumber' => $row['lotNumber'] ?? '',
+        'paymentMethodId' => $row['paymentMethodId'],
         'month' => $row['month'],
         'amount' => $row['amount'],
         'datePaid' => $row['datePaid'],
@@ -46,8 +38,7 @@ while ($row = $result->fetch_assoc()) {
         'document' => $row['document'],
         'status' => $row['status'],
         'createdAt' => $row['createdAt'],
-        'updatedAt' => $row['updatedAt'],
-        'paymentMethodId' => $row['paymentMethodId']
+        'updatedAt' => $row['updatedAt']
     ];
 }
 
