@@ -125,7 +125,8 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                         <td>${req.createdAt || ''}</td>
                         <td>${req.updatedAt || ''}</td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="#" class="btn btn-sm btn-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <a href="#" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
                         </td>
                     </tr>
                 `);
