@@ -41,11 +41,22 @@ $(document).ready(function() {
                     }
                 }
             },
-            { "data": "status" },
+            { 
+                "data": "status", 
+                "render": function(data, type, row) {
+                    if (typeof data === 'string' && data.length > 0) {
+                        return data.charAt(0).toUpperCase() + data.slice(1).toLowerCase();
+                    }
+                    return data;
+                }
+            },
             {
                 "data": null,
                 "render": function(data, type, row) {
-                    return '<button class="btn btn-primary btn-sm">View</button>';
+                    return `
+                        <button class="btn btn-success btn-sm approve-btn" data-id="${row.requestId}">Approve</button>
+                        <button class="btn btn-danger btn-sm reject-btn" data-id="${row.requestId}">Reject</button>
+                    `;
                 }
             }
         ]
@@ -85,5 +96,17 @@ $(document).ready(function() {
 
         var modalEl = new bootstrap.Modal(document.getElementById('documentModal'));
         modalEl.show();
+    });
+
+    $('#burialRequestsTable').on('click', '.approve-btn', function() {
+        var requestId = $(this).data('id');
+        // TODO: AJAX call to approve the request
+        alert('Approve request: ' + requestId);
+    });
+
+    $('#burialRequestsTable').on('click', '.reject-btn', function() {
+        var requestId = $(this).data('id');
+        // TODO: AJAX call to reject the request
+        alert('Reject request: ' + requestId);
     });
 });
