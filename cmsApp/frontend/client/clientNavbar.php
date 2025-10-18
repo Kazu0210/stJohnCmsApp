@@ -21,6 +21,7 @@ if (session_status() === PHP_SESSION_NONE) {
         <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/clientReservations.php">My Reservations</a></li>
         <!-- <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/payment/payment.php">Payment</a></li> -->
         <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/burialRecord/burialRecord.php">Burial Record</a></li>
+        <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/burialRequest/burialRequest.php">Burial Request</a></li>
         <li class="nav-item"><a class="nav-link" href="/stJohnCmsApp/cmsApp/frontend/client/maintenanceServiceRequest/maintenanceServiceRequest.php">Maintenance Request</a></li>
       </ul>
       <div class="dropdown d-none d-lg-block">
