@@ -156,6 +156,33 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
     $(document).ready(function() {
+        // Delete button click handler
+        $(document).on('click', '.btn-delete-burial', function(e) {
+            e.preventDefault();
+            const requestId = $(this).data('id');
+            if (confirm('Are you sure you want to delete this burial request?')) {
+                $.ajax({
+                    url: '/stJohnCmsApp/cms.api/deleteBurialRequest.php',
+                    type: 'POST',
+                    data: { requestId: requestId },
+                    success: function(response) {
+                        let res = response;
+                        if (typeof response === 'string') {
+                            try { res = JSON.parse(response); } catch {}
+                        }
+                        if (res.success) {
+                            alert('Burial request deleted successfully!');
+                            location.reload();
+                        } else {
+                            alert(res.message || 'Delete failed.');
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while deleting.');
+                    }
+                });
+            }
+        });
         // Edit button click handler
         $(document).on('click', '.btn-edit-burial', function(e) {
             e.preventDefault();
@@ -245,7 +272,7 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                         <td>${req.createdAt || ''}</td>
                         <td>
                             <a href="#" class="btn btn-sm btn-warning me-1 btn-edit-burial" title="Edit"><i class="fas fa-edit"></i></a>
-                            <a href="#" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
+                            ${req.status === 'pending' ? `<a href="#" class="btn btn-sm btn-danger btn-delete-burial" data-id="${req.requestId}" title="Delete"><i class="fas fa-trash"></i></a>` : ''}
                         </td>
                     </tr>
                 `); 
