@@ -63,11 +63,26 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                 </tbody>
             </table>
         </div>
-        <nav>
-            <ul class="pagination justify-content-center" id="pagination">
-                <!-- Pagination items will go here -->
-            </ul>
-        </nav>
+                <nav>
+                        <ul class="pagination justify-content-center" id="pagination">
+                                <!-- Pagination items will go here -->
+                        </ul>
+                </nav>
+
+                <!-- Bootstrap Modal for Document/Image Preview -->
+                <div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="documentModalLabel">Document Preview</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center" id="documentModalBody">
+                                <!-- Content will be injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -77,26 +92,35 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
         let currentPage = 1;
         const pageSize = 10;
 
+        function getFileType(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext)) return "image";
+            if (["pdf"].includes(ext)) return "pdf";
+            return "other";
+        }
+
         function renderTable(requests) {
             const tbody = $('#burialRequestTable tbody');
             tbody.empty();
             if (requests.length === 0) {
-                tbody.append('<tr><td colspan="5" class="text-center">No burial requests found.</td></tr>');
+                tbody.append('<tr><td colspan="10" class="text-center">No burial requests found.</td></tr>');
                 return;
             }
             const start = (currentPage - 1) * pageSize;
             const end = Math.min(start + pageSize, requests.length);
             for (let i = start; i < end; i++) {
                 const req = requests[i];
+                const deceasedValidIdUrl = req.deceasedValidId ? `/stJohnCmsApp/uploads/burial_requests/${req.deceasedValidId.split('/').pop()}` : '';
+                const deathCertificateUrl = req.deathCertificate ? `/stJohnCmsApp/uploads/burial_requests/${req.deathCertificate.split('/').pop()}` : '';
+                const burialPermitUrl = req.burialPermit ? `/stJohnCmsApp/uploads/burial_requests/${req.burialPermit.split('/').pop()}` : '';
                 tbody.append(`
                     <tr>
-                        
                         <td>${req.lotId || ''}</td>
                         <td>${req.deceasedName || ''}</td>
                         <td>${req.burialDate || ''}</td>
-                        <td>${req.deceasedValidId ? `<a href="${req.deceasedValidId}" target="_blank">View</a>` : ''}</td>
-                        <td>${req.deathCertificate ? `<a href="${req.deathCertificate}" target="_blank">View</a>` : ''}</td>
-                        <td>${req.burialPermit ? `<a href="${req.burialPermit}" target="_blank">View</a>` : ''}</td>
+                        <td>${req.deceasedValidId ? `<a href="#" class="view-doc" data-url="${deceasedValidIdUrl}" data-type="${getFileType(deceasedValidIdUrl)}">View</a>` : ''}</td>
+                        <td>${req.deathCertificate ? `<a href="#" class="view-doc" data-url="${deathCertificateUrl}" data-type="${getFileType(deathCertificateUrl)}">View</a>` : ''}</td>
+                        <td>${req.burialPermit ? `<a href="#" class="view-doc" data-url="${burialPermitUrl}" data-type="${getFileType(burialPermitUrl)}">View</a>` : ''}</td>
                         <td><span class="badge bg-${req.status === 'approved' ? 'success' : req.status === 'pending' ? 'warning' : 'danger'} text-dark">${req.status}</span></td>
                         <td>${req.createdAt || ''}</td>
                         <td>${req.updatedAt || ''}</td>
@@ -107,6 +131,23 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                 `);
             }
         }
+        // Handle document modal view
+        $(document).on('click', '.view-doc', function(e) {
+            e.preventDefault();
+            const url = $(this).data('url');
+            const type = $(this).data('type');
+            let content = '';
+            if (type === 'image') {
+                content = `<img src="${url}" alt="Document" class="img-fluid" style="max-height:500px;">`;
+            } else if (type === 'pdf') {
+                content = `<iframe src="${url}" width="100%" height="500px"></iframe>`;
+            } else {
+                content = `<a href="${url}" target="_blank">Download File</a>`;
+            }
+            $('#documentModalBody').html(content);
+            var modal = new bootstrap.Modal(document.getElementById('documentModal'));
+            modal.show();
+        });
 
         function renderPagination(requests) {
             const totalPages = Math.ceil(requests.length / pageSize);
