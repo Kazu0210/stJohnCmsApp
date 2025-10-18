@@ -45,10 +45,16 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
             <table class="table table-bordered table-striped" id="burialRequestTable">
                 <thead style="background-color: #ffc107; color: #212529;">
                     <tr>
-                        <th>#</th>
+                        
+                        <th>Lot ID</th>
                         <th>Deceased Name</th>
                         <th>Burial Date</th>
+                        <th>Deceased Valid ID</th>
+                        <th>Death Certificate</th>
+                        <th>Burial Permit</th>
                         <th>Status</th>
+                        <th>Created At</th>
+                        <th>Updated At</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -84,10 +90,16 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                 const req = requests[i];
                 tbody.append(`
                     <tr>
-                        <td>${i + 1}</td>
+                        
+                        <td>${req.lotId || ''}</td>
                         <td>${req.deceasedName || ''}</td>
                         <td>${req.burialDate || ''}</td>
+                        <td>${req.deceasedValidId ? `<a href="${req.deceasedValidId}" target="_blank">View</a>` : ''}</td>
+                        <td>${req.deathCertificate ? `<a href="${req.deathCertificate}" target="_blank">View</a>` : ''}</td>
+                        <td>${req.burialPermit ? `<a href="${req.burialPermit}" target="_blank">View</a>` : ''}</td>
                         <td><span class="badge bg-${req.status === 'approved' ? 'success' : req.status === 'pending' ? 'warning' : 'danger'} text-dark">${req.status}</span></td>
+                        <td>${req.createdAt || ''}</td>
+                        <td>${req.updatedAt || ''}</td>
                         <td>
                             <a href="#" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>
                         </td>
