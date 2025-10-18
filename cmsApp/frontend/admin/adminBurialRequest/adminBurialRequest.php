@@ -16,32 +16,6 @@ $userRole = getCurrentUserRole();
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-        :root {
-            --gold: #EFBF04;
-        }
-        .navbar.bg-gold {
-            background-color: var(--gold) !important;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        .navbar.bg-gold,
-        .navbar.bg-gold .navbar-nav .nav-link,
-        .navbar.bg-gold .navbar-brand,
-        .navbar.bg-gold .dropdown-menu,
-        .navbar.bg-gold .dropdown-item {
-            color: #000 !important;
-        }
-        .navbar.bg-gold .dropdown-menu {
-            background-color: var(--gold) !important;
-        }
-        .navbar.bg-gold .dropdown-item.active,
-        .navbar.bg-gold .dropdown-item:active,
-        .navbar.bg-gold .dropdown-item:focus,
-        .navbar.bg-gold .dropdown-item:hover {
-            background-color: #fff8d6 !important;
-            color: #000 !important;
-        }
-    </style>
     <!-- Bootstrap CSS (optional, for styling) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- DataTables CSS -->
@@ -52,6 +26,7 @@ $userRole = getCurrentUserRole();
 </head>
 <body>
 </body>
+    <?php include '../components/adminNavbar.php'; ?>
     <div class="container mt-5">
         <h2 class="mb-4">Burial Requests</h2>
         <table id="burialRequestsTable" class="display table table-striped" style="width:100%">
@@ -93,7 +68,6 @@ $userRole = getCurrentUserRole();
             </tbody>
         </table>
     </div>
-    <?php include_once __DIR__ . '/../components/adminNavbar.php'; ?>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <!-- DataTables JS -->

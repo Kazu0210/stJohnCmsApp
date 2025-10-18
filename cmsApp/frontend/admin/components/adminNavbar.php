@@ -1,3 +1,53 @@
+<style>
+/* Admin Navbar Styles */
+:root {
+    --gold: #EFBF04;
+    --dark-gold: #ac8f1d;
+    --black: #000000;
+    --white: #ffffff;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.navbar {
+    background-color: var(--gold) !important;
+    box-shadow: var(--shadow);
+}
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+.navbar-brand, 
+.navbar .nav-link, 
+.dropdown-item {
+    color: var(--black) !important;
+}
+.navbar .nav-link:hover, 
+.navbar .nav-link.active {
+    font-weight: bold;
+}
+.navbar-toggler {
+    border-color: var(--dark-gold) !important;
+    padding: 0.2rem 0.5rem;
+    font-size: 1rem;
+}
+.dropdown-menu {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.d-lg-none.mt-3.pt-3.border-top.border-dark-subtle {
+    background: var(--gold);
+    border-top: 1px solid var(--dark-gold);
+}
+.mobile-logout-link {
+    color: var(--danger);
+    text-decoration: none;
+    font-weight: bold;
+}
+.mobile-logout-link:hover {
+    color: var(--danger-hover);
+}
+</style>
 <?php
 // adminNavbar.php
 // Reusable Admin Navbar Component
