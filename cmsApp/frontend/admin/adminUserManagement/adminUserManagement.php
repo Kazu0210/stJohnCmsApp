@@ -24,43 +24,7 @@ $userRole = getCurrentUserRole();
     <link rel="stylesheet" href="adminUserManagement.css"> 
 </head>
 <body>
-
-
     <?php include '../components/adminNavbar.php'; ?>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="adminToolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Admin Tools
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="adminToolsDropdown">
-                            <li><a class="dropdown-item" href="../adminAuditLogs/adminAuditLogs.php">Audit Logs</a></li>
-                            <li><a class="dropdown-item active" href="adminUserManagement.php">User Management</a></li>
-                            <li><a class="dropdown-item" href="../adminReports/adminReports.php">Reports Module</a></li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <div class="d-lg-none mt-3 pt-3 border-top border-dark-subtle">
-                    <div class="d-flex align-items-center mb-2">
-                        <span id="user-name-display-mobile" class="fw-bold"><?php echo htmlspecialchars($userName); ?></span>
-                        <small class="text-muted ms-2">(<?php echo htmlspecialchars($userRole); ?>)</small>
-                    </div>
-                    <a href="../../../../cms.api/logout.php" id="logoutLinkMobile" class="mobile-logout-link">
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                    </a>
-                </div>
-                </div>
-            
-            <div class="dropdown d-none d-lg-flex">
-                <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span id="user-name-display-desktop"><?php echo htmlspecialchars($userName); ?></span>
-                    <small class="text-muted ms-2">(<?php echo htmlspecialchars($userRole); ?>)</small>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" href="../../../../cms.api/logout.php" id="logoutLinkDesktop"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                </ul>
-            </div>
-            </div>
-    </nav>
 
     <main class="main-content">
         <!-- Key Metrics Section -->
