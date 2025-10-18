@@ -115,6 +115,7 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                                                 <option value="approved">Approved</option>
                                                 <option value="rejected">Rejected</option>
                                             </select>
+                                                <input type="hidden" name="status" id="hiddenStatus" value="">
                                         </div>
                                         <div class="col-md-12">
                                             <hr>
@@ -181,10 +182,12 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
         // Save Changes button handler for edit modal
         $(document).on('click', '#editBurialModal .btn-warning', function(e) {
             e.preventDefault();
-            var form = $('#editBurialForm')[0];
-            var formData = new FormData(form);
-            // Optionally, add a burialRequestId if needed for backend
-            // formData.append('burialRequestId', $('#editLotId').val());
+                // Sync hidden status value before submitting
+                $('#hiddenStatus').val($('#editStatus').val());
+                var form = $('#editBurialForm')[0];
+                var formData = new FormData(form);
+                // Optionally, add a burialRequestId if needed for backend
+                // formData.append('burialRequestId', $('#editLotId').val());
             $.ajax({
                 url: '/stJohnCmsApp/cms.api/updateBurialRequest.php',
                 type: 'POST',
