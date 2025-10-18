@@ -65,6 +65,39 @@ $stmt->bind_param('ssssssi', $deceasedName, $burialDate, $deceasedValidId, $deat
 if ($stmt->execute()) {
     $response['success'] = true;
     $response['message'] = 'Burial request updated.';
+
+    echo `Request status is: {$staus}`;
+
+    // If status is Approved, insert into reservations table
+    // if (strtolower($status) === 'approved') {
+    //     // Fetch burial request data for mapping
+    //     $fetchStmt = $conn->prepare("SELECT deceasedName, burialDate, deceasedValidId, deathCertificate, burialPermit FROM burial_request WHERE requestId = ? LIMIT 1");
+    //     $fetchStmt->bind_param('i', $requestId);
+    //     $fetchStmt->execute();
+    //     $burialData = $fetchStmt->get_result()->fetch_assoc();
+    //     $fetchStmt->close();
+
+    //     if ($burialData) {
+    //         // Update only the required fields in the existing reservation using reservationId
+    //         $updateStmt = $conn->prepare("UPDATE reservations SET deceasedName = ?, burialDate = ?, deceasedValidId = ?, deathCertificate = ?, burialPermit = ? WHERE reservationId = ?");
+    //         $updateStmt->bind_param(
+    //             'sssssi',
+    //             $burialData['deceasedName'],
+    //             $burialData['burialDate'],
+    //             $burialData['deceasedValidId'],
+    //             $burialData['deathCertificate'],
+    //             $burialData['burialPermit'],
+    //             $requestId
+    //         );
+    //         if ($updateStmt->execute()) {
+    //             $response['reservation_updated'] = true;
+    //         } else {
+    //             $response['reservation_updated'] = false;
+    //             $response['reservation_error'] = $updateStmt->error;
+    //         }
+    //         $updateStmt->close();
+    //     }
+    // }
 } else {
     $response['message'] = 'Database update failed.';
 }
