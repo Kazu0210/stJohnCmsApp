@@ -36,6 +36,11 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                 </select>
             </div>
         </div>
+        <div class="d-flex justify-content-end mb-3">
+            <a href="#" class="btn btn-warning" id="submitBurialRequestBtn">
+                <i class="fas fa-plus me-2"></i>Submit Burial Request
+            </a>
+        </div>
         <div class="table-responsive">
             <table class="table table-bordered table-striped" id="burialRequestTable">
                 <thead style="background-color: #ffc107; color: #212529;">
@@ -69,6 +74,6 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
         });
         // Pagination logic placeholder
     </script>
-    
+
 </body>
 </html>
