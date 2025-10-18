@@ -37,7 +37,7 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
             </div>
         </div>
         <div class="d-flex justify-content-end mb-3">
-            <a href="#" class="btn btn-warning" id="submitBurialRequestBtn">
+            <a href="/stJohnCmsApp/cmsApp/frontend/client/burialRequest/submitBurialRequest.php" class="btn btn-warning" id="submitBurialRequestBtn">
                 <i class="fas fa-plus me-2"></i>Submit Burial Request
             </a>
         </div>
