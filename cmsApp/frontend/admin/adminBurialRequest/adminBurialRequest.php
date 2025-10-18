@@ -36,39 +36,23 @@ $userRole = getCurrentUserRole();
                 <table id="burialRequestsTable" class="display table table-striped table-hover" style="width:100%">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Client Name</th>
+                            <th>Request ID</th>
+                            <th>User ID</th>
+                            <th>Lot ID</th>
+                            <th>Reservation ID</th>
                             <th>Deceased Name</th>
-                            <th>Date Requested</th>
+                            <th>Burial Date</th>
+                            <th>Deceased Valid ID</th>
+                            <th>Death Certificate</th>
+                            <th>Burial Permit</th>
                             <th>Status</th>
+                            <th>Created At</th>
+                            <th>Updated At</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php
-                        // Fetch burial requests from API
-                        $apiUrl = "../../../../cms.api/fetchAllBurialRequests.php";
-                        $response = @file_get_contents($apiUrl);
-                        $requests = [];
-                        if ($response !== false) {
-                            $json = json_decode($response, true);
-                            if (isset($json['requests'])) {
-                                $requests = $json['requests'];
-                            }
-                        }
-                        foreach ($requests as $row):
-                        ?>
-                        <tr>
-                            <td><?= htmlspecialchars($row['requestId']) ?></td>
-                            <td><?= htmlspecialchars($row['userId']) ?></td>
-                            <td><?= htmlspecialchars($row['deceasedName']) ?></td>
-                            <td><?= htmlspecialchars($row['burialDate']) ?></td>
-                            <td><?= htmlspecialchars($row['status']) ?></td>
-                            <td>
-                                <button class="btn btn-primary btn-sm">View</button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <!-- Table rows will be populated by JavaScript using AJAX -->
                     </tbody>
                 </table>
             </div>
