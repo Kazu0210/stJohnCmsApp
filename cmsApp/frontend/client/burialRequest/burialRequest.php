@@ -94,6 +94,7 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                             </div>
                             <div class="modal-body">
                                 <form id="editBurialForm">
+                                    <input type="hidden" id="editRequestId" name="requestId">
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label for="editLotId" class="form-label">Lot ID</label>
@@ -160,31 +161,50 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
             e.preventDefault();
             const row = $(this).closest('tr');
             // Get data from row
-            const lotId = row.find('td').eq(0).text();
-            const deceasedName = row.find('td').eq(1).text();
-            const burialDate = row.find('td').eq(2).text();
-            const deceasedValidId = row.find('td').eq(3).text();
-            const deceasedValidIdUrl = row.find('td').eq(3).find('a').attr('data-url');
-            const deathCertificate = row.find('td').eq(4).text();
-            const deathCertificateUrl = row.find('td').eq(4).find('a').attr('data-url');
-            const burialPermit = row.find('td').eq(5).text();
-            const burialPermitUrl = row.find('td').eq(5).find('a').attr('data-url');
-            const status = row.find('td').eq(6).text();
-            const createdAt = row.find('td').eq(7).text();
-            const updatedAt = row.find('td').eq(8).text();
+            const rowIndex = row.index();
+            const req = allRequests[rowIndex];
             // Populate modal fields
-            $('#editLotId').val(lotId);
-            $('#editDeceasedName').val(deceasedName);
-            $('#editBurialDate').val(burialDate);
-            $('#editDeceasedValidIdLink').attr('href', deceasedValidIdUrl || '#');
-            $('#editDeathCertificateLink').attr('href', deathCertificateUrl || '#');
-            $('#editBurialPermitLink').attr('href', burialPermitUrl || '#');
-            $('#editStatus').val(status);
-            $('#editCreatedAt').val(createdAt);
-            $('#editUpdatedAt').val(updatedAt);
+            $('#editRequestId').val(req.requestId);
+            $('#editLotId').val(req.lotId);
+            $('#editDeceasedName').val(req.deceasedName);
+            $('#editBurialDate').val(req.burialDate);
+            $('#editDeceasedValidIdLink').attr('href', req.deceasedValidId ? `/stJohnCmsApp/uploads/burial_requests/${req.deceasedValidId.split('/').pop()}` : '#');
+            $('#editDeathCertificateLink').attr('href', req.deathCertificate ? `/stJohnCmsApp/uploads/burial_requests/${req.deathCertificate.split('/').pop()}` : '#');
+            $('#editBurialPermitLink').attr('href', req.burialPermit ? `/stJohnCmsApp/uploads/burial_requests/${req.burialPermit.split('/').pop()}` : '#');
+            $('#editStatus').val(req.status);
+            $('#editCreatedAt').val(req.createdAt);
+            $('#editUpdatedAt').val(req.updatedAt);
             // Show modal
             var modal = new bootstrap.Modal(document.getElementById('editBurialModal'));
             modal.show();
+        });
+        // Save Changes button handler for edit modal
+        $(document).on('click', '#editBurialModal .btn-warning', function(e) {
+            e.preventDefault();
+            var form = $('#editBurialForm')[0];
+            var formData = new FormData(form);
+            // Optionally, add a burialRequestId if needed for backend
+            // formData.append('burialRequestId', $('#editLotId').val());
+            $.ajax({
+                url: '/stJohnCmsApp/cms.api/updateBurialRequest.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // You may want to parse response and show a message
+                    if (response.success) {
+                        alert('Burial request updated successfully!');
+                        // Optionally, refresh the table
+                        location.reload();
+                    } else {
+                        alert(response.message || 'Update failed.');
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while updating.');
+                }
+            });
         });
         let allRequests = [];
         let currentPage = 1;
