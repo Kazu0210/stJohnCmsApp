@@ -6,18 +6,42 @@ $(document).ready(function() {
             "dataSrc": "requests"
         },
         "columns": [
-            { "data": "requestId" },
-            { "data": "userId" },
+            { "data": "userName", "title": "Client Name" },
             { "data": "lotId" },
             { "data": "reservationId" },
             { "data": "deceasedName" },
             { "data": "burialDate" },
-            { "data": "deceasedValidId" },
-            { "data": "deathCertificate" },
-            { "data": "burialPermit" },
+            {
+                "data": "deceasedValidId",
+                "render": function(data, type, row) {
+                    if (data) {
+                        return '<button class="btn btn-link btn-sm" onclick="window.open(\'' + data + '\', \"_blank\")">View</button>';
+                    } else {
+                        return '';
+                    }
+                }
+            },
+            {
+                "data": "deathCertificate",
+                "render": function(data, type, row) {
+                    if (data) {
+                        return '<button class="btn btn-link btn-sm" onclick="window.open(\'' + data + '\', \"_blank\")">View</button>';
+                    } else {
+                        return '';
+                    }
+                }
+            },
+            {
+                "data": "burialPermit",
+                "render": function(data, type, row) {
+                    if (data) {
+                        return '<button class="btn btn-link btn-sm" onclick="window.open(\'' + data + '\', \"_blank\")">View</button>';
+                    } else {
+                        return '';
+                    }
+                }
+            },
             { "data": "status" },
-            { "data": "createdAt" },
-            { "data": "updatedAt" },
             {
                 "data": null,
                 "render": function(data, type, row) {

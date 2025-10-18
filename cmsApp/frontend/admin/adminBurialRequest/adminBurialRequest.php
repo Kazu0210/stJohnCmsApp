@@ -36,7 +36,6 @@ $userRole = getCurrentUserRole();
                 <table id="burialRequestsTable" class="display table table-striped table-hover" style="width:100%">
                     <thead>
                         <tr>
-                            <th>Request ID</th>
                             <th>User ID</th>
                             <th>Lot ID</th>
                             <th>Reservation ID</th>
@@ -46,8 +45,6 @@ $userRole = getCurrentUserRole();
                             <th>Death Certificate</th>
                             <th>Burial Permit</th>
                             <th>Status</th>
-                            <th>Created At</th>
-                            <th>Updated At</th>
                             <th>Actions</th>
                         </tr>
                     </thead>

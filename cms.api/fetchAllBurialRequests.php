@@ -7,7 +7,7 @@ require_once 'db_connect.php';
 
 // Optionally, check for admin/secretary role here if needed
 
-$sql = "SELECT * FROM burial_request ORDER BY createdAt DESC";
+$sql = "SELECT br.*, CONCAT(u.firstName, ' ', u.lastName) AS userName FROM burial_request br LEFT JOIN user u ON br.userId = u.userId ORDER BY br.createdAt DESC";
 $result = $conn->query($sql);
 
 $requests = [];
