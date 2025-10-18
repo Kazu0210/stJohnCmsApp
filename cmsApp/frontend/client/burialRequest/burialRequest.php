@@ -83,11 +83,112 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                         </div>
                     </div>
                 </div>
+
+                <!-- Edit Burial Request Modal -->
+                <div class="modal fade" id="editBurialModal" tabindex="-1" aria-labelledby="editBurialModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editBurialModalLabel">Edit Burial Request</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editBurialForm">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="editLotId" class="form-label">Lot ID</label>
+                                            <input type="text" class="form-control" id="editLotId" name="lotId" readonly>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="editDeceasedName" class="form-label">Deceased Name</label>
+                                            <input type="text" class="form-control" id="editDeceasedName" name="deceasedName">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="editBurialDate" class="form-label">Burial Date</label>
+                                            <input type="date" class="form-control" id="editBurialDate" name="burialDate">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="editStatus" class="form-label">Status</label>
+                                            <select class="form-select" id="editStatus" name="status" disabled>
+                                                <option value="pending">Pending</option>
+                                                <option value="approved">Approved</option>
+                                                <option value="rejected">Rejected</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <hr>
+                                            <h6 class="mb-3">Documents</h6>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="editDeceasedValidId" class="form-label">Deceased Valid ID</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="editDeceasedValidId" name="deceasedValidId" readonly>
+                                                <a href="#" id="editDeceasedValidIdLink" target="_blank" class="btn btn-outline-primary">View</a>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="editDeathCertificate" class="form-label">Death Certificate</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="editDeathCertificate" name="deathCertificate" readonly>
+                                                <a href="#" id="editDeathCertificateLink" target="_blank" class="btn btn-outline-primary">View</a>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="editBurialPermit" class="form-label">Burial Permit</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="editBurialPermit" name="burialPermit" readonly>
+                                                <a href="#" id="editBurialPermitLink" target="_blank" class="btn btn-outline-primary">View</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-warning">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
     $(document).ready(function() {
+        // Edit button click handler
+        $(document).on('click', '.btn-edit-burial', function(e) {
+            e.preventDefault();
+            const row = $(this).closest('tr');
+            // Get data from row
+            const lotId = row.find('td').eq(0).text();
+            const deceasedName = row.find('td').eq(1).text();
+            const burialDate = row.find('td').eq(2).text();
+            const deceasedValidId = row.find('td').eq(3).text();
+            const deceasedValidIdUrl = row.find('td').eq(3).find('a').attr('data-url');
+            const deathCertificate = row.find('td').eq(4).text();
+            const deathCertificateUrl = row.find('td').eq(4).find('a').attr('data-url');
+            const burialPermit = row.find('td').eq(5).text();
+            const burialPermitUrl = row.find('td').eq(5).find('a').attr('data-url');
+            const status = row.find('td').eq(6).text();
+            const createdAt = row.find('td').eq(7).text();
+            const updatedAt = row.find('td').eq(8).text();
+            // Populate modal fields
+            $('#editLotId').val(lotId);
+            $('#editDeceasedName').val(deceasedName);
+            $('#editBurialDate').val(burialDate);
+            $('#editDeceasedValidId').val(deceasedValidId);
+            $('#editDeceasedValidIdLink').attr('href', deceasedValidIdUrl || '#');
+            $('#editDeathCertificate').val(deathCertificate);
+            $('#editDeathCertificateLink').attr('href', deathCertificateUrl || '#');
+            $('#editBurialPermit').val(burialPermit);
+            $('#editBurialPermitLink').attr('href', burialPermitUrl || '#');
+            $('#editStatus').val(status);
+            $('#editCreatedAt').val(createdAt);
+            $('#editUpdatedAt').val(updatedAt);
+            // Show modal
+            var modal = new bootstrap.Modal(document.getElementById('editBurialModal'));
+            modal.show();
+        });
         let allRequests = [];
         let currentPage = 1;
         const pageSize = 10;
@@ -125,11 +226,11 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                         <td>${req.createdAt || ''}</td>
                         <td>${req.updatedAt || ''}</td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <a href="#" class="btn btn-sm btn-warning me-1 btn-edit-burial" title="Edit"><i class="fas fa-edit"></i></a>
                             <a href="#" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
                         </td>
                     </tr>
-                `);
+                `); 
             }
         }
         // Handle document modal view
