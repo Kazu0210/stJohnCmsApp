@@ -64,15 +64,94 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
         </nav>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-        // Basic JS for search, filter, and pagination (empty table)
-        document.getElementById('searchInput').addEventListener('input', function() {
-            // Implement search logic here
+    $(document).ready(function() {
+        let allRequests = [];
+        let currentPage = 1;
+        const pageSize = 10;
+
+        function renderTable(requests) {
+            const tbody = $('#burialRequestTable tbody');
+            tbody.empty();
+            if (requests.length === 0) {
+                tbody.append('<tr><td colspan="5" class="text-center">No burial requests found.</td></tr>');
+                return;
+            }
+            const start = (currentPage - 1) * pageSize;
+            const end = Math.min(start + pageSize, requests.length);
+            for (let i = start; i < end; i++) {
+                const req = requests[i];
+                tbody.append(`
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${req.deceasedName || ''}</td>
+                        <td>${req.burialDate || ''}</td>
+                        <td><span class="badge bg-${req.status === 'approved' ? 'success' : req.status === 'pending' ? 'warning' : 'danger'} text-dark">${req.status}</span></td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>
+                        </td>
+                    </tr>
+                `);
+            }
+        }
+
+        function renderPagination(requests) {
+            const totalPages = Math.ceil(requests.length / pageSize);
+            const pagination = $('#pagination');
+            pagination.empty();
+            if (totalPages <= 1) return;
+            for (let i = 1; i <= totalPages; i++) {
+                pagination.append(`<li class="page-item${i === currentPage ? ' active' : ''}"><a class="page-link" href="#">${i}</a></li>`);
+            }
+        }
+
+        function filterRequests() {
+            const search = $('#searchInput').val().toLowerCase();
+            const status = $('#statusFilter').val();
+            let filtered = allRequests.filter(req => {
+                let match = true;
+                if (search) {
+                    match = (req.deceasedName && req.deceasedName.toLowerCase().includes(search)) || (req.burialDate && req.burialDate.includes(search));
+                }
+                if (status) {
+                    match = match && req.status === status;
+                }
+                return match;
+            });
+            renderTable(filtered);
+            renderPagination(filtered);
+        }
+
+        // Fetch burial requests
+        $.ajax({
+            url: '/stJohnCmsApp/cms.api/fetchClientBurialRequests.php',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.requests) {
+                    allRequests = response.requests;
+                    filterRequests();
+                }
+            }
         });
-        document.getElementById('statusFilter').addEventListener('change', function() {
-            // Implement filter logic here
+
+        // Search and filter events
+        $('#searchInput').on('input', function() {
+            currentPage = 1;
+            filterRequests();
         });
-        // Pagination logic placeholder
+        $('#statusFilter').on('change', function() {
+            currentPage = 1;
+            filterRequests();
+        });
+        // Pagination click
+        $('#pagination').on('click', 'a', function(e) {
+            e.preventDefault();
+            currentPage = parseInt($(this).text());
+            filterRequests();
+        });
+    });
     </script>
 
 </body>
