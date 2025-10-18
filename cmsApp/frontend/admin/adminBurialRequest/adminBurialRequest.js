@@ -1,6 +1,6 @@
 // DataTable initialization for adminBurialRequest.php
 $(document).ready(function() {
-    $('#burialRequestsTable').DataTable({
+    var burialTable = $('#burialRequestsTable').DataTable({
         "ajax": {
             "url": "../../../../cms.api/fetchAllBurialRequests.php",
             "dataSrc": "requests"
@@ -53,6 +53,11 @@ $(document).ready(function() {
             {
                 "data": null,
                 "render": function(data, type, row) {
+                    // Only show buttons if status is not approved or rejected
+                    var status = (row.status || '').toLowerCase();
+                    if (status === 'approved' || status === 'rejected') {
+                        return '';
+                    }
                     return `
                         <button class="btn btn-success btn-sm approve-btn" data-id="${row.requestId}">Approve</button>
                         <button class="btn btn-danger btn-sm reject-btn" data-id="${row.requestId}">Reject</button>
@@ -98,15 +103,61 @@ $(document).ready(function() {
         modalEl.show();
     });
 
+    // Approve button logic with confirmation
     $('#burialRequestsTable').on('click', '.approve-btn', function() {
         var requestId = $(this).data('id');
-        // TODO: AJAX call to approve the request
-        alert('Approve request: ' + requestId);
+        var rowData = burialTable.row($(this).closest('tr')).data();
+        if (!rowData) return;
+        if (confirm('Are you sure you want to approve this burial request?')) {
+            $.ajax({
+                url: '../../../../cms.api/updateBurialRequest.php',
+                type: 'POST',
+                data: {
+                    requestId: requestId,
+                    deceasedName: rowData.deceasedName,
+                    burialDate: rowData.burialDate,
+                    status: 'approved'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        burialTable.ajax.reload(null, false);
+                    } else {
+                        alert('Failed to approve: ' + (response.message || 'Unknown error.'));
+                    }
+                },
+                error: function() {
+                    alert('Error occurred while approving request.');
+                }
+            });
+        }
     });
 
+    // Reject button logic with confirmation
     $('#burialRequestsTable').on('click', '.reject-btn', function() {
         var requestId = $(this).data('id');
-        // TODO: AJAX call to reject the request
-        alert('Reject request: ' + requestId);
+        var rowData = burialTable.row($(this).closest('tr')).data();
+        if (!rowData) return;
+        if (confirm('Are you sure you want to reject this burial request?')) {
+            $.ajax({
+                url: '../../../../cms.api/updateBurialRequest.php',
+                type: 'POST',
+                data: {
+                    requestId: requestId,
+                    deceasedName: rowData.deceasedName,
+                    burialDate: rowData.burialDate,
+                    status: 'rejected'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        burialTable.ajax.reload(null, false);
+                    } else {
+                        alert('Failed to reject: ' + (response.message || 'Unknown error.'));
+                    }
+                },
+                error: function() {
+                    alert('Error occurred while rejecting request.');
+                }
+            });
+        }
     });
 });
