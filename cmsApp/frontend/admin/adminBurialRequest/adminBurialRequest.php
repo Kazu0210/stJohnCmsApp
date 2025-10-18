@@ -32,6 +32,14 @@ $userRole = getCurrentUserRole();
     <main class="main-content">
         <div class="container-fluid mt-4">
             <h2 class="mb-4">Burial Requests</h2>
+            <!-- Visible message for empty table -->
+            <div id="emptyTableMessage" class="alert alert-info d-none" role="alert">
+                No burial requests to display.
+            </div>
+            <!-- Ajax error message -->
+            <div id="ajaxErrorMessage" class="alert alert-danger d-none" role="alert">
+                Error loading burial requests. See console for details.
+            </div>
             <div class="table-responsive">
                 <table id="burialRequestsTable" class="display table table-striped table-hover" style="width:100%">
                     <thead>
