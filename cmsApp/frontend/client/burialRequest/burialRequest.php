@@ -260,6 +260,10 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                 const deceasedValidIdUrl = req.deceasedValidId ? `/stJohnCmsApp/uploads/burial_requests/${req.deceasedValidId.split('/').pop()}` : '';
                 const deathCertificateUrl = req.deathCertificate ? `/stJohnCmsApp/uploads/burial_requests/${req.deathCertificate.split('/').pop()}` : '';
                 const burialPermitUrl = req.burialPermit ? `/stJohnCmsApp/uploads/burial_requests/${req.burialPermit.split('/').pop()}` : '';
+                // Capitalize status
+                const statusText = req.status ? req.status.charAt(0).toUpperCase() + req.status.slice(1).toLowerCase() : '';
+                // Hide edit button if approved or rejected
+                const showEdit = req.status === 'pending';
                 tbody.append(`
                     <tr>
                         <td>${req.lotId || ''}</td>
@@ -268,14 +272,14 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                         <td>${req.deceasedValidId ? `<a href="#" class="view-doc" data-url="${deceasedValidIdUrl}" data-type="${getFileType(deceasedValidIdUrl)}">View</a>` : ''}</td>
                         <td>${req.deathCertificate ? `<a href="#" class="view-doc" data-url="${deathCertificateUrl}" data-type="${getFileType(deathCertificateUrl)}">View</a>` : ''}</td>
                         <td>${req.burialPermit ? `<a href="#" class="view-doc" data-url="${burialPermitUrl}" data-type="${getFileType(burialPermitUrl)}">View</a>` : ''}</td>
-                        <td><span class="badge bg-${req.status === 'approved' ? 'success' : req.status === 'pending' ? 'warning' : 'danger'} text-dark">${req.status}</span></td>
+                        <td><span class="badge bg-${req.status === 'approved' ? 'success' : req.status === 'pending' ? 'warning' : 'danger'} text-white">${statusText}</span></td>
                         <td>${req.createdAt || ''}</td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-warning me-1 btn-edit-burial" title="Edit"><i class="fas fa-edit"></i></a>
+                            ${showEdit ? `<a href="#" class="btn btn-sm btn-warning me-1 btn-edit-burial" title="Edit"><i class="fas fa-edit"></i></a>` : ''}
                             ${req.status === 'pending' ? `<a href="#" class="btn btn-sm btn-danger btn-delete-burial" data-id="${req.requestId}" title="Delete"><i class="fas fa-trash"></i></a>` : ''}
                         </td>
                     </tr>
-                `); 
+                `);
             }
         }
         // Handle document modal view
