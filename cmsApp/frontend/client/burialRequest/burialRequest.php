@@ -53,8 +53,7 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                         <th>Death Certificate</th>
                         <th>Burial Permit</th>
                         <th>Status</th>
-                        <th>Created At</th>
-                        <th>Updated At</th>
+                        <th>Submitted On</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -64,9 +63,9 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
             </table>
         </div>
                 <nav>
-                        <ul class="pagination justify-content-center" id="pagination">
-                                <!-- Pagination items will go here -->
-                        </ul>
+                    <ul class="pagination justify-content-center" id="pagination">
+                            <!-- Pagination items will go here -->
+                    </ul>
                 </nav>
 
                 <!-- Bootstrap Modal for Document/Image Preview -->
@@ -244,7 +243,6 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                         <td>${req.burialPermit ? `<a href="#" class="view-doc" data-url="${burialPermitUrl}" data-type="${getFileType(burialPermitUrl)}">View</a>` : ''}</td>
                         <td><span class="badge bg-${req.status === 'approved' ? 'success' : req.status === 'pending' ? 'warning' : 'danger'} text-dark">${req.status}</span></td>
                         <td>${req.createdAt || ''}</td>
-                        <td>${req.updatedAt || ''}</td>
                         <td>
                             <a href="#" class="btn btn-sm btn-warning me-1 btn-edit-burial" title="Edit"><i class="fas fa-edit"></i></a>
                             <a href="#" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
