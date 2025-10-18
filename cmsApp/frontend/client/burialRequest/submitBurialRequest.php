@@ -24,7 +24,7 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
 
     <div class="container mt-5 pt-4">
         <h2 class="mb-4">Submit Burial Request</h2>
-        <form action="processBurialRequest.php" method="POST" enctype="multipart/form-data" class="bg-light p-4 rounded shadow-sm">
+    <form action="/stJohnCmsApp/cms.api/processBurialRequest.php" method="POST" enctype="multipart/form-data" class="bg-light p-4 rounded shadow-sm">
             <div class="mb-3">
                 <label for="reservationId" class="form-label">Reservation</label>
                 <select class="form-select" id="reservationId" name="reservationId" required>
