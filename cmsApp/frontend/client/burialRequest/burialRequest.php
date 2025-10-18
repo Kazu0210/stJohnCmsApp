@@ -122,21 +122,21 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
                                         <div class="col-md-4">
                                             <label for="editDeceasedValidId" class="form-label">Deceased Valid ID</label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="editDeceasedValidId" name="deceasedValidId" readonly>
+                                                <input type="file" class="form-control" id="editDeceasedValidId" name="deceasedValidId" accept=".jpg,.jpeg,.png,.pdf">
                                                 <a href="#" id="editDeceasedValidIdLink" target="_blank" class="btn btn-outline-primary">View</a>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <label for="editDeathCertificate" class="form-label">Death Certificate</label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="editDeathCertificate" name="deathCertificate" readonly>
+                                                <input type="file" class="form-control" id="editDeathCertificate" name="deathCertificate" accept=".jpg,.jpeg,.png,.pdf">
                                                 <a href="#" id="editDeathCertificateLink" target="_blank" class="btn btn-outline-primary">View</a>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <label for="editBurialPermit" class="form-label">Burial Permit</label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="editBurialPermit" name="burialPermit" readonly>
+                                                <input type="file" class="form-control" id="editBurialPermit" name="burialPermit" accept=".jpg,.jpeg,.png,.pdf">
                                                 <a href="#" id="editBurialPermitLink" target="_blank" class="btn btn-outline-primary">View</a>
                                             </div>
                                         </div>
@@ -176,11 +176,8 @@ if (!isset($_SESSION['client_id']) && !isset($_SESSION['user_id']) && !isset($_S
             $('#editLotId').val(lotId);
             $('#editDeceasedName').val(deceasedName);
             $('#editBurialDate').val(burialDate);
-            $('#editDeceasedValidId').val(deceasedValidId);
             $('#editDeceasedValidIdLink').attr('href', deceasedValidIdUrl || '#');
-            $('#editDeathCertificate').val(deathCertificate);
             $('#editDeathCertificateLink').attr('href', deathCertificateUrl || '#');
-            $('#editBurialPermit').val(burialPermit);
             $('#editBurialPermitLink').attr('href', burialPermitUrl || '#');
             $('#editStatus').val(status);
             $('#editCreatedAt').val(createdAt);
