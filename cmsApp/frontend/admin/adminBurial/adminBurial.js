@@ -6,6 +6,7 @@ if (window.pdfjsLib) {
 document.addEventListener('DOMContentLoaded', function () {
     // --- 1. DATA STATE (empty, to be loaded dynamically) ---
     let burialData = [];
+
     // PDF Viewer State
     let pdfDoc = null;
     let currentPage = 1;
@@ -118,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- 4. CORE LOGIC ---
     function renderTable(data) {
         tableBody.innerHTML = '';
+        
         if (data.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="13" class="text-center">No records found.</td></tr>';
             return;
