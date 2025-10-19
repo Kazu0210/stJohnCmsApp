@@ -198,6 +198,7 @@ $(document).ready(function() {
                 success: function(response) {
                     if (response.success) {
                         burialTable.ajax.reload(null, false);
+                        updateClientReservation(rowData.reservationId || '', rowData.requestId || '');
                     } else {
                         alert('Failed to approve: ' + (response.message || 'Unknown error.'));
                     }
@@ -236,4 +237,17 @@ $(document).ready(function() {
             });
         }
     });
+
+    const updateClientReservation = (reservationId, requestId) => {
+        console.log('Updating client reservation for ID:', reservationId);
+        console.log('Associated burial request ID:', requestId);
+        $.ajax({
+            url: '../../../../cms.api/updateClientReservation.php',
+            type: 'POST',
+            data: {
+                reservationId: reservationId,
+                requestId: requestId,
+            }
+        })
+    }
 });
