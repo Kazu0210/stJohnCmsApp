@@ -22,6 +22,12 @@ $userRole = getCurrentUserRole();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="adminBurial.css">
+    <style>
+        /* Add margin to DataTables search bar */
+        div.dataTables_filter {
+            margin-bottom: 1rem;
+        }
+    </style>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
@@ -29,7 +35,7 @@ $userRole = getCurrentUserRole();
 
     <main class="main-content">
         <!-- Key Metrics Section -->
-        <div class="row g-2 mb-3">
+        <div class="row g-2 mb-3 bg-light rounded-3 shadow-sm p-2">
             <div class="col-6 col-lg-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center p-2 p-md-3">
@@ -69,19 +75,15 @@ $userRole = getCurrentUserRole();
         </div>
 
         <div class="card shadow-sm">
-            <div class="card-header">Burial Record Management</div>
-            <div class="card-body">
-                <div class="row g-3 mb-4">
-                    <div class="col-12 col-lg-8">
-                        <div class="input-group">
-                            <input type="text" id="searchInput" class="form-control" placeholder="Search...">
-                            <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Clear Search">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
+            <div class="card-header bg-white">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                    <div>
+                        <h5 class="mb-1">Burial Record Management</h5>
+                        <small class="text-muted">View, search, and manage all burial records in the system.</small>
                     </div>
-                    <div class="col-12 col-lg-4">
-                        <select id="statusFilter" class="form-select">
+                    <div class="d-flex gap-2 mt-2 mt-md-0">
+                        <!-- <input type="text" id="searchInput" class="form-control" placeholder="Search..." style="max-width: 220px;"> -->
+                        <select id="statusFilter" class="form-select" style="max-width: 180px;">
                             <option value="all" selected>Filter by Status (All)</option>
                             <option value="active">Active</option>
                             <option value="exhumed">Exhumed</option>
@@ -90,6 +92,8 @@ $userRole = getCurrentUserRole();
                         </select>
                     </div>
                 </div>
+            </div>
+            <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
