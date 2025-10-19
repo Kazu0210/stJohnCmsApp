@@ -20,6 +20,9 @@ $(document).ready(function() {
         // Don't render Cancel button for reservations already cancelled
         const statusText = (r.status || '').toString();
         const isCancelled = statusText.toLowerCase() === 'cancelled' || statusText.toLowerCase() === 'cancel';
+        // Payment progress calculation (move up so paid/total are available)
+        const total = Number(r.total_amount ?? r.totalAmount ?? 0);
+        const paid = Number(r.amount_paid ?? r.total_paid ?? r.totalPaid ?? 0);
         // Determine Pay button (show only when there is an amount due > 0, reservation is not cancelled, and status allows payment)
         // Normalize amount fields and show Pay when amount_due > 0
         const amtDueRaw = r.amount_due ?? r.amountDue ?? r.amount_due ?? 0;
@@ -37,15 +40,14 @@ $(document).ready(function() {
             ? `<a class="btn btn-sm btn-outline-success btn-pay me-1" href="${payUrl}">Pay</a>`
             : '';
 
+        // Hide cancel button if fully paid
+        const isFullyPaid = paid >= total;
         const cancelButton = isCancelled
             ? '<button class="btn btn-sm btn-secondary" disabled>Cancelled</button>'
-            : `<button class="btn btn-sm btn-outline-danger btn-cancel" data-id="${escapeHtml(r.reservationId)}">Cancel</button>`;
+            : (isFullyPaid ? '' : `<button class="btn btn-sm btn-outline-danger btn-cancel" data-id="${escapeHtml(r.reservationId)}">Cancel</button>`);
 
         const actionButton = `<div class="btn-group" role="group" aria-label="Actions">${payButton}${cancelButton}</div>`;
 
-        // Payment progress calculation
-        const total = Number(r.total_amount ?? r.totalAmount ?? 0);
-        const paid = Number(r.amount_paid ?? r.total_paid ?? r.totalPaid ?? 0);
         let percent = 0;
         if (total > 0) {
             percent = Math.min(100, Math.round((paid / total) * 100));
