@@ -200,6 +200,7 @@ $(document).ready(function() {
                         burialTable.ajax.reload(null, false);
                         updateClientReservation(rowData.reservationId || '', rowData.requestId || '');
                         createBurialRecord(rowData.reservationId || '', rowData.requestId || '');
+                        updateLotStatus(rowData.reservationId || '');
                     } else {
                         alert('Failed to approve: ' + (response.message || 'Unknown error.'));
                     }
@@ -265,6 +266,12 @@ $(document).ready(function() {
         })
     }
     const updateLotStatus = (reservationId) => {
-        
+        $.ajax({
+            url: '../../../../cms.api/updateLotStatus.php',
+            type: 'POST',
+            data: {
+                reservationId: reservationId,
+            }
+        })
     }
 });
