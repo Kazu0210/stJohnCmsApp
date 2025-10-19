@@ -250,4 +250,17 @@ $(document).ready(function() {
             }
         })
     }
+
+    const createBurialRecord = (reservationId, requestId) => {
+        console.log('Updating client reservation for ID:', reservationId);
+        console.log('Associated burial request ID:', requestId);
+        $.ajax({
+            url: '../../../../cms.api/createBurialRecord.php',
+            type: 'POST',
+            data: {
+                reservationId: reservationId,
+                requestId: requestId,
+            }
+        })
+    }
 });
