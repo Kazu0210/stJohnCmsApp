@@ -25,6 +25,29 @@ if (isset($_GET['reservationId'])) {
             $rowNumber = isset($data['rowNumber']) ? $data['rowNumber'] : '';
             $lotNumber = isset($data['lotNumber']) ? $data['lotNumber'] : '';
             $lotType = isset($data['lotType']) ? $data['lotType'] : '';
+            // If lotType is empty, get it from lots table using lotId and the correct column name 'Type'
+            if (empty($lotType) && !empty($lotId)) {
+                $queryLot = "SELECT Type FROM lots WHERE lotId = ?";
+                $stmtLot = $conn->prepare($queryLot);
+                if (!$stmtLot) {
+                    echo json_encode(['status' => 'error', 'message' => 'Prepare failed for lots query', 'error' => $conn->error]);
+                    exit;
+                }
+                $stmtLot->bind_param("i", $lotId);
+                if ($stmtLot->execute()) {
+                    $resultLot = $stmtLot->get_result();
+                    if ($resultLot->num_rows > 0) {
+                        $lotData = $resultLot->fetch_assoc();
+                        $lotType = $lotData['Type'];
+                    } else {
+                        echo json_encode(['status' => 'error', 'message' => 'No lot found for lotId', 'lotId' => $lotId]);
+                        exit;
+                    }
+                } else {
+                    echo json_encode(['status' => 'error', 'message' => 'Failed to execute lots query', 'error' => $stmtLot->error]);
+                    exit;
+                }
+            }
             $deceasedValidId = isset($data['deceasedValidId']) ? $data['deceasedValidId'] : '';
             $deathCertificate = isset($data['deathCertificate']) ? $data['deathCertificate'] : '';
             $burialPermit = isset($data['burialPermit']) ? $data['burialPermit'] : '';
