@@ -26,7 +26,7 @@ if (isset($_POST['reservationId']) && isset($_POST['requestId'])) {
     $reservationId = $_POST['reservationId'];
     $requestId = $_POST['requestId'];
 
-    // Get only the required fields from the burial_request using the requestId
+    // Try to get the required fields from the burial_request using the requestId
     $query = "SELECT deceasedName, burialDate, deceasedValidId, deathCertificate, burialPermit FROM burial_request WHERE requestId = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $requestId);
@@ -37,9 +37,23 @@ if (isset($_POST['reservationId']) && isset($_POST['requestId'])) {
             $data = $result->fetch_assoc();
             echo json_encode(['status' => 'success', 'data' => $data]);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'No record found.']);
+            // If not found in burial_request, try to get from reservations table
+            $query2 = "SELECT * FROM reservations WHERE reservationId = ?";
+            $stmt2 = $conn->prepare($query2);
+            $stmt2->bind_param("i", $reservationId);
+            if ($stmt2->execute()) {
+                $result2 = $stmt2->get_result();
+                if ($result2->num_rows > 0) {
+                    $data2 = $result2->fetch_assoc();
+                    echo json_encode(['status' => 'success', 'data' => $data2]);
+                } else {
+                    echo json_encode(['status' => 'error', 'message' => 'No record found in burial_request or reservations.']);
+                }
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to fetch data from reservations.']);
+            }
         }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Failed to fetch data.']);
+        echo json_encode(['status' => 'error', 'message' => 'Failed to fetch data from burial_request.']);
     }
 }
