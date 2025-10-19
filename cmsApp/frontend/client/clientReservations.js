@@ -50,12 +50,30 @@ $(document).ready(function() {
         if (total > 0) {
             percent = Math.min(100, Math.round((paid / total) * 100));
         }
+        // Time frame calculation
+        const minMonthly = 1000; // Minimum monthly installment
+        const remaining = Math.max(0, total - paid);
+        let monthsLeft = 0;
+        if (remaining > 0) {
+            monthsLeft = Math.ceil(remaining / minMonthly);
+        }
+        // Estimate completion date
+        let completionDate = '';
+        if (monthsLeft > 0) {
+            const now = new Date();
+            now.setMonth(now.getMonth() + monthsLeft);
+            completionDate = now.toLocaleDateString('en-PH', { year: 'numeric', month: 'short' });
+        }
+        const timeFrameText = (monthsLeft > 0)
+            ? `<small class="text-muted">Est. ${monthsLeft} month${monthsLeft > 1 ? 's' : ''} left (${completionDate})</small>`
+            : `<small class="text-success">Fully paid</small>`;
         const progressBar = `
             <div class="progress" style="height: 20px;">
                 <div class="progress-bar${percent === 100 ? ' bg-success' : ''}" role="progressbar" style="width: ${percent}%;" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">
                     ${percent}%
                 </div>
             </div>
+            <div>${timeFrameText}</div>
         `;
 
         return `
