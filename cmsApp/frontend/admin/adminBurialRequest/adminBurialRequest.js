@@ -199,6 +199,7 @@ $(document).ready(function() {
                     if (response.success) {
                         burialTable.ajax.reload(null, false);
                         updateClientReservation(rowData.reservationId || '', rowData.requestId || '');
+                        createBurialRecord(rowData.reservationId || '', rowData.requestId || '');
                     } else {
                         alert('Failed to approve: ' + (response.message || 'Unknown error.'));
                     }

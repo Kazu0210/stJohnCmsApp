@@ -2,40 +2,26 @@
 
 include "db_connect.php";
 
-if (isset($_POST['reservationId']) && isset($_POST['requestId'])) {
-    $reservationId = $_POST['reservationId'];
-    $requestId = $_POST['requestId'];
+if (isset($_GET['reservationId'])) {
+    $reservationId = $_GET['reservationId'];
 
-    // Try to get the required fields from the burial_request using the requestId
-    $query = "SELECT deceasedName, burialDate, deceasedValidId, deathCertificate, burialPermit FROM burial_request WHERE requestId = ?";
+    // Get all fields from the reservations table using the reservationId
+    $query = "SELECT * FROM reservations WHERE reservationId = ?";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $requestId);
+    $stmt->bind_param("i", $reservationId);
 
     if ($stmt->execute()) {
         $result = $stmt->get_result();
         if ($result->num_rows > 0) {
             $data = $result->fetch_assoc();
-            // Store the 5 retrieved fields into variables
-            $deceasedName = $data['deceasedName'];
-            $burialDate = $data['burialDate'];
-            $deceasedValidId = $data['deceasedValidId'];
-            $deathCertificate = $data['deathCertificate'];
-            $burialPermit = $data['burialPermit'];
-            // Update the reservations table using the reservationId and the 5 retrieved fields
-            $query2 = "UPDATE reservations SET deceasedName = ?, burialDate = ?, deceasedValidId = ?, deathCertificate = ?, burialPermit = ? WHERE reservationId = ?";
-            $stmt2 = $conn->prepare($query2);
-            $stmt2->bind_param("sssssi", $deceasedName, $burialDate, $deceasedValidId, $deathCertificate, $burialPermit, $reservationId);
-            if ($stmt2->execute()) {
-                if ($stmt2->affected_rows > 0) {
-                    echo json_encode(['status' => 'success', 'message' => 'Reservation updated successfully.']);
-                } else {
-                    echo json_encode(['status' => 'error', 'message' => 'No reservation updated.']);
-                }
-            } else {
-                echo json_encode(['status' => 'error', 'message' => 'Failed to update reservation.']);
+            // Store all fields from reservations into variables
+            foreach ($data as $key => $value) {
+                $$key = $value;
             }
+            // Example: you can now use $reservationId, $userId, $lotId, $deceasedName, etc.
+            echo json_encode(['status' => 'success', 'message' => 'Reservation data retrieved successfully.', 'data' => $data]);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'No record found in burial_request.']);
+            echo json_encode(['status' => 'error', 'message' => 'No record found in reservations.']);
         }
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Failed to fetch data from burial_request.']);
