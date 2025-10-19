@@ -2,8 +2,8 @@
 
 include "db_connect.php";
 
-if (isset($_GET['reservationId'])) {
-    $reservationId = $_GET['reservationId'];
+if (isset($$_POST['reservationId'])) {
+    $reservationId = $$_POST['reservationId'];
 
     // Get all fields from the reservations table using the reservationId
     $query = "SELECT * FROM reservations WHERE reservationId = ?";

@@ -264,4 +264,7 @@ $(document).ready(function() {
             }
         })
     }
+    const updateLotStatus = (reservationId) => {
+        
+    }
 });
