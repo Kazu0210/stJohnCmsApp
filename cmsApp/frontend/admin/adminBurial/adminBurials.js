@@ -16,7 +16,7 @@ $(document).ready(function() {
 		var $tbody = $('#burialTableBody');
 		$tbody.empty();
 		if (!Array.isArray(data) || data.length === 0) {
-			$tbody.append('<tr><td colspan="13" class="text-center">No records found.</td></tr>');
+			$tbody.append('<tr><td colspan="12" class="text-center">No records found.</td></tr>');
 		} else {
 			data.forEach(function(record) {
 				$tbody.append(`
@@ -33,9 +33,6 @@ $(document).ready(function() {
 						<td class="text-center">${record.lotType || ''}</td>
 						<td>${record.createdAt || ''}</td>
 						<td>${record.updatedAt || ''}</td>
-						<td class="text-center">
-							<button class="btn btn-sm btn-primary" data-id="${record.burialId}">View</button>
-						</td>
 					</tr>
 				`);
 			});

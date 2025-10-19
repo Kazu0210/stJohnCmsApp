@@ -110,7 +110,6 @@ $userRole = getCurrentUserRole();
                                 <th class="text-center">Status</th>
                                 <th>Submitted On</th>
                                 <th>Updated On</th>
-                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="burialTableBody"></tbody>
