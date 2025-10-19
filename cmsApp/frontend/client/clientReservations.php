@@ -18,12 +18,15 @@ $userRole = getCurrentUserRole();
 <body>
     <?php include __DIR__ . '/clientNavbar.php'; ?>
 
+
     <main class="container main-content mt-5 pt-3">
+        <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h4">My Reservations</h1>
+            <h1 class="h4 mb-0">My Reservations</h1>
         </div>
 
-        <div id="alerts"> 
+        <!-- Alerts Section -->
+        <section id="alerts" class="mb-3">
             <?php 
             // Show a short message when redirected after a payment 
             if (isset($_GET['payment']) && $_GET['payment'] === 'success') { 
@@ -34,15 +37,18 @@ $userRole = getCurrentUserRole();
                 echo "<div class='alert alert-danger alert-dismissible fade show' role='alert'>" . $msg . "<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button></div>"; 
             } 
             ?> 
-        </div>
+        </section>
 
-        <div class="card">
-            <div class="card-body">
-                <div id="reservationsContainer">
-                    <p class="text-muted">Loading your reservations...</p>
+        <!-- Reservations Table Section -->
+        <section>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div id="reservationsContainer">
+                        <p class="text-muted">Loading your reservations...</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
     </main>
 
     <footer class="footer bg-dark text-white py-3 mt-5">
