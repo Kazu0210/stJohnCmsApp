@@ -43,20 +43,18 @@ if ($stmt->execute()) {
             $stmt3->bind_result($totalPaid);
             $stmt3->fetch();
             $stmt3->close();
-            // Get amount_due from reservations
-            $sql4 = "SELECT amount_due FROM reservations WHERE reservationId = ?";
+            // Get amount_due, total_amount, lotTypeId from reservations
+            $sql4 = "SELECT amount_due, total_amount, lotTypeId FROM reservations WHERE reservationId = ?";
             $stmt4 = $conn->prepare($sql4);
             $stmt4->bind_param('i', $reservationId);
             $stmt4->execute();
-            $stmt4->bind_result($amountDue);
+            $stmt4->bind_result($amountDue, $totalAmount, $lotTypeId);
             $stmt4->fetch();
             $stmt4->close();
-            // Calculate new amount_due (if amount_due exists)
-            $newAmountDue = ($amountDue !== null) ? max(0, $amountDue - $totalPaid) : 0;
-            // Update reservation
-            $sql5 = "UPDATE reservations SET amount_paid = ?, amount_due = ? WHERE reservationId = ?";
+            // Set amount_paid to the sum of all confirmed payments
+            $sql5 = "UPDATE reservations SET amount_paid = ? WHERE reservationId = ?";
             $stmt5 = $conn->prepare($sql5);
-            $stmt5->bind_param('ddi', $totalPaid, $newAmountDue, $reservationId);
+            $stmt5->bind_param('di', $totalPaid, $reservationId);
             $stmt5->execute();
             $stmt5->close();
         } else {
