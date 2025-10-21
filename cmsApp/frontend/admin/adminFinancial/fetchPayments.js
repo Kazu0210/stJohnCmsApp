@@ -45,7 +45,8 @@ $(document).ready(function() {
                                     // Get client name from userId
                                     var clientName = userMap[payment.userId] || payment.userId || '';
                                         let actions = '';
-                                        if ((payment.status || '').toLowerCase() !== 'rejected') {
+                                        const statusLower = (payment.status || '').toLowerCase();
+                                        if (statusLower !== 'rejected' && statusLower !== 'confirmed') {
                                             actions = `<button class="btn btn-success btn-sm confirm-payment" data-id="${payment.paymentId}" title="Confirm Payment"><i class="bi bi-check-circle"></i></button> <button class="btn btn-danger btn-sm reject-payment" data-id="${payment.paymentId}" title="Reject Payment"><i class="bi bi-x-circle"></i></button>`;
                                         }
                                         // Document column: show a download/view link if document exists
@@ -74,6 +75,29 @@ $(document).ready(function() {
                                 });
                                 table.clear();
                                 table.rows.add(rows).draw();
+                                // Add click handler for approve (confirm) button
+                                $('#paymentsTable').off('click', '.confirm-payment').on('click', '.confirm-payment', function() {
+                                    var paymentId = $(this).data('id');
+                                    if (confirm('Are you sure you want to approve this payment?')) {
+                                        $.ajax({
+                                            url: '/stJohnCmsApp/cms.api/updatePaymentStatus.php',
+                                            method: 'POST',
+                                            data: { paymentId: paymentId, status: 'Confirmed' },
+                                            dataType: 'json',
+                                            success: function(res) {
+                                                if (res.success) {
+                                                    alert('Payment approved successfully.');
+                                                    location.reload();
+                                                } else {
+                                                    alert(res.message || 'Failed to approve payment.');
+                                                }
+                                            },
+                                            error: function() {
+                                                alert('Error updating payment status.');
+                                            }
+                                        });
+                                    }
+                                });
                                 // Add click handler for reject button
                                 $('#paymentsTable').off('click', '.reject-payment').on('click', '.reject-payment', function() {
                                     var paymentId = $(this).data('id');

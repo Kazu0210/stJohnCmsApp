@@ -23,7 +23,44 @@ if ($stmt === false) {
     exit;
 }
 $stmt->bind_param('si', $status, $paymentId);
+
 if ($stmt->execute()) {
+    // If status is Confirmed, update amount_paid and amount_due in reservations
+    if (strtolower($status) === 'confirmed') {
+        // Get reservationId and amount from this payment
+        $sql2 = "SELECT reservationId, amount FROM payments WHERE paymentId = ? LIMIT 1";
+        $stmt2 = $conn->prepare($sql2);
+        $stmt2->bind_param('i', $paymentId);
+        $stmt2->execute();
+        $stmt2->bind_result($reservationId, $amount);
+        if ($stmt2->fetch() && $reservationId) {
+            $stmt2->close();
+            // Update amount_paid: add all confirmed payments for this reservation
+            $sql3 = "SELECT SUM(amount) FROM payments WHERE reservationId = ? AND status = 'Confirmed'";
+            $stmt3 = $conn->prepare($sql3);
+            $stmt3->bind_param('i', $reservationId);
+            $stmt3->execute();
+            $stmt3->bind_result($totalPaid);
+            $stmt3->fetch();
+            $stmt3->close();
+            // Get amount_due, total_amount, lotTypeId from reservations
+            $sql4 = "SELECT amount_due, total_amount, lotTypeId FROM reservations WHERE reservationId = ?";
+            $stmt4 = $conn->prepare($sql4);
+            $stmt4->bind_param('i', $reservationId);
+            $stmt4->execute();
+            $stmt4->bind_result($amountDue, $totalAmount, $lotTypeId);
+            $stmt4->fetch();
+            $stmt4->close();
+            // Set amount_paid to the sum of all confirmed payments
+            $sql5 = "UPDATE reservations SET amount_paid = ? WHERE reservationId = ?";
+            $stmt5 = $conn->prepare($sql5);
+            $stmt5->bind_param('di', $totalPaid, $reservationId);
+            $stmt5->execute();
+            $stmt5->close();
+        } else {
+            $stmt2->close();
+        }
+    }
     echo json_encode(['success' => true]);
 } else {
     echo json_encode(['success' => false, 'message' => 'Update failed', 'error' => $stmt->error]);
