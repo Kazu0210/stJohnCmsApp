@@ -33,13 +33,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ================================
     // Load Reserved Lots (for dropdown)
     // ================================
+    let reservationsData = [];
     async function loadReservedLots() {
         try {
-            const res = await fetch(`${API_BASE_URL}getReservedLots.php?mode=lots`, {
-                credentials: "include",
-            });
+            const sessionUserIdInput = document.getElementById('sessionUserId');
+            const sessionUserId = sessionUserIdInput ? sessionUserIdInput.value : null;
+            if (!sessionUserId) {
+                reservationSelect.innerHTML = '<option value="">-- Select Lot --</option>';
+                return;
+            }
+            const res = await fetch(`/stJohnCmsApp/cms.api/fetchClientLots.php?userId=${sessionUserId}`);
             const result = await res.json();
             const data = result.data || [];
+            reservationsData = data;
 
             reservationSelect.innerHTML = '<option value="">-- Select Lot --</option>';
 
@@ -47,24 +53,35 @@ document.addEventListener("DOMContentLoaded", async () => {
                 data.forEach(lot => {
                     const option = document.createElement("option");
                     option.value = lot.reservationId;
-                    option.textContent = `${lot.clientName} - Area ${lot.area}, Block ${lot.block}, Row ${lot.rowNumber}, Lot ${lot.lotNumber}`;
+                    option.textContent = `Area ${lot.area}, Block ${lot.block}, Row ${lot.rowNumber}, Lot ${lot.lotNumber}`;
+                    option.dataset.lotId = lot.lotId;
+                    option.dataset.area = lot.area;
+                    option.dataset.block = lot.block;
+                    option.dataset.lotNumber = lot.lotNumber;
                     reservationSelect.appendChild(option);
                 });
-
-                // ✅ Update reserved lot count dynamically
                 if (reservedLotsCount) reservedLotsCount.textContent = data.length;
             } else {
                 const option = document.createElement("option");
                 option.textContent = "No lots reserved";
                 option.disabled = true;
                 reservationSelect.appendChild(option);
-
                 if (reservedLotsCount) reservedLotsCount.textContent = "0";
             }
         } catch (err) {
             console.error("Error loading reserved lots:", err);
         }
     }
+
+    // Update hidden fields when lot selection changes
+    reservationSelect.addEventListener('change', function() {
+        const selectedId = reservationSelect.value;
+        const selectedLot = reservationsData.find(lot => lot.reservationId == selectedId);
+        document.getElementById('lotId').value = selectedLot ? selectedLot.lotId : '';
+        document.getElementById('area').value = selectedLot ? selectedLot.area : '';
+        document.getElementById('block').value = selectedLot ? selectedLot.block : '';
+        document.getElementById('lotNumber').value = selectedLot ? selectedLot.lotNumber : '';
+    });
 
     // ================================
     // Load Maintenance Request History
@@ -156,4 +173,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadUserName();
     loadReservedLots();
     loadHistory();
+
 });
