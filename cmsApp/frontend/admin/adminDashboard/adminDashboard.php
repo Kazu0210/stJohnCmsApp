@@ -52,7 +52,7 @@ $userRole = getCurrentUserRole();
                         <div class="card-body">
                             <h3 class="card-title text-success"><i class="fas fa-money-bill-wave me-2"></i>Payment Summary</h3>
                             <hr>
-                            <p class="m-0"><strong>Payments Received:</strong> <span class="fw-bold text-success">₱150,000</span></p>
+                            <p class="m-0"><strong>Payments Received:</strong> <span class="fw-bold text-success">₱,000</span></p>
                             <p class="m-0"><strong>Outstanding Balances:</strong> <span class="fw-bold text-danger">₱50,000</span></p>
                             <p class="m-0">Upcoming Due: 8</p>
                         </div>
@@ -88,9 +88,9 @@ $userRole = getCurrentUserRole();
                         <div class="card-body">
                             <h3 class="card-title text-secondary"><i class="fas fa-box-open me-2"></i>Lot Classification</h3>
                             <hr>
-                            <p class="m-0">Available: <span class="fw-bold text-success">300</span></p>
-                            <p class="m-0">Reserved: <span class="fw-bold text-warning">150</span></p>
-                            <p class="m-0">Occupied: <span class="fw-bold text-danger">50</span></p>
+                            <p class="m-0">Available: <span class="fw-bold text-success" id="available-lot-count"></span></p>
+                            <p class="m-0">Reserved: <span class="fw-bold text-warning" id="reserved-lot-count"></span></p>
+                            <p class="m-0">Occupied: <span class="fw-bold text-danger" id="occupied-lot-count"></span></p>
                         </div>
                     </div>
                 </div>
