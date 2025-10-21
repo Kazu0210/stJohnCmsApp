@@ -90,6 +90,7 @@ $userRole = getCurrentUserRole();
                             <th>Payment Method</th>
                             <th>Reference/OR No.</th>
                             <th>Date Paid</th>
+                            <th>Document</th>
                             <th>Actions</th>
                         </tr>
                     </thead>

@@ -48,6 +48,18 @@ $(document).ready(function() {
                                         if ((payment.status || '').toLowerCase() !== 'rejected') {
                                             actions = `<button class="btn btn-success btn-sm confirm-payment" data-id="${payment.paymentId}" title="Confirm Payment"><i class="bi bi-check-circle"></i></button> <button class="btn btn-danger btn-sm reject-payment" data-id="${payment.paymentId}" title="Reject Payment"><i class="bi bi-x-circle"></i></button>`;
                                         }
+                                        // Document column: show a download/view link if document exists
+                                        let documentCell = '';
+                                            if (payment.document) {
+                                                // Only use the filename, not the full path, to avoid double uploads/payments
+                                                let docFile = payment.document;
+                                                if (docFile.startsWith('uploads/payments/')) {
+                                                    docFile = docFile.replace('uploads/payments/', '');
+                                                }
+                                                documentCell = `<a href="/stJohnCmsApp/cms.api/uploads/payments/${docFile}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt"></i> View</a>`;
+                                            } else {
+                                                documentCell = '<span class="text-muted">None</span>';
+                                            }
                                         return [
                                             clientName,
                                             lotNumber,
@@ -56,6 +68,7 @@ $(document).ready(function() {
                                             paymentMethod,
                                             payment.reference || '',
                                             payment.datePaid || '',
+                                            documentCell,
                                             actions
                                         ];
                                 });
@@ -86,7 +99,7 @@ $(document).ready(function() {
                                     }
                                 });
                                 // Hide Payment ID column and add Actions column if not already set
-                                if (!table.settings()[0].aoColumns || table.settings()[0].aoColumns.length !== 8) {
+                                if (!table.settings()[0].aoColumns || table.settings()[0].aoColumns.length !== 9) {
                                     table.destroy();
                                     $('#paymentsTable').DataTable({
                                         data: rows,
@@ -98,6 +111,7 @@ $(document).ready(function() {
                                             { title: 'Payment Method' },
                                             { title: 'Reference/OR No.' },
                                             { title: 'Date Paid' },
+                                            { title: 'Document', orderable: false, searchable: false },
                                             { title: 'Actions', orderable: false, searchable: false }
                                         ]
                                     });
