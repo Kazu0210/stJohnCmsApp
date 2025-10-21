@@ -21,11 +21,23 @@ function getOutstandingBalances($conn) {
     }
 }
 
+function getUpcomingDue($conn) {
+    $sql = "SELECT SUM(amount_due) AS upcoming_due FROM reservations WHERE status = 'Reserved'";
+    $result = $conn->query($sql);
+    if ($result && $row = $result->fetch_assoc()) {
+        return $row['upcoming_due'];
+    } else {
+        return 0;
+    }
+}
+
 $total = getTotalPayments($conn);
 $outstanding = getOutstandingBalances($conn);
+$upcomingDue = getUpcomingDue($conn);
 echo json_encode([
     'total_amount' => $total,
-    'outstanding_balance' => $outstanding
+    'outstanding_balance' => $outstanding,
+    'upcoming_due' => $upcomingDue
 ]);
 
 $conn->close();
