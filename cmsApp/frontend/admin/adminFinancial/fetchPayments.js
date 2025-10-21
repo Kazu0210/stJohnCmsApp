@@ -45,7 +45,8 @@ $(document).ready(function() {
                                     // Get client name from userId
                                     var clientName = userMap[payment.userId] || payment.userId || '';
                                         let actions = '';
-                                        if ((payment.status || '').toLowerCase() !== 'rejected') {
+                                        const statusLower = (payment.status || '').toLowerCase();
+                                        if (statusLower !== 'rejected' && statusLower !== 'confirmed') {
                                             actions = `<button class="btn btn-success btn-sm confirm-payment" data-id="${payment.paymentId}" title="Confirm Payment"><i class="bi bi-check-circle"></i></button> <button class="btn btn-danger btn-sm reject-payment" data-id="${payment.paymentId}" title="Reject Payment"><i class="bi bi-x-circle"></i></button>`;
                                         }
                                         // Document column: show a download/view link if document exists
