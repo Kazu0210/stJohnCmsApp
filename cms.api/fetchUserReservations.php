@@ -35,7 +35,7 @@ try {
             FROM reservations r
             LEFT JOIN lots l ON r.lotId = l.lotId
             LEFT JOIN lot_types lt ON l.lotTypeId = lt.lotTypeId
-            WHERE r.userId = ?
+            WHERE r.userId = ? AND r.status IN ('Reserved')
             ORDER BY r.reservationId DESC";
 
     $stmt = $conn->prepare($sql);

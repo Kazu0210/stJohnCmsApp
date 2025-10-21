@@ -1,4 +1,31 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Fetch payment progress for the logged-in user
+    async function fetchPaymentProgress(userId) {
+        try {
+            const response = await fetch(`../../../../cms.api/fetchUserReservations.php?userId=${userId}`, {
+                method: "GET",
+                credentials: "include"
+            });
+            if (!response.ok) {
+                throw new Error("Failed to fetch payment progress");
+            }
+            const result = await response.json();
+            if (result.success && result.data.length > 0) {
+                // Aggregate payment data
+                let totalPaid = 0, totalAmount = 0;
+                result.data.forEach(r => {
+                    totalPaid += r.total_paid ? parseFloat(r.total_paid) : 0;
+                    totalAmount += r.total_amount ? parseFloat(r.total_amount) : 0;
+                });
+                return { totalPaid, totalAmount };
+            } else {
+                return { totalPaid: 0, totalAmount: 0 };
+            }
+        } catch (error) {
+            console.error("Fetch error:", error);
+            return { totalPaid: 0, totalAmount: 0 };
+        }
+    }
     // Fetch maintenance requests for the logged-in user
     async function fetchMaintenanceRequests(userId) {
         try {
@@ -162,6 +189,18 @@ document.addEventListener("DOMContentLoaded", function () {
         // Get userId from PHP session (injected into JS)
         const userId = window.userId;
         if (userId) {
+            // Payment Progress
+            const payment = await fetchPaymentProgress(userId);
+            const paid = payment.totalPaid || 0;
+            const total = payment.totalAmount || 0;
+            const percent = total > 0 ? Math.round((paid / total) * 100) : 0;
+            // Update payment progress card
+            document.querySelector('.card .progress-bar').style.width = percent + '%';
+            document.querySelector('.card .progress-bar').textContent = percent + '%';
+            document.querySelector('.card .progress').setAttribute('aria-valuenow', percent);
+            document.querySelector('.card .card-body p').textContent = `₱${paid.toLocaleString()} Paid / ₱${total.toLocaleString()} Total`;
+
+            // Service Requests
             const requests = await fetchMaintenanceRequests(userId);
             renderServiceRequests(requests);
         } else {
