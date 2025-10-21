@@ -20,6 +20,9 @@ if (!isset($_SESSION['user_id'])) {
 
     <?php include '../../client/clientNavbar.php'; ?>
 
+    <?php if (isset($_SESSION['user_id'])): ?>
+    <input type="hidden" id="sessionUserId" value="<?php echo htmlspecialchars($_SESSION['user_id']); ?>">
+    <?php endif; ?>
     <main class="container py-4">
         <div class="row g-4">
             <div class="col-lg-6">

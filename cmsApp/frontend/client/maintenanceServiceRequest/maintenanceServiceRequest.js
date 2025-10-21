@@ -35,9 +35,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ================================
     async function loadReservedLots() {
         try {
-            const res = await fetch(`${API_BASE_URL}getReservedLots.php?mode=lots`, {
-                credentials: "include",
-            });
+            const sessionUserIdInput = document.getElementById('sessionUserId');
+            const sessionUserId = sessionUserIdInput ? sessionUserIdInput.value : null;
+            if (!sessionUserId) {
+                reservationSelect.innerHTML = '<option value="">-- Select Lot --</option>';
+                return;
+            }
+            const res = await fetch(`/stJohnCmsApp/cms.api/fetchClientLots.php?userId=${sessionUserId}`);
             const result = await res.json();
             const data = result.data || [];
 
@@ -47,18 +51,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 data.forEach(lot => {
                     const option = document.createElement("option");
                     option.value = lot.reservationId;
-                    option.textContent = `${lot.clientName} - Area ${lot.area}, Block ${lot.block}, Row ${lot.rowNumber}, Lot ${lot.lotNumber}`;
+                    option.textContent = `Area ${lot.area}, Block ${lot.block}, Row ${lot.rowNumber}, Lot ${lot.lotNumber}`;
                     reservationSelect.appendChild(option);
                 });
-
-                // ✅ Update reserved lot count dynamically
                 if (reservedLotsCount) reservedLotsCount.textContent = data.length;
             } else {
                 const option = document.createElement("option");
                 option.textContent = "No lots reserved";
                 option.disabled = true;
                 reservationSelect.appendChild(option);
-
                 if (reservedLotsCount) reservedLotsCount.textContent = "0";
             }
         } catch (err) {
@@ -156,4 +157,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadUserName();
     loadReservedLots();
     loadHistory();
+
 });
