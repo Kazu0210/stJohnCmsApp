@@ -52,9 +52,9 @@ $userRole = getCurrentUserRole();
                         <div class="card-body">
                             <h3 class="card-title text-success"><i class="fas fa-money-bill-wave me-2"></i>Payment Summary</h3>
                             <hr>
-                            <p class="m-0"><strong>Payments Received:</strong> <span class="fw-bold text-success">₱,000</span></p>
-                            <p class="m-0"><strong>Outstanding Balances:</strong> <span class="fw-bold text-danger">₱50,000</span></p>
-                            <p class="m-0">Upcoming Due: 8</p>
+                            <p class="m-0"><strong>Payments Received:</strong> <span class="fw-bold text-success" id="payments-received">₱0</span></p>
+                            <p class="m-0"><strong>Outstanding Balances:</strong> <span class="fw-bold text-danger" id="outstanding-balances">₱0</span></p>
+                            <p class="m-0">Upcoming Due: <span id="upcoming-due">0</span></p>
                         </div>
                     </div>
                 </div>
