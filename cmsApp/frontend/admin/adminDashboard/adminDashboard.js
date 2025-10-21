@@ -361,4 +361,21 @@ document.addEventListener('DOMContentLoaded', function() {
     contentElement.innerHTML = activityHtml;
     timeElement.textContent = latestTime;
   }
+
+  // Fetch lot classification counts and update dashboard
+  fetch('../../../../cms.api/fetchLotClassification.php')
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        const counts = data.data;
+        document.getElementById('available-lot-count').textContent = counts.Available || 0;
+        document.getElementById('reserved-lot-count').textContent = counts.Reserved || 0;
+        document.getElementById('occupied-lot-count').textContent = counts.Occupied || 0;
+      } else {
+        console.error('Failed to fetch lot classification:', data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching lot classification:', error);
+    });
 });
