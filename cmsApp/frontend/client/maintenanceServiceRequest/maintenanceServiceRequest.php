@@ -35,6 +35,11 @@ if (!isset($_SESSION['user_id'])) {
                                 <option value="">-- Select Lot --</option>
                             </select>
                         </div>
+                        <!-- Hidden fields for lot details -->
+                        <input type="hidden" id="lotId" name="lotId">
+                        <input type="hidden" id="area" name="area">
+                        <input type="hidden" id="block" name="block">
+                        <input type="hidden" id="lotNumber" name="lotNumber">
 
                         <div class="mb-3">
                             <label for="serviceType" class="form-label">Service Type</label>

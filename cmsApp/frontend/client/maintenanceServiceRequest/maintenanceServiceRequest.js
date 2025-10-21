@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ================================
     // Load Reserved Lots (for dropdown)
     // ================================
+    let reservationsData = [];
     async function loadReservedLots() {
         try {
             const sessionUserIdInput = document.getElementById('sessionUserId');
@@ -44,6 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const res = await fetch(`/stJohnCmsApp/cms.api/fetchClientLots.php?userId=${sessionUserId}`);
             const result = await res.json();
             const data = result.data || [];
+            reservationsData = data;
 
             reservationSelect.innerHTML = '<option value="">-- Select Lot --</option>';
 
@@ -52,6 +54,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                     const option = document.createElement("option");
                     option.value = lot.reservationId;
                     option.textContent = `Area ${lot.area}, Block ${lot.block}, Row ${lot.rowNumber}, Lot ${lot.lotNumber}`;
+                    option.dataset.lotId = lot.lotId;
+                    option.dataset.area = lot.area;
+                    option.dataset.block = lot.block;
+                    option.dataset.lotNumber = lot.lotNumber;
                     reservationSelect.appendChild(option);
                 });
                 if (reservedLotsCount) reservedLotsCount.textContent = data.length;
@@ -66,6 +72,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.error("Error loading reserved lots:", err);
         }
     }
+
+    // Update hidden fields when lot selection changes
+    reservationSelect.addEventListener('change', function() {
+        const selectedId = reservationSelect.value;
+        const selectedLot = reservationsData.find(lot => lot.reservationId == selectedId);
+        document.getElementById('lotId').value = selectedLot ? selectedLot.lotId : '';
+        document.getElementById('area').value = selectedLot ? selectedLot.area : '';
+        document.getElementById('block').value = selectedLot ? selectedLot.block : '';
+        document.getElementById('lotNumber').value = selectedLot ? selectedLot.lotNumber : '';
+    });
 
     // ================================
     // Load Maintenance Request History

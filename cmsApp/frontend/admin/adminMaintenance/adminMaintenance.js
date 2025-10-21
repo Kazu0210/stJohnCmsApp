@@ -133,7 +133,7 @@ const renderTable = (data, page) => {
         row.innerHTML = `
             <td>${record.client}</td>
             <td class="text-center">${record.areaBlock}</td>
-            <td class="text-center">${record.areaBlock}</td> 
+            <td class="text-center">${record.block}</td>
             <td class="text-center">${record.rowNo}</td>
             <td class="text-center">${record.lotNoOnly}</td>
             <td>${formatDateTime(record.requested)}</td>
