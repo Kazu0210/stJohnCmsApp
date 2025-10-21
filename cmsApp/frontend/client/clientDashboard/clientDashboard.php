@@ -112,14 +112,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
                             <h2 class="card-title">Active Service Requests</h2>
                         </div>
                         <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item">Grass Trimming<span class="status in-progress">In Progress</span></li>
-                                <li class="list-group-item">Repainting (Lot 12)<span class="status pending">Pending</span></li>
-                                <li class="list-group-item">Cleaning (Lot 8)<span class="status completed">Completed</span></li>
-                                <li class="list-group-item">Flower Planting<span class="status in-progress">In Progress</span></li>
-                                <li class="list-group-item">Stone Repair (Lot 22)<span class="status pending">Pending</span></li>
-                                <li class="list-group-item">Monument Polish<span class="status completed">Completed</span></li>
-                                <li class="list-group-item">Fence Installation<span class="status pending">Pending</span></li>
+                            <ul class="list-group list-group-flush" id="serviceRequestsList">
+                                <li class="list-group-item text-center">Loading...</li>
                             </ul>
                         </div>
                     </div>
@@ -136,6 +130,9 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
         </div>
     </footer>
 
+    <script>
+        window.userId = <?php echo json_encode($_SESSION['user_id']); ?>;
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
