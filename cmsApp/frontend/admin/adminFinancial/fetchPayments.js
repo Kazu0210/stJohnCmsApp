@@ -74,6 +74,29 @@ $(document).ready(function() {
                                 });
                                 table.clear();
                                 table.rows.add(rows).draw();
+                                // Add click handler for approve (confirm) button
+                                $('#paymentsTable').off('click', '.confirm-payment').on('click', '.confirm-payment', function() {
+                                    var paymentId = $(this).data('id');
+                                    if (confirm('Are you sure you want to approve this payment?')) {
+                                        $.ajax({
+                                            url: '/stJohnCmsApp/cms.api/updatePaymentStatus.php',
+                                            method: 'POST',
+                                            data: { paymentId: paymentId, status: 'Confirmed' },
+                                            dataType: 'json',
+                                            success: function(res) {
+                                                if (res.success) {
+                                                    alert('Payment approved successfully.');
+                                                    location.reload();
+                                                } else {
+                                                    alert(res.message || 'Failed to approve payment.');
+                                                }
+                                            },
+                                            error: function() {
+                                                alert('Error updating payment status.');
+                                            }
+                                        });
+                                    }
+                                });
                                 // Add click handler for reject button
                                 $('#paymentsTable').off('click', '.reject-payment').on('click', '.reject-payment', function() {
                                     var paymentId = $(this).data('id');
