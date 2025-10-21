@@ -1,0 +1,11 @@
+/* Burial Request Page Styles */
+body {
+    background-color: #f8f9fa;
+    color: #333;
+    padding-top: 56px; /* Ensure space for fixed navbar */
+}
+
+/* Import navbar styles from User Management for consistency */
+@import url('../adminUserManagement/adminUserManagement.css');
+
+/* Additional page-specific styles can go below */

@@ -4,13 +4,9 @@ if (window.pdfjsLib) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    // --- 1. MOCK DATA & STATE ---
-    let burialData = [
-        { id: 1, name: "Jane M. Smith", burialDate: "2025-09-25", area: "A", block: 1, rowNumber: 3, lotNumber: 12, status: "active", submittedOn: "2025-09-20 10:00", updatedOn: "2025-09-20 10:00", docs: {} },
-        { id: 2, name: "John Doe", burialDate: "2025-08-15", area: "B", block: 3, rowNumber: 1, lotNumber: 22, status: "exhumed", submittedOn: "2025-08-10 14:30", updatedOn: "2025-08-12 09:00", docs: {} },
-        { id: 3, name: "Peter Jones (Multi-Page PDF)", burialDate: "2024-01-20", area: "A", block: 2, rowNumber: 5, lotNumber: 5, status: "archived", submittedOn: "2024-01-15 11:00", updatedOn: "2024-01-15 11:00", docs: {} },
-        { id: 4, name: "Mary Williams", burialDate: "2023-11-30", area: "C", block: 5, rowNumber: 2, lotNumber: 18, status: "active", submittedOn: "2023-11-25 16:00", updatedOn: "2023-11-25 16:00", docs: {} }
-    ];
+    // --- 1. DATA STATE (empty, to be loaded dynamically) ---
+    let burialData = [];
+
     // PDF Viewer State
     let pdfDoc = null;
     let currentPage = 1;
@@ -123,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- 4. CORE LOGIC ---
     function renderTable(data) {
         tableBody.innerHTML = '';
+        
         if (data.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="13" class="text-center">No records found.</td></tr>';
             return;

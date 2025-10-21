@@ -205,12 +205,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ✅ Logout buttons
+    // ✅ Logout buttons (call logout API then redirect)
     logoutLinks.forEach((link) => {
         if (link)
-            link.addEventListener("click", (e) => {
+            link.addEventListener("click", async (e) => {
                 e.preventDefault();
-                window.location.href = "../../auth/login/login.php";
+                try {
+                    const res = await fetch("/stJohnCmsApp/cms.api/logout.php", {
+                        method: "GET",
+                        credentials: "include"
+                    });
+                    // Always redirect to login page after logout
+                    window.location.href = "../../auth/login/login.php";
+                } catch (err) {
+                    // Fallback: still redirect
+                    window.location.href = "../../auth/login/login.php";
+                }
             });
     });
 
