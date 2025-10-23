@@ -26,6 +26,25 @@ document.addEventListener("DOMContentLoaded", function () {
             return { totalPaid: 0, totalAmount: 0 };
         }
     }
+    
+    // Fetch summary payment info (upcoming deadlines, totals) per user
+    async function fetchPaymentSummary(userId) {
+        try {
+            const response = await fetch(`../../../../cms.api/getPaymentData.php?userId=${userId}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (!response.ok) throw new Error('Failed to fetch payment summary');
+            const result = await response.json();
+            // result expected { status: 'success', data: { reservationId: { ... }, ... } }
+            return result;
+        } catch (err) {
+            console.error('Fetch error:', err);
+            return { status: 'error', data: {} };
+        }
+    }
+
+    // (Removed) global maintenance totals call — we'll fetch the user's maintenance requests directly.
     // Fetch maintenance requests for the logged-in user
     async function fetchMaintenanceRequests(userId) {
         try {
@@ -200,8 +219,30 @@ document.addEventListener("DOMContentLoaded", function () {
             document.querySelector('.card .progress').setAttribute('aria-valuenow', percent);
             document.querySelector('.card .card-body p').textContent = `₱${paid.toLocaleString()} Paid / ₱${total.toLocaleString()} Total`;
 
-            // Service Requests
+            // Update summary cards: total paid, balance, upcoming payment
+            const summary = await fetchPaymentSummary(userId);
+            if (summary && summary.status === 'success' && summary.data) {
+                // summary.data is an object keyed by reservation id
+                let totalPaidAll = 0;
+                let totalAmountAll = 0;
+                Object.values(summary.data).forEach(item => {
+                    totalPaidAll += parseFloat(item.paymentHistory?.reduce?.((s,p)=>s+parseFloat(p.amount||0),0) || 0);
+                    totalAmountAll += parseFloat(item.totalPrice || item.totalPrice === 0 ? item.totalPrice : 0) || 0;
+                });
+
+                // Populate DOM elements (no upcoming payment card anymore)
+                const totalPaidEl = document.getElementById('totalPaid');
+                const balanceEl = document.getElementById('balanceAmount');
+
+                if (totalPaidEl) totalPaidEl.textContent = `₱${Number(totalPaidAll || 0).toLocaleString()}`;
+                if (balanceEl) balanceEl.textContent = `₱${Number(Math.max(0, (totalAmountAll - totalPaidAll)) || 0).toLocaleString()}`;
+            }
+
+            // Fetch user's maintenance requests and populate both the service requests list and the count
             const requests = await fetchMaintenanceRequests(userId);
+            // Update count based on number of requests returned for this user
+            const countEl = document.getElementById('maintenanceRequestsCount');
+            if (countEl) countEl.textContent = (Array.isArray(requests) ? requests.length : 0);
             renderServiceRequests(requests);
         } else {
             renderServiceRequests([]);

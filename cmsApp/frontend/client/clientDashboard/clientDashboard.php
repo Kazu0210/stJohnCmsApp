@@ -43,27 +43,22 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
             <div class="col-6 col-lg">
                 <div class="panel">
                     <small>Total Paid</small>
-                    <span class="fw-bold">₱25,000</span>
+                    <span class="fw-bold" id="totalPaid">₱0</span>
                 </div>
             </div>
             <div class="col-6 col-lg">
                 <div class="panel">
                     <small>Balance</small>
-                    <span class="fw-bold">₱15,000</span>
+                    <span class="fw-bold" id="balanceAmount">₱0</span>
                 </div>
             </div>
             <div class="col-6 col-lg">
                 <div class="panel">
                     <small>Maintenance Requests</small>
-                    <span class="fw-bold">3</span>
+                    <span class="fw-bold" id="maintenanceRequestsCount">0</span>
                 </div>
             </div>
-            <div class="col-12 col-lg">
-                <div class="panel">
-                    <small>Upcoming Payment</small>
-                    <span class="fw-bold fs-6">May 5, 2025</span>
-                </div>
-            </div>
+            <!-- Upcoming Payment card removed per request -->
         </section>
 
         <div class="row g-4">
