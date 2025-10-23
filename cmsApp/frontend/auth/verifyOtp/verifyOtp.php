@@ -90,6 +90,10 @@
       background: #357ab8;
     }
 
+    .verify-btn {
+      display: none; /* Initially hide the verify button */
+    }
+
     #message {
       margin-top: 15px;
       font-weight: bold;
@@ -134,7 +138,7 @@
       </div>
 
       <!-- Verify OTP button -->
-      <button type="submit" class="btn verify-btn">Verify OTP</button>
+      <button type="submit" class="btn verify-btn" id="verify-otp-btn">Verify OTP</button>
     </form>
 
     <!-- Message area -->
@@ -142,7 +146,7 @@
 
     <!-- Resend OTP -->
     <p class="resend">
-      Didn’t get the code? <a href="#" id="resend-link">Resend OTP</a>
+      Didn't get the code? <a href="#" id="resend-link">Resend OTP</a>
     </p>
   </div>
 

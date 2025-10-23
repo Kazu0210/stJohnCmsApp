@@ -1,19 +1,3 @@
-<?php
-session_start();
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
-    // User is not logged in, redirect to login page
-    header("Location: ../../auth/login/login.php");
-    exit();
-}
-
-// Optional: You can also check user role if needed
-// if ($_SESSION['role'] !== 'client') {
-//     header("Location: ../../auth/login/login.php");
-//     exit();
-// }
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,9 +12,47 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
     <link rel="stylesheet" href="clientDashboard.css">
     <script src="clientDashboard.js" defer></script>
 </head>
-
 <body>
-    <?php include dirname(__DIR__) . '/clientNavbar.php'; ?>
+<nav class="navbar navbar-expand-lg fixed-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <span class="fw-bold">Cemetery Management System</span> </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../cemeteryMap/cemeteryMap.php">Cemetery Map</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../lotReservation/lotReservation.php">Lot Reservation</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../payment/payment.php">Payment</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../burialRecord/burialRecord.php">Burial Record</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../maintenanceServiceRequest/maintenanceServiceRequest.php">Maintenance Request</a></li>
+                </ul>
+            
+                <div class="d-lg-none mt-3 pt-3 border-top border-dark-subtle">
+                     <div class="d-flex align-items-center mb-2">
+                        <span id="user-name-display-mobile" class="fw-bold">User Name</span>
+                    </div>
+                    <a href="../../../cms.api/logout.php" id="logoutLinkMobile" class="mobile-logout-link">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+            
+            <div class="dropdown d-none d-lg-block">
+                <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span id="user-name-display-desktop">User Name</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="../../../cms.api/logout.php" id="logoutLinkDesktop">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
 
     <main class="main-content container-fluid">
         <section class="row g-3 mb-4">
@@ -85,9 +107,37 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Data will be populated by JavaScript -->
                                     <tr>
-                                        <td colspan="6" class="text-center">Loading...</td>
+                                        <td>Maria A. Erese</td>
+                                        <td>Area A</td>
+                                        <td>1</td>
+                                        <td>1</td>
+                                        <td>12</td>
+                                        <td><span class="status completed">Paid</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Maria A. Erese</td>
+                                        <td>Area B</td>
+                                        <td>3</td>
+                                        <td>1</td>
+                                        <td>8</td>
+                                        <td><span class="status pending">Partially Paid</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Maria A. Erese</td>
+                                        <td>Area C</td>
+                                        <td>5</td>
+                                        <td>1</td>
+                                        <td>22</td>
+                                        <td><span class="status in-progress">Reserved</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Maria A. Erese</td>
+                                        <td>Area D</td>
+                                        <td>2</td>
+                                        <td>1</td>
+                                        <td>15</td>
+                                        <td><span class="status completed">Paid</span></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -112,8 +162,14 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
                             <h2 class="card-title">Active Service Requests</h2>
                         </div>
                         <div class="card-body">
-                            <ul class="list-group list-group-flush" id="serviceRequestsList">
-                                <li class="list-group-item text-center">Loading...</li>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Grass Trimming<span class="status in-progress">In Progress</span></li>
+                                <li class="list-group-item">Repainting (Lot 12)<span class="status pending">Pending</span></li>
+                                <li class="list-group-item">Cleaning (Lot 8)<span class="status completed">Completed</span></li>
+                                <li class="list-group-item">Flower Planting<span class="status in-progress">In Progress</span></li>
+                                <li class="list-group-item">Stone Repair (Lot 22)<span class="status pending">Pending</span></li>
+                                <li class="list-group-item">Monument Polish<span class="status completed">Completed</span></li>
+                                <li class="list-group-item">Fence Installation<span class="status pending">Pending</span></li>
                             </ul>
                         </div>
                     </div>
@@ -130,9 +186,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
         </div>
     </footer>
 
-    <script>
-        window.userId = <?php echo json_encode($_SESSION['user_id']); ?>;
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="../../environment.js"></script>
+    <script src="signup.js"></script>
 </body>
 </html>

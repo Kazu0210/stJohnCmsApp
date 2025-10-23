@@ -3,6 +3,9 @@ require_once "db_connect.php";
 session_start();
 
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 // Check if user is admin (you may need to adjust this based on your user roles)
 if (!isset($_SESSION['user_id'])) {

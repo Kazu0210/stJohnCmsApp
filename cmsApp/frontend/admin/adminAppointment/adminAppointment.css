@@ -184,7 +184,6 @@ main {
     
 }
 .status-display.confirmed { color: var(--success); }
-.status-display.pending { color: var(--pending); }
 .status-display.scheduled { color: var(--pending); }
 .status-display.cancelled { color: var(--danger); }
 .status-display.completed { color: var(--archived); }

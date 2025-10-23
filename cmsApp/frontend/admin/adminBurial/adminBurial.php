@@ -22,20 +22,69 @@ $userRole = getCurrentUserRole();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="adminBurial.css">
-    <style>
-        /* Add margin to DataTables search bar */
-        div.dataTables_filter {
-            margin-bottom: 1rem;
-        }
-    </style>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
-    <?php include '../components/adminNavbar.php'; ?>
+
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Blessed Saint John Memorial</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item"><a class="nav-link" href="../adminDashboard/adminDashboard.php">Home</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="managementDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Management
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="managementDropdown">
+                            <li><a class="dropdown-item" href="../adminAppointment/adminAppointment.php">Appointment Management</a></li>
+                            <li><a class="dropdown-item" href="../adminCemeteryMap/adminCemeteryMap.php">Cemetery Map Management</a></li>
+                            <li><a class="dropdown-item" href="../adminReservation/adminReservation.php">Lot Reservation Management</a></li>
+                            <li><a class="dropdown-item active" href="adminBurial.php">Burial Record Management</a></li>
+                            <li><a class="dropdown-item" href="../adminFinancial/adminFinancial.php">Financial Tracking</a></li>
+                            <li><a class="dropdown-item" href="../adminMaintenance/adminMaintenance.php">Maintenance Management</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminToolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Admin Tools
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="adminToolsDropdown">
+                            <li><a class="dropdown-item" href="../adminAuditLogs/adminAuditLogs.php">Audit Logs</a></li>
+                            <li><a class="dropdown-item" href="../adminUserManagement/adminUserManagement.php">User Management</a></li>
+                            <li><a class="dropdown-item" href="../adminReports/adminReports.php">Reports Module</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <div class="d-lg-none mt-3 pt-3 border-top border-dark-subtle">
+                    <div class="d-flex align-items-center mb-2">
+                        <span id="user-name-display-mobile" class="fw-bold"><?php echo htmlspecialchars($userName); ?></span>
+                        <small class="text-muted ms-2">(<?php echo htmlspecialchars($userRole); ?>)</small>
+                    </div>
+                    <a href="../../../../cms.api/logout.php" id="logoutLinkMobile" class="mobile-logout-link">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+            
+            <div class="dropdown d-none d-lg-flex">
+                <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span id="user-name-display-desktop"><?php echo htmlspecialchars($userName); ?></span>
+                    <small class="text-muted ms-2">(<?php echo htmlspecialchars($userRole); ?>)</small>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="../../../../cms.api/logout.php" id="logoutLinkDesktop"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
     <main class="main-content">
         <!-- Key Metrics Section -->
-        <div class="row g-2 mb-3 bg-light rounded-3 shadow-sm p-2">
+        <div class="row g-2 mb-3">
             <div class="col-6 col-lg-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body text-center p-2 p-md-3">
@@ -75,15 +124,19 @@ $userRole = getCurrentUserRole();
         </div>
 
         <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-                    <div>
-                        <h5 class="mb-1">Burial Record Management</h5>
-                        <small class="text-muted">View, search, and manage all burial records in the system.</small>
+            <div class="card-header">Burial Record Management</div>
+            <div class="card-body">
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-lg-8">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search...">
+                            <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Clear Search">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="d-flex gap-2 mt-2 mt-md-0">
-                        <!-- <input type="text" id="searchInput" class="form-control" placeholder="Search..." style="max-width: 220px;"> -->
-                        <select id="statusFilter" class="form-select" style="max-width: 180px;">
+                    <div class="col-12 col-lg-4">
+                        <select id="statusFilter" class="form-select">
                             <option value="all" selected>Filter by Status (All)</option>
                             <option value="active">Active</option>
                             <option value="exhumed">Exhumed</option>
@@ -92,8 +145,6 @@ $userRole = getCurrentUserRole();
                         </select>
                     </div>
                 </div>
-            </div>
-            <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -110,6 +161,7 @@ $userRole = getCurrentUserRole();
                                 <th class="text-center">Status</th>
                                 <th>Submitted On</th>
                                 <th>Updated On</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="burialTableBody"></tbody>
@@ -268,10 +320,7 @@ $userRole = getCurrentUserRole();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script type="module" src="/stJohnCmsApp/cmsApp/frontend/environment.js"></script>
     <script src="adminBurial.js"></script>
-    <!-- DataTables CSS & JS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="adminBurials.js"></script>
 </body>
 </html>

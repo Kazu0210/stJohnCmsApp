@@ -26,6 +26,12 @@ body::-webkit-scrollbar {
     display: none;
 }
 
+/* Remove fixed width restrictions on the main area */
+.container-fluid {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+}
+
 main {
     flex-grow: 1;
 }
@@ -83,6 +89,11 @@ main {
     border-radius: 8px;
     box-shadow: 0 2px 10px var(--shadow-light);
     margin-bottom: 30px;
+    /* Explicitly use all available width */
+    width: 100%; 
+    max-width: none;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .maintenance-request-container h2,
@@ -161,11 +172,28 @@ main {
     text-transform: uppercase;
 }
 
+/* Added specific classes for status based on JS implementation */
 .status.pending { background-color: #ffc107; color: var(--black); }
 .status.approved { background-color: #007bff; }
 .status.in-progress { background-color: #6f42c1; }
 .status.completed { background-color: #28a745; }
 .status.cancelled { background-color: #dc3545; }
+
+/* Pagination Styles (Bootstrap handles most of this, but ensure link color is correct) */
+.pagination .page-link {
+    color: var(--black);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--gold);
+    border-color: var(--dark-gold);
+    color: var(--black);
+}
+
+.pagination .page-link:hover {
+    background-color: var(--dark-gold);
+    color: var(--black);
+}
 
 /* Footer */
 .footer {
@@ -196,6 +224,8 @@ main {
         margin-top: 0.5rem;
         border-radius: 0.25rem;
     }
+    
+    /* On smaller screens, Bootstrap container-fluid handles padding */
 }
 
 @media (max-width: 576px) {

@@ -4,6 +4,9 @@
 header("Access-Control-Allow-Origin: *"); // For development only. Change '*' to your actual domain in production.
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 include 'db_connect.php'; 
 session_start();

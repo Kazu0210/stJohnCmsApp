@@ -1,17 +1,153 @@
+// login.js
+const endpoints = {
+    get: '/stJohnCmsApp/cms.api/get_lots.php', 
+    update: '/stJohnCmsApp/cms.api/update_lot.php', 
+};
+
+let cachedVectorSource = null;
+
+function findVectorSource() {
+    if (cachedVectorSource) return cachedVectorSource;
+
+    if (typeof jsonSource_geo_2 !== "undefined") {
+        return (cachedVectorSource = jsonSource_geo_2);
+    }
+
+    if (window.map?.getLayers) {
+        for (const layer of window.map.getLayers().getArray()) {
+            if (layer instanceof ol.layer.Vector) {
+                const src = layer.getSource();
+                if (src) return (cachedVectorSource = src);
+            }
+        }
+    }
+    return null;
+}
+
+async function ensureVectorSource(maxRetries = 50, interval = 100) {
+    return new Promise((resolve) => {
+        let tries = 0;
+        const check = () => {
+            const src = findVectorSource();
+            if (src && src.getFeatures().length > 0) return resolve(src); 
+            
+            if (++tries >= maxRetries) return resolve(null);
+            
+            setTimeout(check, interval);
+        };
+        check();
+    });
+}
+
+const normalizeStatus = (status) => {
+    const s = String(status || "").trim().toLowerCase();
+    if (s.includes("pending")) return "Pending";
+    if (s.includes("reserved")) return "Reserved";
+    if (s.includes("occupied")) return "Occupied";
+    return "Available";
+};
+
+// Applies lot status colors, labels, and updates feature properties for the popup
+async function updateMap(lotData) {
+    const src = await ensureVectorSource();
+    if (!src) {
+        console.warn("Map vector source or features not found after waiting. Skipping update.");
+        return;
+    }
+
+    const colors = {
+        Available: "rgba(0,200,0,0.6)",
+        Pending: "rgba(0,47,255,0.6)",
+        Reserved: "rgba(255,165,0,0.6)",
+        Occupied: "rgba(200,0,0,0.6)",
+    };
+
+    src.getFeatures().forEach((f) => {
+        const id = f.get("lotId") || f.get("id") || f.get("LotID") || f.get("LOT_ID");
+        const lot = lotData.find((l) => String(l.lotId) === String(id));
+
+        if (!lot) return; 
+
+        const status = normalizeStatus(lot.status);
+
+        f.setProperties({
+            lotId: lot.lotId,
+            lotNumber: lot.lotNumber,
+            status: status,
+            userId: lot.userId || 'N/A',
+            type: lot.type || f.get('type') || 'N/A', 
+        }, true); 
+
+        f.setStyle(
+            new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: "#333", width: 1 }),
+                fill: new ol.style.Fill({ color: colors[status] || "rgba(180,180,180,0.6)" }),
+                text: new ol.style.Text({
+                    text: lot.lotNumber ? `Lot ${lot.lotNumber}` : "",
+                    font: "12px Calibri,sans-serif",
+                    fill: new ol.style.Fill({ color: "#000" }),
+                    stroke: new ol.style.Stroke({ color: "#fff", width: 2 }),
+                }),
+            })
+        );
+    });
+
+    if (typeof lyr_geo_2 !== "undefined") {
+        lyr_geo_2.changed();
+    }
+}
+
+// LOT DATA HANDLING (Load and Update)
+async function loadLots() {
+    try {
+        const res = await fetch(endpoints.get); 
+        const data = await res.json();
+        
+        if (!data.success) throw new Error(data.message || "Server returned non-success status.");
+        
+        await updateMap(data.data);
+        
+        return data.data; 
+    } catch (err) {
+        console.error("Load Lots Error:", err);
+        return [];
+    }
+}
+
+async function updateLot(lotData) {
+    try {
+        const res = await fetch(endpoints.update, { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(lotData),
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            console.log("Lot updated successfully:", lotData.lotId);
+            await loadLots(); 
+            return true;
+        } else {
+            console.error("Update failed:", result.message);
+            return false;
+        }
+    } catch (err) {
+        console.error("Error updating lot:", err);
+        return false;
+    }
+}
+
 document.getElementById("loginForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
-    // Clear old error messages
     document.getElementById("emailError").textContent = "";
     document.getElementById("passwordError").textContent = "";
     document.getElementById("serverMessage").textContent = "";
 
-    // Get form values
     let email = document.getElementById("email").value.trim();
     let password = document.getElementById("password").value.trim();
     let hasError = false;
 
-    // Email validation
     if (email === "") {
         document.getElementById("emailError").textContent = "Email is required";
         hasError = true;
@@ -19,8 +155,6 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
         document.getElementById("emailError").textContent = "Invalid email format";
         hasError = true;
     }
-
-    // Password validation
     if (password === "") {
         document.getElementById("passwordError").textContent = "Password is required";
         hasError = true;
@@ -31,46 +165,37 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
 
     if (hasError) return;
 
-    // Send request to PHP
     const formData = new FormData();
     formData.append("email", email);
     formData.append("password", password);
 
-    // This path remains absolute to your web server root
-    fetch("http://localhost/stJohnCmsApp/cms.api/login.php", {
+    fetch("/stJohnCmsApp/cms.api/login.php", {
         method: "POST",
         body: formData
     })
     .then(res => res.json())
     .then(data => {
+        const serverMessageEl = document.getElementById("serverMessage");
         if (data.status === "success") {
-            document.getElementById("serverMessage").style.color = "green";
-            document.getElementById("serverMessage").textContent = data.message;
+            serverMessageEl.style.color = "green";
+            serverMessageEl.textContent = data.message;
 
-      setTimeout(() => {
-        // If server provided an absolute redirect URL, use it (preferred)
-        if (data.redirect) {
-          window.location.href = data.redirect;
-          return;
-        }
-
-        // Otherwise fall back to role-based redirects (relative paths)
-        const userRole = data.role ? data.role.toLowerCase() : '';
-
-        if (userRole === "admin") {
-          window.location.href = "../../admin/adminDashboard/adminDashboard.php";
-        } else if (userRole === "secretary") {
-          window.location.href = "../../secretary/secretary.php";
-        } else if (userRole === "client") {
-          window.location.href = "../../client/clientDashboard/clientDashboard.php";
+            setTimeout(() => {
+                const userRole = data.role ? data.role.toLowerCase() : '';
+                if (userRole === "admin") {
+                    window.location.href = "../../admin/adminDashboard/adminDashboard.php";
+                } else if (userRole === "secretary") {
+                    window.location.href = "../../secretary/secretaryDashboard.php";
+                } else if (userRole === "client") {
+                    window.location.href = "../../client/clientDashboard/clientDashboard.php";
+                } else {
+                    console.error("Unknown user role:", data.role);
+                    alert("Unknown user role. Cannot redirect.");
+                }
+            }, 1000);
         } else {
-          console.error("Unknown user role:", data.role);
-          alert("Unknown user role. Cannot redirect.");
-        }
-      }, 1000);
-        } else {
-            document.getElementById("serverMessage").style.color = "red";
-            document.getElementById("serverMessage").textContent = data.message;
+            serverMessageEl.style.color = "red";
+            serverMessageEl.textContent = data.message;
         }
     })
     .catch(err => {
@@ -80,7 +205,6 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
     });
 });
 
-// Function to toggle password visibility
 function togglePassword() {
     const passwordField = document.getElementById("password");
     const toggleIcon = document.querySelector(".password-toggle-icon");
@@ -96,7 +220,6 @@ function togglePassword() {
     }
 }
 
-// Image Modal functionality (assuming images are still relative to stJohnCmsApp root)
 function openModal(element) {
     document.getElementById("modal").style.display = "block";
     document.getElementById("modal-img").src = element.src;
@@ -107,87 +230,18 @@ function closeModal() {
     document.getElementById("modal").style.display = "none";
 }
 
-// New Appointment Form Submission (client-side validation for now)
-document.getElementById("appointmentForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-
-    // Clear previous messages
-    document.getElementById("appointmentMessage").textContent = "";
-
-    const userName = document.getElementById("user_name").value.trim();
-    const userEmail = document.getElementById("user_email").value.trim();
-    const userPhone = document.getElementById("user_phone").value.trim();
-    const appointmentDate = document.getElementById("appointment_date").value.trim();
-    const appointmentTime = document.getElementById("appointment_time").value.trim();
-    const appointmentPurpose = document.getElementById("appointment_purpose").value.trim();
-
-    let hasError = false;
-
-    // Validate all fields are filled
-    if (!userName || !userEmail || !userPhone || !appointmentDate || !appointmentTime || !appointmentPurpose) {
-        document.getElementById("appointmentMessage").style.color = "red";
-        document.getElementById("appointmentMessage").textContent = "Please fill in all required fields.";
-        hasError = true;
-    }
-    // Validate email format
-    else if (!/^\S+@\S+\.\S+$/.test(userEmail)) {
-        document.getElementById("appointmentMessage").style.color = "red";
-        document.getElementById("appointmentMessage").textContent = "Please enter a valid email address.";
-        hasError = true;
-    }
-    // Basic phone number validation (can be more robust if needed)
-    else if (!/^\d{10,15}$/.test(userPhone)) {
-        document.getElementById("appointmentMessage").style.color = "red";
-        document.getElementById("appointmentMessage").textContent = "Please enter a valid phone number (10-15 digits).";
-        hasError = true;
-    }
-    // Validate appointment time range (7 AM to 4 PM)
-    else {
-        const selectedTime = appointmentTime; // e.g., "07:00", "16:00"
-        const minTime = "07:00";
-        const maxTime = "16:00";
-
-        if (selectedTime < minTime || selectedTime > maxTime) {
-            document.getElementById("appointmentMessage").style.color = "red";
-            document.getElementById("appointmentMessage").textContent = "Appointment time must be between 7 AM and 4 PM.";
-            hasError = true;
-        }
-    }
-
-
-    if (hasError) return;
-
-    // For demonstration, we'll just show a success message.
-    // In a real application, you would send this data to a server (e.g., via Fetch API).
-    document.getElementById("appointmentMessage").style.color = "green";
-    document.getElementById("appointmentMessage").textContent = "Appointment request submitted successfully! We will contact you soon.";
-
-    // Optionally clear the form after successful submission
-    document.getElementById("appointmentForm").reset();
-
-    console.log({
-        userName,
-        userEmail,
-        userPhone,
-        appointmentDate,
-        appointmentTime,
-        appointmentPurpose
-    });
-});
-
 const storageKey = 'bsjAppointments';
 function loadAppointments(){
-  try {
-    const raw = localStorage.getItem(storageKey);
-    return raw ? JSON.parse(raw) : [];
-  } catch(e){ return []; }
+    try {
+        const raw = localStorage.getItem(storageKey);
+        return raw ? JSON.parse(raw) : [];
+    } catch(e){ return []; }
 }
 function saveAppointments(arr){
-  localStorage.setItem(storageKey, JSON.stringify(arr));
+    localStorage.setItem(storageKey, JSON.stringify(arr));
 }
 function uid(){ return 'id_' + Math.random().toString(36).slice(2,9); }
 
-// DOM refs
 const calendarGrid = document.getElementById('calendarGrid');
 const monthLabel = document.getElementById('monthLabel');
 const prevMonthBtn = document.getElementById('prevMonth');
@@ -203,6 +257,7 @@ const apptNotes = document.getElementById('apptNotes');
 const editingId = document.getElementById('editingId');
 const deleteBtn = document.getElementById('deleteBtn');
 const cancelBtn = document.getElementById('cancelBtn');
+
 const apptCountEl = document.getElementById('apptCount');
 const dayApptsEl = document.getElementById('dayAppts');
 const selectedDayHeading = document.getElementById('selectedDayHeading');
@@ -210,365 +265,344 @@ const selectedDayHeading = document.getElementById('selectedDayHeading');
 let current = new Date();
 let currentMonth = current.getMonth();
 let currentYear = current.getFullYear();
-let appointments = loadAppointments();
-let selectedDate = null; // yyyy-mm-dd
+let appointments = loadAppointments(); 
+let selectedDate = null; 
 
-// Render calendar for month/year
 function renderCalendar(month, year) {
-  Array.from(calendarGrid.querySelectorAll('.day')).forEach(n => n.remove());
+    Array.from(calendarGrid.querySelectorAll('.day')).forEach(n => n.remove());
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    monthLabel.textContent = `${monthNames[month]} ${year}`;
 
-  const firstDayIndex = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const monthNames = [
-    "January","February","March","April","May","June","July",
-    "August","September","October","November","December"
-  ];
-  monthLabel.textContent = `${monthNames[month]} ${year}`;
-
-  // blank placeholders
-  for (let i = 0; i < firstDayIndex; i++) {
-    const blank = document.createElement('div');
-    blank.className = 'day other-month';
-    calendarGrid.appendChild(blank);
-  }
-
-  const todayIso = new Date().toLocaleDateString('en-CA');
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateObj = new Date(year, month, d);
-    const dateStr = dateObj.toLocaleDateString('en-CA');
-    const dayEl = document.createElement('div');
-    dayEl.className = 'day';
-    dayEl.dataset.date = dateStr;
-
-    const num = document.createElement('div');
-    num.className = 'date-num';
-    num.textContent = d;
-    dayEl.appendChild(num);
-
-    // 🔦 Check appointments for this date
-    const dayAppts = appointments.filter(a => a.date === dateStr);
-    if (dayAppts.length > 0) {
-      const indicator = document.createElement('div');
-      indicator.className = 'light-indicator';
-
-      // Determine color based on status or proximity
-      const now = new Date();
-      const dayDate = new Date(dateStr);
-      const diffDays = Math.ceil((dayDate - now) / (1000 * 60 * 60 * 24));
-
-      let color = '';
-      if (dayAppts.some(a => !a.time)) {
-        color = 'red'; // 🔴 missing time (uncertain)
-      } else if (diffDays === 0) {
-        color = 'green'; // 🟢 ongoing (today)
-      } else if (diffDays <= 2 && diffDays > 0) {
-        color = 'blue'; // 🔵 almost upcoming (within 2 days)
-      } else if (diffDays < 0) {
-        color = 'gray'; // past appointments
-      } else {
-        color = 'lightblue'; // far future
-      }
-
-      indicator.style.backgroundColor = color;
-      dayEl.appendChild(indicator);
-
-      // subtle background glow for active days
-      dayEl.style.boxShadow = `0 0 6px ${color}80`;
+    for (let i = 0; i < firstDayIndex; i++) {
+        const blank = document.createElement('div');
+        blank.className = 'day other-month';
+        calendarGrid.appendChild(blank);
     }
+    const todayIso = new Date().toLocaleDateString('en-CA');
 
-    // Highlight today’s box border
-    if (dateStr === todayIso) {
-      dayEl.style.border = '2px solid #4caf50';
-    }
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateObj = new Date(year, month, d);
+        const dateStr = dateObj.toLocaleDateString('en-CA');
+        const dayEl = document.createElement('div');
+        dayEl.className = 'day';
+        dayEl.dataset.date = dateStr;
 
-    dayEl.addEventListener('click', () => openDay(dateStr));
-    calendarGrid.appendChild(dayEl);
-  }
+        const num = document.createElement('div');
+        num.className = 'date-num';
+        num.textContent = d;
+        dayEl.appendChild(num);
 
-  if (selectedDate) {
-    updateSidebar(selectedDate);
-  } else {
-    apptCountEl.textContent = appointments.length;
-  }
-}
+        const dayAppts = appointments.filter(a => a.date === dateStr);
+        if (dayAppts.length > 0) {
+            const indicator = document.createElement('div');
+            indicator.className = 'light-indicator';
+            const now = new Date();
+            const dayDate = new Date(dateStr);
+            const diffDays = Math.ceil((dayDate - now) / (1000 * 60 * 60 * 24));
+            
+            let color = '';
+            const hasConfirmed = dayAppts.some(a => a.status === 'confirmed'); 
+            const hasCancelled = dayAppts.some(a => a.status === 'cancelled');
 
-// open day: either show list in sidebar and open modal new if desired
-function openDay(dateStr){
-  selectedDate = dateStr;
-  // highlight selection visually
-  Array.from(calendarGrid.querySelectorAll('.day'))
-    .forEach(d => d.classList.toggle('selected', d.dataset.date === dateStr));
+            if (hasCancelled) { color = 'gray'; } 
+            else if (hasConfirmed) { color = 'green'; } 
+            else if (dayAppts.some(a => !a.time)) { color = 'red'; } 
+            else if (diffDays === 0) { color = 'green'; } 
+            else if (diffDays <= 2 && diffDays > 0) { color = 'blue'; } 
+            else if (diffDays < 0) { color = 'gray'; } 
+            else { color = 'lightblue'; }
 
-  selectedDayHeading.textContent = new Date(dateStr).toLocaleDateString();
-  updateSidebar(dateStr);
-}
-
-// update sidebar with appointments for date
-function updateSidebar(dateStr){
-  const appts = appointments.filter(a => a.date === dateStr);
-  dayApptsEl.innerHTML = '';
-  if(appts.length === 0){
-    dayApptsEl.innerHTML = `<div class="empty">No appointments for this day. Click "+ New" to add one, or click a day to add.</div>`;
-  } else {
-    appts.forEach(a => {
-      const card = document.createElement('div');
-      card.className = 'card mb-2';
-      card.innerHTML = `<div class="card-body p-2">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:700">${a.client || '—'}</div>
-            <div class="muted small">${a.time ? a.time + ' • ' : ''}${a.notes ? a.notes : ''}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${a.id}">Edit</button>
-            <button class="btn btn-sm btn-outline-danger btn-del" data-id="${a.id}">Delete</button>
-          </div>
-        </div>
-      </div>`;
-      dayApptsEl.appendChild(card);
-    });
-
-    // wire edit/delete buttons
-    dayApptsEl.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', (e)=>{
-        const id = btn.dataset.id;
-        openEditById(id);
-      });
-    });
-    dayApptsEl.querySelectorAll('.btn-del').forEach(btn => {
-      btn.addEventListener('click', (e)=>{
-        const id = btn.dataset.id;
-        if(confirm('Delete this appointment?')){
-          appointments = appointments.filter(a => a.id !== id);
-          saveAppointments(appointments);
-          renderCalendar(currentMonth, currentYear);
-          updateSidebar(selectedDate);
+            indicator.style.backgroundColor = color;
+            dayEl.appendChild(indicator);
+            dayEl.style.boxShadow = `0 0 6px ${color}80`;
         }
-      });
-    });
-  }
-  apptCountEl.textContent = appointments.length;
+
+        if (dateStr === todayIso) { dayEl.style.border = '2px solid #4caf50'; }
+
+        dayEl.addEventListener('click', () => openDay(dateStr));
+        calendarGrid.appendChild(dayEl);
+    }
+
+    if (selectedDate) {
+        updateSidebar(selectedDate);
+    } else {
+        apptCountEl.textContent = appointments.length; 
+    }
 }
 
-// show modal
+function openDay(dateStr){
+    selectedDate = dateStr;
+    Array.from(calendarGrid.querySelectorAll('.day'))
+        .forEach(d => d.classList.toggle('selected', d.dataset.date === dateStr));
+
+    selectedDayHeading.textContent = new Date(dateStr).toLocaleDateString();
+    updateSidebar(dateStr);
+}
+
+function updateSidebar(dateStr){
+    const appts = appointments.filter(a => a.date === dateStr);
+    dayApptsEl.innerHTML = '';
+    if(appts.length === 0){
+        dayApptsEl.innerHTML = `<div class="empty">No appointments for this day. Click a day to see appointments.</div>`;
+    } else {
+        appts.forEach(a => {
+            const card = document.createElement('div');
+            card.className = 'card mb-2';
+            const statusText = a.status ? `Status: <strong>${a.status}</strong>` : 'Status: Unknown (Local)';
+            card.innerHTML = `<div class="card-body p-2">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div>
+                        <div style="font-weight:700">${a.client || '—'}</div>
+                        <div class="muted small">${a.time ? a.time + ' • ' : ''}${a.notes ? a.notes : ''}</div>
+                        <div class="muted small">${statusText}</div> 
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${a.id}">Edit</button>
+                    </div>
+                </div>
+            </div>`;
+            dayApptsEl.appendChild(card);
+        });
+
+        dayApptsEl.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e)=>{
+                const id = btn.dataset.id;
+                openEditById(id);
+            });
+        });
+    }
+    apptCountEl.textContent = appts.length; 
+}
+
 function showModal(){
-  modalBackdrop.style.display = 'flex';
-  modalBackdrop.setAttribute('aria-hidden', 'false');
-  deleteBtn.style.display = 'none';
-  editingId.value = '';
-  // focus first input
-  setTimeout(()=>apptClient.focus(), 200);
+    modalBackdrop.style.display = 'flex';
+    modalBackdrop.setAttribute('aria-hidden', 'false');
+    deleteBtn.style.display = 'none'; 
+    editingId.value = '';
+    setTimeout(()=>apptClient.focus(), 200);
 }
 
-// hide modal
 function hideModal(){
-  modalBackdrop.style.display = 'none';
-  modalBackdrop.setAttribute('aria-hidden', 'true');
-  apptFormReset();
+    modalBackdrop.style.display = 'none';
+    modalBackdrop.setAttribute('aria-hidden', 'true');
+    apptFormReset();
 }
 
-// reset modal inputs
 function apptFormReset(){
-  apptClient.value = '';
-  apptDate.value = '';
-  apptTime.value = '';
-  apptNotes.value = '';
-  editingId.value = '';
-  deleteBtn.style.display = 'none';
+    apptClient.value = '';
+    apptDate.value = '';
+    apptTime.value = '';
+    apptNotes.value = '';
+    editingId.value = '';
+    deleteBtn.style.display = 'none';
+    document.getElementById('apptFormTitle').textContent = 'Edit Local Appointment';
 }
 
-// open edit modal for appointment id
 function openEditById(id){
-  const a = appointments.find(x => x.id === id);
-  if(!a) return;
-  editingId.value = a.id;
-  apptClient.value = a.client || '';
-  apptDate.value = a.date || '';
-  apptTime.value = a.time || '';
-  apptNotes.value = a.notes || '';
-  deleteBtn.style.display = 'inline-block';
-  showModal();
+    const a = appointments.find(x => x.id === id);
+    if(!a) return;
+    
+    apptFormReset(); 
+
+    editingId.value = a.id;
+    apptClient.value = a.client || '';
+    apptDate.value = a.date || '';
+    apptTime.value = a.time || '';
+    apptNotes.value = a.notes || '';
+    
+    deleteBtn.style.display = 'inline-block'; 
+    
+    showModal();
 }
 
-// save appointment (from modal)
 function saveAppointmentFromModal(){
-  const id = editingId.value || uid();
-  const obj = {
-    id,
-    client: apptClient.value.trim(),
-    date: apptDate.value,
-    time: apptTime.value,
-    notes: apptNotes.value.trim()
-  };
-  // simple validation
-  if(!obj.client || !obj.date){
-    alert('Please add client name and date.');
-    return false;
-  }
+    const id = editingId.value; 
+    
+    if(!id) {
+        alert('Action blocked: New appointments must be submitted via the main form.');
+        hideModal();
+        return false;
+    }
 
-  // if editing replace, else push
-  const idx = appointments.findIndex(a => a.id === id);
-  if(idx > -1){
-    appointments[idx] = obj;
-  } else {
-    appointments.push(obj);
-  }
-  saveAppointments(appointments);
-  renderCalendar(currentMonth, currentYear);
-  updateSidebar(obj.date);
-  hideModal();
-  return true;
-}
+    const obj = {
+        id,
+        client: apptClient.value.trim(),
+        date: apptDate.value,
+        time: apptTime.value,
+        notes: apptNotes.value.trim()
+    };
+    if(!obj.client || !obj.date){
+        alert('Please add client name and date.');
+        return false;
+    }
 
-// delete appointment from modal
-function deleteAppointmentFromModal(){
-  const id = editingId.value;
-  if(!id) return;
-  if(confirm('Delete this appointment?')){
-    appointments = appointments.filter(a => a.id !== id);
-    saveAppointments(appointments);
+    const idx = appointments.findIndex(a => a.id === id);
+    if(idx > -1){
+        appointments[idx] = obj;
+    } 
+
+    saveAppointments(appointments); 
     renderCalendar(currentMonth, currentYear);
+    updateSidebar(obj.date);
     hideModal();
-  }
+    return true;
 }
 
-// modal cancel / delete / save wiring
+function deleteAppointmentFromModal(){
+    const id = editingId.value;
+    if(!id) return;
+    if(confirm('Delete this local appointment?')){
+        appointments = appointments.filter(a => a.id !== id);
+        saveAppointments(appointments); 
+        renderCalendar(currentMonth, currentYear);
+        updateSidebar(selectedDate);
+        hideModal();
+    }
+}
+
 cancelBtn.addEventListener('click', hideModal);
 deleteBtn.addEventListener('click', deleteAppointmentFromModal);
 apptForm.addEventListener('submit', (e)=>{
-  e.preventDefault();
-  saveAppointmentFromModal();
+    e.preventDefault();
+    saveAppointmentFromModal();
 });
 
-// calendar nav
 prevMonthBtn.addEventListener('click', ()=>{
-  currentMonth--;
-  if(currentMonth < 0){ currentMonth = 11; currentYear--; }
-  renderCalendar(currentMonth, currentYear);
+    currentMonth--;
+    if(currentMonth < 0){ currentMonth = 11; currentYear--; }
+    renderCalendar(currentMonth, currentYear);
 });
 nextMonthBtn.addEventListener('click', ()=>{
-  currentMonth++;
-  if(currentMonth > 11){ currentMonth = 0; currentYear++; }
-  renderCalendar(currentMonth, currentYear);
+    currentMonth++;
+    if(currentMonth > 11){ currentMonth = 0; currentYear++; }
+    renderCalendar(currentMonth, currentYear);
 });
 todayBtn.addEventListener('click', ()=>{
-  const t = new Date();
-  currentMonth = t.getMonth();
-  currentYear = t.getFullYear();
-  renderCalendar(currentMonth, currentYear);
+    const t = new Date();
+    currentMonth = t.getMonth();
+    currentYear = t.getFullYear();
+    renderCalendar(currentMonth, currentYear);
 });
 
-// clicking outside modal to close (backdrop)
 modalBackdrop.addEventListener('click', (e)=>{
-  if(e.target === modalBackdrop){
-    hideModal();
-  }
+    if(e.target === modalBackdrop){
+        hideModal();
+    }
 });
 
-// integrate quick-click on calendar days to populate main appointment form date
 calendarGrid.addEventListener('click', (e)=>{
-  const dayEl = e.target.closest('.day');
-  if(!dayEl || !dayEl.dataset.date) return;
-  const date = dayEl.dataset.date;
-  // set main appointment form date input
-  const mainDateInput = document.getElementById('appointment_date');
-  if(mainDateInput) mainDateInput.value = date;
-
-  // Also open modal for adding appointment (optional) — keep conservative: only show modal on double-click
+    const dayEl = e.target.closest('.day');
+    if(!dayEl || !dayEl.dataset.date) return;
+    const date = dayEl.dataset.date;
+    const mainDateInput = document.getElementById('appointment_date');
+    if(mainDateInput) mainDateInput.value = date;
 });
 
-// allow double-click to open modal for that date
-calendarGrid.addEventListener('dblclick', (e)=>{
-  const dayEl = e.target.closest('.day');
-  if(!dayEl || !dayEl.dataset.date) return;
-  apptFormReset();
-  apptDate.value = dayEl.dataset.date;
-  showModal();
-});
-
-// initial render
 renderCalendar(currentMonth, currentYear);
 
-// Local submit handler for main appointment form - this saves a quick appointment to local storage
-function handleLocalAppointmentSubmit(e){
-  e.preventDefault();
-  // create a simple appointment from main form (this won't interfere with other process)
-  const client = document.getElementById('user_name').value.trim();
-  const date = document.getElementById('appointment_date').value;
-  const time = document.getElementById('appointment_time').value;
-  const notes = document.getElementById('appointment_purpose').value.trim();
-  if(!client || !date){
-    document.getElementById('appointmentMessage').textContent = 'Please fill name and date.';
-    return;
-  }
-  const newAppt = { id: uid(), client, date, time, notes };
-  appointments.push(newAppt);
-  saveAppointments(appointments);
-  renderCalendar(currentMonth, currentYear);
-  updateSidebar(date);
-  document.getElementById('appointmentMessage').textContent = 'Appointment saved locally.';
-  // call original handleAppointmentSubmit if it exists (so existing processes run)
-  if(typeof window.handleAppointmentSubmit === 'function'){
-    try { window.handleAppointmentSubmit(e); } catch(err){ console.warn('existing handleAppointmentSubmit failed', err); }
-  }
-}
-
-// Attach local handler but do not override existing global function
-const mainForm = document.getElementById('appointmentForm');
-if(mainForm){
-  // If the form already has onsubmit inline, our extra listener will not cancel it.
-  mainForm.addEventListener('submit', handleLocalAppointmentSubmit);
-}
-
-// Load appointments from MySQL (XAMPP)
 async function loadAppointmentsFromDB() {
-  try {
-    const res = await fetch("http://localhost/stJohnCmsApp/cms.api/clientAppointment.php");
-    if (!res.ok) throw new Error("Failed to connect to MySQL backend");
-    const data = await res.json();
-    // console.log("Fetched appointments from MySQL:", data);
-    appointments = Array.isArray(data) ? data : [];
-    renderCalendar(currentMonth, currentYear);
-  } catch (err) {
-    console.error("Error loading appointments from database:", err);
-    renderCalendar(currentMonth, currentYear);
-  }
+    try {
+        const res = await fetch("/stJohnCmsApp/cms.api/clientAppointment.php"); 
+        
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Failed to load data. Server responded with status ${res.status}. Response: ${errorText.substring(0, 100)}...`);
+        }
+
+        const data = await res.json();
+        appointments = Array.isArray(data) ? data : [];
+        renderCalendar(currentMonth, currentYear);
+    } catch (err) {
+        console.error("Error loading appointments from database:", err);
+        appointments = loadAppointments(); 
+        renderCalendar(currentMonth, currentYear);
+    }
 }
 
-// Refresh appointments right after page load
 loadAppointmentsFromDB();
 
-// After submitting an appointment, refresh calendar from DB
+loadLots();
+
 document.getElementById("appointmentForm").addEventListener("submit", async function (e) {
-  e.preventDefault();
+    e.preventDefault(); 
 
-  const formData = {
-    user_name: document.getElementById("user_name").value,
-    user_email: document.getElementById("user_email").value, // ✅ corrected
-    user_phone: document.getElementById("user_phone").value,
-    appointment_date: document.getElementById("appointment_date").value,
-    appointment_time: document.getElementById("appointment_time").value,
-    appointment_purpose: document.getElementById("appointment_purpose").value,
-  };
+    const appointmentMessage = document.getElementById("appointmentMessage");
+    appointmentMessage.textContent = ""; 
+    
+    const userName = document.getElementById("user_name").value.trim();
+    const userEmail = document.getElementById("user_email").value.trim();
+    const userAddress = document.getElementById("user_address").value.trim();
+    const userPhone = document.getElementById("user_phone").value.trim();
+    const appointmentDate = document.getElementById("appointment_date").value.trim();
+    const appointmentTime = document.getElementById("appointment_time").value.trim();
+    const appointmentPurpose = document.getElementById("appointment_purpose").value.trim();
 
-  try {
-    const res = await fetch("http://localhost/stJohnCmsApp/cms.api/clientAppointment.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await res.json();
-    document.getElementById("appointmentMessage").textContent = data.message;
-
-    if (data.status === "success") {
-      document.getElementById("appointmentForm").reset();
-      await loadAppointmentsFromDB(); // 🔁 reload appointments from MySQL
+    if (!userName || !userEmail || !userAddress || !userPhone || !appointmentDate || !appointmentTime || !appointmentPurpose) {
+        appointmentMessage.style.color = "red";
+        appointmentMessage.textContent = "Please fill in all required fields.";
+        return;
     }
-  } catch (err) {
-    console.error("Database connection error:", err);
-    document.getElementById("appointmentMessage").textContent = "Error connecting to database.";
-  }
+    if (!/^\S+@\S+\.\S+$/.test(userEmail)) {
+        appointmentMessage.style.color = "red";
+        appointmentMessage.textContent = "Please enter a valid email address.";
+        return;
+    }
+    const selectedTime = appointmentTime; 
+    const minTime = "07:00";
+    const maxTime = "16:00";
+    if (selectedTime < minTime || selectedTime > maxTime) {
+        appointmentMessage.style.color = "red";
+        appointmentMessage.textContent = "Appointment time must be between 7 AM and 4 PM.";
+        return;
+    }
+    
+    const formData = {
+        user_name: userName,
+        user_email: userEmail,
+        user_address: userAddress,
+        user_phone: userPhone,
+        appointment_date: appointmentDate,
+        appointment_time: appointmentTime,
+        appointment_purpose: appointmentPurpose,
+    };
+
+    try {
+        const res = await fetch("/stJohnCmsApp/cms.api/clientAppointment.php", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+        });
+
+        if (!res.ok) {
+            let errorData;
+            try {
+                errorData = await res.json();
+                appointmentMessage.textContent = errorData.message || `Server Error: HTTP ${res.status}`;
+            } catch (e) {
+                const errorText = await res.text();
+                appointmentMessage.textContent = `Server Execution Error (${res.status}). Check PHP file for syntax/connection errors.`;
+                console.error("Raw Server Response (Likely PHP Fatal Error):", errorText.substring(0, 500));
+            }
+            appointmentMessage.style.color = "red";
+            return;
+        }
+
+        const data = await res.json(); 
+        appointmentMessage.textContent = data.message;
+        
+        if (data.status === "success") {
+            appointmentMessage.style.color = "green";
+            document.getElementById("appointmentForm").reset();
+            await loadAppointmentsFromDB();
+        } else {
+            appointmentMessage.style.color = "red"; 
+        }
+
+    } catch (err) {
+        console.error("Fetch/Parsing Error:", err);
+        appointmentMessage.textContent = `Client-side error: ${err.message}. Check browser console for details.`;
+        appointmentMessage.style.color = "red";
+    }
 });

@@ -1,9 +1,13 @@
 <?php
-// Inserts a new maintenance request into the database.
+// FILE: /cms.api/clientMaintenanceRequest.php
 require_once "db_connect.php";
 session_start();
+// Enable CORS for cross-origin requests
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json");
 
-// Ensures the user is logged in before allowing a submission.
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(["success" => false, "message" => "User not logged in"]);
     exit;
@@ -14,33 +18,60 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $serviceType = $_POST['serviceType'] ?? null;
     $notes = $_POST['notes'] ?? "";
     $userId = $_SESSION['user_id'];
-    $lotId = $_POST['lotId'] ?? null;
-    $area = $_POST['area'] ?? null;
-    $block = $_POST['block'] ?? null;
-    $lotNumber = $_POST['lotNumber'] ?? null;
 
-    // Validates that all required fields are present.
-    if (empty($reservationId) || empty($serviceType) || empty($lotId) || empty($area) || empty($block) || empty($lotNumber)) {
+    if (empty($reservationId) || empty($serviceType)) {
         echo json_encode(["success" => false, "message" => "Missing required fields"]);
         exit;
     }
 
-    // Inserts the new request into the 'maintenancerequest' table.
-    $sql = "INSERT INTO maintenancerequest (userId, reservationId, lotId, area, block, lotNumber, serviceType, requestedDate, notes, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, 'Pending')";
+    // ✅ Step 1: Fetch the lotId and lot details directly from the reservation
+    $reservationQuery = $conn->prepare("SELECT lotId, area, block, rowNumber, lotNumber FROM reservations WHERE reservationId = ?");
+    $reservationQuery->bind_param("i", $reservationId);
+    $reservationQuery->execute();
+    $reservationResult = $reservationQuery->get_result();
+
+    if ($reservationResult->num_rows === 0) {
+        echo json_encode(["success" => false, "message" => "Invalid reservation ID — no reservation found."]);
+        exit;
+    }
+
+    $reservationRow = $reservationResult->fetch_assoc();
+    $lotId = $reservationRow['lotId'];
+    $area = $reservationRow['area'];
+    $block = $reservationRow['block'];
+    $rowNumber = $reservationRow['rowNumber'];
+    $lotNumber = $reservationRow['lotNumber'];
+    $reservationQuery->close();
+
+    // ✅ Step 2: Insert the maintenance request with full details
+    $sql = "INSERT INTO maintenancerequest 
+            (userId, reservationId, lotId, area, block, rowNumber, lotNumber, serviceType, requestedDate, notes, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, 'Pending')";
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        echo json_encode(["success" => false, "message" => "Error preparing statement: " . $conn->error]);
+        echo json_encode(["success" => false, "message" => "SQL Prepare Failed: " . $conn->error]);
         exit;
     }
-    $stmt->bind_param("iiisssss", $userId, $reservationId, $lotId, $area, $block, $lotNumber, $serviceType, $notes);
+
+    $stmt->bind_param("iiississs", 
+        $userId, 
+        $reservationId, 
+        $lotId, 
+        $area, 
+        $block, 
+        $rowNumber, 
+        $lotNumber, 
+        $serviceType, 
+        $notes
+    );
 
     if ($stmt->execute()) {
         echo json_encode(["success" => true, "message" => "Maintenance request submitted successfully."]);
     } else {
-        echo json_encode(["success" => false, "message" => "Error submitting request: " . $stmt->error]);
+        echo json_encode(["success" => false, "message" => "Submission Failed (DB Error): " . $stmt->error]);
     }
+
     $stmt->close();
 }
 

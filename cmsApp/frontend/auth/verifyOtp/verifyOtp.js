@@ -1,18 +1,28 @@
+//verifyOtp.js (Full Code - Modified to bypass server for front-end testing)
+
 // Grab DOM nodes
 const emailInput = document.getElementById("email");
 const sendOtpBtn = document.getElementById("send-otp-btn");
+const verifyOtpBtn = document.getElementById("verify-otp-btn");
 const otpInputs = document.querySelectorAll(".otp-inputs input");
 const otpForm = document.getElementById("otp-form");
 const resendLink = document.getElementById("resend-link");
 const message = document.getElementById("message");
 
-// Helper: enable or disable OTP inputs
+// State management for better control
+let isOtpSent = false;
+
+// --- Helper Functions ---
+
+// Helper: enable or disable OTP inputs and toggle Verify button visibility
 function toggleOtpInputs(enable = false) {
   otpInputs.forEach(input => {
     input.disabled = !enable;
     if (!enable) input.value = "";
   });
   if (enable) otpInputs[0].focus();
+  // Toggle the visibility of the verify button
+  verifyOtpBtn.style.display = enable ? 'block' : 'none';
 }
 
 // Helper: read OTP string
@@ -26,46 +36,109 @@ function clearOtpInputs() {
   otpInputs[0].focus();
 }
 
-// Send OTP handler
-sendOtpBtn.addEventListener("click", async () => {
+// 🎯 New Functionality: Resend Cooldown Timer ⏳
+const RESEND_COOLDOWN_SECONDS = 60;
+let resendTimer = null;
+
+function startResendCooldown() {
+  let timeLeft = RESEND_COOLDOWN_SECONDS;
+  resendLink.style.pointerEvents = 'none'; // Disable clicking during cooldown
+  resendLink.style.color = '#ccc';
+  resendLink.style.cursor = 'default';
+  resendLink.textContent = `Resend in ${timeLeft}s`;
+
+  clearInterval(resendTimer);
+  resendTimer = setInterval(() => {
+    timeLeft--;
+    if (timeLeft > 0) {
+      resendLink.textContent = `Resend in ${timeLeft}s`;
+    } else {
+      clearInterval(resendTimer);
+      resendLink.textContent = "Resend OTP";
+      resendLink.style.pointerEvents = 'auto';
+      resendLink.style.color = '#4a90e2';
+      resendLink.style.cursor = 'pointer';
+    }
+  }, 1000);
+}
+
+
+// --- Initial Setup and Email Persistence ---
+
+// Pre-fill email from local storage if available
+const storedEmail = localStorage.getItem('recoveryEmail');
+if (storedEmail) {
+  emailInput.value = storedEmail;
+}
+
+
+// --- Event Handlers ---
+
+// Send OTP handler (MODIFIED: Simulates server success for testing)
+async function sendOtpHandler() {
   const email = emailInput.value.trim();
-  if (!email) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     message.style.color = "red";
-    message.textContent = "Please enter a valid email.";
+    message.textContent = "Please enter a valid email address.";
     return;
   }
 
-  try {
-    sendOtpBtn.disabled = true;
-    sendOtpBtn.textContent = "Sending...";
-    message.textContent = "";
+  // 1. Disable button and show loading text immediately
+  sendOtpBtn.disabled = true;
+  sendOtpBtn.textContent = "Sending...";
+  message.textContent = "";
+  emailInput.disabled = true;
 
-    const resp = await fetch("http://localhost:5001/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
-    const data = await resp.json();
+  // 2. SIMULATION: Simulate a network delay (500ms)
+  await new Promise(resolve => setTimeout(resolve, 500)); 
 
-    if (data.success) {
-      message.style.color = "green";
-      message.textContent = "OTP sent! Check your email.";
-      toggleOtpInputs(true);
-    } else {
-      message.style.color = "red";
-      message.textContent = data.error || "Failed to send OTP.";
-      toggleOtpInputs(false);
-    }
-  } catch (err) {
-    console.error(err);
+  // 3. SIMULATION: Define the simulated successful response data
+  const data = { success: true }; 
+  
+  // 4. Handle simulated response
+  if (data.success) {
+    isOtpSent = true;
+    localStorage.setItem('recoveryEmail', email); // Save email on success
+    message.style.color = "green";
+    message.textContent = `(TEST SUCCESS) OTP sent to ${email}! Please check your inbox.`;
+    
+    // Enable inputs and show Verify button
+    toggleOtpInputs(true); 
+    
+    // Start cooldown for resend link
+    startResendCooldown();
+  } else {
+    // This would be the real error path (currently not possible with simulation)
     message.style.color = "red";
-    message.textContent = "Server error, try again.";
+    message.textContent = data.error || "Simulated failure: Failed to send OTP.";
     toggleOtpInputs(false);
-  } finally {
-    sendOtpBtn.disabled = false;
-    sendOtpBtn.textContent = "Send OTP";
+    emailInput.disabled = false; 
   }
+
+  // 5. Reset button state
+  sendOtpBtn.disabled = false;
+  sendOtpBtn.textContent = "Send OTP";
+}
+
+sendOtpBtn.addEventListener("click", sendOtpHandler);
+
+
+// Resend OTP handler (uses the same simulated success logic as sendOtpHandler)
+resendLink.addEventListener("click", async (e) => {
+  e.preventDefault();
+  if (resendLink.style.pointerEvents === 'none') return; // Do nothing if on cooldown
+
+  const email = emailInput.value.trim();
+  if (!email) {
+    message.style.color = "red";
+    message.textContent = "Enter your email to resend OTP.";
+    return;
+  }
+
+  // Use the sendOtpHandler logic for the resend function
+  await sendOtpHandler();
 });
+
 
 // OTP input handling (numeric, auto-move, backspace, paste)
 otpInputs.forEach((input, index) => {
@@ -106,9 +179,17 @@ otpInputs.forEach((input, index) => {
   }
 });
 
-// Form submit: verify OTP
+
+// Form submit: verify OTP (MODIFIED: Simulates server verification)
 otpForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  if (!isOtpSent) {
+      message.style.color = "red";
+      message.textContent = "Please send an OTP first.";
+      return;
+  }
+
   const otp = getEnteredOtp();
   const email = emailInput.value.trim();
 
@@ -119,52 +200,43 @@ otpForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const resp = await fetch("http://localhost:5001/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp })
-    });
-    const data = await resp.json();
+    verifyOtpBtn.disabled = true; 
+    verifyOtpBtn.textContent = "Verifying...";
+    message.textContent = "";
 
+    // 1. SIMULATION: Simulate a network delay (500ms)
+    await new Promise(resolve => setTimeout(resolve, 500)); 
+
+    // 2. SIMULATION: Success is hardcoded IF the user enters '123456'
+    // This allows you to test the success path on the front end.
+    const TEST_OTP = "123456"; 
+    const isOtpCorrect = otp === TEST_OTP;
+
+    const data = { verified: isOtpCorrect, error: isOtpCorrect ? null : "Incorrect OTP." };
+    
+    // 3. Handle simulated response
     if (data.verified) {
       message.style.color = "green";
-      message.textContent = "✅ OTP Verified!";
+      message.textContent = "✅ (TEST SUCCESS) OTP Verified! Redirecting to password reset...";
       toggleOtpInputs(false);
+      // Redirect to the password reset page
+      setTimeout(() => {
+        window.location.href = "../confirmPassword/confirmPassword.php"; 
+      }, 1500);
+
     } else {
       message.style.color = "red";
       message.textContent = data.error || "Invalid OTP. Try again.";
       clearOtpInputs();
+      verifyOtpBtn.disabled = false; 
+      verifyOtpBtn.textContent = "Verify OTP";
     }
   } catch (err) {
+    // This catch block will never be hit with the simulation
     console.error(err);
     message.style.color = "red";
-    message.textContent = "Server error, please try again.";
-  }
-});
-
-// Resend OTP handler
-resendLink.addEventListener("click", async (e) => {
-  e.preventDefault();
-  const email = emailInput.value.trim();
-  if (!email) {
-    message.style.color = "red";
-    message.textContent = "Enter your email to resend OTP.";
-    return;
-  }
-
-  try {
-    const resp = await fetch("http://localhost:5001/resend-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
-    const data = await resp.json();
-    message.style.color = data.success ? "green" : "red";
-    message.textContent = data.message || "Failed to resend OTP.";
-    toggleOtpInputs(data.success);
-  } catch (err) {
-    console.error(err);
-    message.style.color = "red";
-    message.textContent = "Server error while resending OTP.";
+    message.textContent = "Server error during verification, try again.";
+    verifyOtpBtn.disabled = false;
+    verifyOtpBtn.textContent = "Verify OTP";
   }
 });
