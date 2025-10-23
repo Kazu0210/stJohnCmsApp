@@ -26,28 +26,7 @@ $userRole = getCurrentUserRole();
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="../adminDashboard/adminDashboard.php">Blessed Saint John Memorial</a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link" href="../adminDashboard/adminDashboard.php">Home</a></li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="managementDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Management
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="managementDropdown">
-                            <li><a class="dropdown-item" href="../adminAppointment/adminAppointment.php">Appointment Management</a></li>
-                            <li><a class="dropdown-item" href="../adminCemeteryMap/adminCemeteryMap.php">Cemetery Map Management</a></li>
-                            <li><a class="dropdown-item" href="../adminReservation/adminReservation.php">Lot Reservation Management</a></li>
-                            <li><a class="dropdown-item" href="../adminBurial/adminBurial.php">Burial Record Management</a></li>
-                            <li><a class="dropdown-item" href="../adminFinancial/adminFinancial.php">Financial Tracking</a></li>
+    <?php include '../components/adminNavbar.php'; ?>
                             <li class="nav-item"><a class="dropdown-item" href="../adminMaintenance/adminMaintenance.php">Maintenance Management</a></li>
                         </ul>
                     </li>
@@ -105,7 +84,7 @@ $userRole = getCurrentUserRole();
                                 <form data-report-type="financial">
                                     <label for="financialTimeframeStart" class="form-label mt-2">Start Date</label>
                                     <input type="date" class="form-control mb-2" id="financialTimeframeStart" required>
-                                    <label for="financialTimeframeEnd" class="form-label">End Date</label>
+                                    <label for="financialTimeframeEnd" class="form-label visually-hidden">End Date</label>
                                     <input type="date" class="form-control mb-3" id="financialTimeframeEnd" required>
                                     <button type="submit" class="btn btn-sm btn-outline-dark me-2 generate-report-btn" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</button>
                                     <button type="submit" class="btn btn-sm btn-outline-dark generate-report-btn" data-format="excel"><i class="fas fa-file-excel"></i> Excel</button>
@@ -122,7 +101,7 @@ $userRole = getCurrentUserRole();
                                 <form data-report-type="reservation">
                                     <label for="reservationTimeframeStart" class="form-label mt-2">Start Date</label>
                                     <input type="date" class="form-control mb-2" id="reservationTimeframeStart" required>
-                                    <label for="reservationTimeframeEnd" class="form-label">End Date</label>
+                                    <label for="reservationTimeframeEnd" class="form-label visually-hidden">End Date</label>
                                     <input type="date" class="form-control mb-3" id="reservationTimeframeEnd" required>
                                     <button type="submit" class="btn btn-sm btn-outline-dark me-2 generate-report-btn" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</button>
                                     <button type="submit" class="btn btn-sm btn-outline-dark generate-report-btn" data-format="excel"><i class="fas fa-file-excel"></i> Excel</button>
@@ -139,7 +118,7 @@ $userRole = getCurrentUserRole();
                                 <form data-report-type="maintenance">
                                     <label for="maintenanceTimeframeStart" class="form-label mt-2">Start Date</label>
                                     <input type="date" class="form-control mb-2" id="maintenanceTimeframeStart" required>
-                                    <label for="maintenanceTimeframeEnd" class="form-label">End Date</label>
+                                    <label for="maintenanceTimeframeEnd" class="form-label visually-hidden">End Date</label>
                                     <input type="date" class="form-control mb-3" id="maintenanceTimeframeEnd" required>
                                     <button type="submit" class="btn btn-sm btn-outline-dark me-2 generate-report-btn" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</button>
                                     <button type="submit" class="btn btn-sm btn-outline-dark generate-report-btn" data-format="excel"><i class="fas fa-file-excel"></i> Excel</button>
@@ -156,7 +135,7 @@ $userRole = getCurrentUserRole();
                                 <form data-report-type="burial">
                                     <label for="burialTimeframeStart" class="form-label mt-2">Start Date</label>
                                     <input type="date" class="form-control mb-2" id="burialTimeframeStart" required>
-                                    <label for="burialTimeframeEnd" class="form-label">End Date</label>
+                                    <label for="burialTimeframeEnd" class="form-label visually-hidden">End Date</label>
                                     <input type="date" class="form-control mb-3" id="burialTimeframeEnd" required>
                                     <button type="submit" class="btn btn-sm btn-outline-dark me-2 generate-report-btn" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</button>
                                     <button type="submit" class="btn btn-sm btn-outline-dark generate-report-btn" data-format="excel"><i class="fas fa-file-excel"></i> Excel</button>
@@ -173,7 +152,7 @@ $userRole = getCurrentUserRole();
                                 <form data-report-type="clients">
                                     <label for="clientTimeframeStart" class="form-label mt-2">Start Date</label>
                                     <input type="date" class="form-control mb-2" id="clientTimeframeStart" required>
-                                    <label for="clientTimeframeEnd" class="form-label">End Date</label>
+                                    <label for="clientTimeframeEnd" class="form-label visually-hidden">End Date</label>
                                     <input type="date" class="form-control mb-3" id="clientTimeframeEnd" required>
                                     <button type="submit" class="btn btn-sm btn-outline-dark me-2 generate-report-btn" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</button>
                                     <button type="submit" class="btn btn-sm btn-outline-dark generate-report-btn" data-format="excel"><i class="fas fa-file-excel"></i> Excel</button>
@@ -190,7 +169,7 @@ $userRole = getCurrentUserRole();
                                 <form data-report-type="logs">
                                     <label for="logTimeframeStart" class="form-label mt-2">Start Date</label>
                                     <input type="date" class="form-control mb-2" id="logTimeframeStart" required>
-                                    <label for="logTimeframeEnd" class="form-label">End Date</label>
+                                    <label for="logTimeframeEnd" class="form-label visually-hidden">End Date</label>
                                     <input type="date" class="form-control mb-3" id="logTimeframeEnd" required>
                                     <button type="submit" class="btn btn-sm btn-outline-dark me-2 generate-report-btn" data-format="pdf"><i class="fas fa-file-pdf"></i> PDF</button>
                                     <button type="submit" class="btn btn-sm btn-outline-dark generate-report-btn" data-format="excel"><i class="fas fa-file-excel"></i> Excel</button>
@@ -220,7 +199,6 @@ $userRole = getCurrentUserRole();
     </footer>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="/stJohnCmsApp/cmsApp/frontend/environment.js?v=<?php echo time(); ?>"></script>
-    <script src="adminReports.js?v=<?php echo time(); ?>"></script>
+    <script src="adminReports.js"></script>
 </body>
 </html>
