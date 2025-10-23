@@ -4,15 +4,14 @@ if (window.pdfjsLib) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-   
+    // --- 1. DATA STATE (empty, to be loaded dynamically) ---
+    let burialData = [];
+
     // PDF Viewer State
     let pdfDoc = null;
     let currentPage = 1;
     let totalPages = 0;
     let currentFileURL = null;
-
-    // --- 1. DATA MANAGEMENT ---
-    let burialData = [];
 
     // --- 2. DOM ELEMENTS & MODALS ---
     const tableBody = document.getElementById('burialTableBody');
@@ -32,39 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const nextPageBtn = document.getElementById('nextPageBtn');
     const pageInfo = document.getElementById('pageInfo');
     
-    // --- 3. DATA FETCHING ---
-    async function fetchBurialData() {
-        try {
-            const response = await fetch('/stJohnCmsApp/cms.api/adminBurialManagement.php', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'same-origin'
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.status === 'success') {
-                burialData = result.data;
-                console.log('Burial data loaded:', burialData);
-                return burialData;
-            } else {
-                throw new Error(result.message || 'Failed to fetch burial data');
-            }
-        } catch (error) {
-            console.error('Error fetching burial data:', error);
-            showToast('Error loading burial data: ' + error.message, 'danger');
-            burialData = [];
-            return [];
-        }
-    }
-
-    // --- 4. HELPER FUNCTIONS ---
+    // --- 3. HELPER FUNCTIONS ---
     const getRecordById = (id) => burialData.find(r => r.id === id);
     const formatDate = (dateString) => `${dateString.split(' ')[0]}<br><small class="text-muted">${dateString.split(' ')[1]}</small>`;
     const getCurrentTimestamp = () => new Date().toISOString().slice(0, 16).replace('T', ' ');
@@ -152,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- 4. CORE LOGIC ---
     function renderTable(data) {
         tableBody.innerHTML = '';
+        
         if (data.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="13" class="text-center">No records found.</td></tr>';
             return;
@@ -198,58 +166,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function showDocumentModal(recordId, docType) {
         const record = getRecordById(recordId);
-        const docPath = record.docs ? record.docs[docType] : null;
-        
+        const file = record.docs ? record.docs[docType] : null;
         document.getElementById('currentDocRecordId').value = recordId;
         document.getElementById('currentDocType').value = docType;
         document.getElementById('docModalLabel').textContent = `${{ 'death-cert': 'Death Certificate', 'burial-permit': 'Burial Permit', 'valid-id': 'Valid ID' }[docType]} for ${record.name}`;
-        
         if (currentFileURL) URL.revokeObjectURL(currentFileURL);
         
         // Reset previews and controls
         ['img-preview', 'pdf-canvas'].forEach(id => document.getElementById(id).classList.add('d-none'));
         pdfControls.classList.add('d-none');
-        document.getElementById('no-doc-placeholder').classList.toggle('d-none', !!docPath);
+        document.getElementById('no-doc-placeholder').classList.toggle('d-none', !!file);
         
-        if (docPath) {
-            // Construct the document URL using the getDocument.php API
-            const docUrl = `/stJohnCmsApp/cms.api/getDocument.php?doc=${docType}&id=${recordId}`;
-            document.getElementById('docFilename').textContent = docPath;
-            
-            // Try to determine file type from extension
-            const fileExtension = docPath.split('.').pop().toLowerCase();
-            
-            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+        if (file) {
+            currentFileURL = URL.createObjectURL(file);
+            document.getElementById('docFilename').textContent = file.name;
+            if (file.type.startsWith('image/')) {
                 const img = document.getElementById('img-preview');
-                img.src = docUrl;
+                img.src = currentFileURL;
                 img.classList.remove('d-none');
-                
-                // Add error handling for image loading
-                img.onerror = function() {
-                    console.error('Failed to load image:', docUrl);
-                    img.classList.add('d-none');
-                    document.getElementById('no-doc-placeholder').classList.remove('d-none');
-                    document.getElementById('no-doc-placeholder').innerHTML = '<i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i><p class="mb-0">Failed to load document. Click Download to view.</p>';
-                };
-                
-            } else if (fileExtension === 'pdf') {
-                // For PDFs, we'll show a placeholder and enable download
-                document.getElementById('no-doc-placeholder').classList.remove('d-none');
-                document.getElementById('no-doc-placeholder').innerHTML = '<i class="fas fa-file-pdf fa-3x mb-3 text-danger"></i><p class="mb-0">PDF Document. Click Download to view.</p>';
-            } else {
-                // Other file types
-                document.getElementById('no-doc-placeholder').classList.remove('d-none');
-                document.getElementById('no-doc-placeholder').innerHTML = '<i class="fas fa-file fa-3x mb-3 text-muted"></i><p class="mb-0">Document available. Click Download to view.</p>';
+            } else if (file.type === 'application/pdf') {
+                pdfjsLib.getDocument(currentFileURL).promise.then(loadedPdf => {
+                    pdfDoc = loadedPdf;
+                    totalPages = pdfDoc.numPages;
+                    currentPage = 1;
+                    renderPage(currentPage);
+                    document.getElementById('pdf-canvas').classList.remove('d-none');
+                    if (totalPages > 1) pdfControls.classList.remove('d-none');
+                });
             }
-            
-            document.getElementById('downloadLink').href = docUrl;
-            document.getElementById('downloadLink').download = docPath;
+            document.getElementById('downloadLink').href = currentFileURL;
+            document.getElementById('downloadLink').download = file.name;
         } else {
             document.getElementById('docFilename').textContent = "No file uploaded.";
         }
-        
-        document.getElementById('downloadLink').classList.toggle('disabled', !docPath);
-        document.getElementById('deleteDocBtn').disabled = !docPath;
+        document.getElementById('downloadLink').classList.toggle('disabled', !file);
+        document.getElementById('deleteDocBtn').disabled = !file;
         docModal.show();
     }
 
@@ -372,28 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
         currentFileURL = null; pdfDoc = null;
     });
 
-    // --- 8. INITIALIZATION ---
-    async function initializePage() {
-        try {
-            // Show loading state
-            tableBody.innerHTML = '<tr><td colspan="13" class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Loading burial records...</td></tr>';
-            
-            // Fetch burial data
-            await fetchBurialData();
-            
-            // Render the table with fetched data
-            applyFilters();
-            
-            // Initialize metrics
-            updateMetrics();
-            
-        } catch (error) {
-            console.error('Error initializing page:', error);
-            tableBody.innerHTML = '<tr><td colspan="13" class="text-center text-danger">Error loading burial records. Please refresh the page.</td></tr>';
-            showToast('Error loading burial records: ' + error.message, 'danger');
-        }
-    }
-
-    // Initialize the page
-    initializePage();
+    // --- 7. INITIALIZATION ---
+    updateMetrics(); // Initialize metrics immediately
+    applyFilters(); // This will also update metrics after rendering table
 });
