@@ -34,7 +34,7 @@
         <div class="container">
             <div class="signup-box p-4 shadow-sm rounded mx-auto bg-white">
                 <h2 class="text-center mb-4">Create <span class="text-warning">New Account</span></h2>
-                <form id="signupForm" method="POST" action="http://localhost/stJohnCmsApp/cms.api/signup.php
+                <form id="signupForm" method="POST" action="/stJohnCmsApp/cms.api/signup.php
 ">
 
                     <div class="row g-2 mb-3">
@@ -77,7 +77,7 @@
                     </div>
 
                     <p class="text-center">Already a Member? <a href="../login/login.php">Log In</a></p>
-                    <button type="submit" class="btn btn-warning w-100 fw-bold">Create Account</button>
+                    <button type="submit" class="btn btn-warning w-100 fw-bold" a href="../login/login.php">Create Account</a></button>
                 </form>
             </div>
         </div>

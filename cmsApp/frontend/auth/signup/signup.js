@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ✅ Send data to PHP via fetch
         const formData = new FormData(signupForm);
 
-        fetch("http://localhost/cms.api/signup.php", { 
+        fetch("/stJohnCmsApp/cms.api/signup.php", { 
             method: "POST",
             body: formData
         })

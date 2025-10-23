@@ -15,9 +15,10 @@
         <input type="password" id="confirmPassword" placeholder="Confirm New Password" required />
         <p class="member-text">Create a strong password you haven't used before.</p>
         <p id="errorMsg" style="color: red; font-size: 14px; display: none; text-align: center;">Passwords do not match.</p>
-        <button type="submit" class="create-account">Reset Password</button>
+        <button type="submit" id="resetButton" class="create-account">Reset Password</button>
       </form>
     </div>
   </div>
+  <script src="confirmPassword.js"></script>
 </body>
 </html>

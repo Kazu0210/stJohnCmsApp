@@ -1,128 +1,11 @@
-// --- Add Payment Modal Logic ---
-const addPaymentBtn = document.getElementById('addPaymentBtn');
-const addPaymentModal = document.getElementById('addPaymentModal');
-const addPaymentForm = document.getElementById('addPaymentForm');
-const addClientReservation = document.getElementById('addClientReservation');
-const addMonthDue = document.getElementById('addMonthDue');
-const addAmountPaid = document.getElementById('addAmountPaid');
-const addPaymentMethod = document.getElementById('addPaymentMethod');
-const addReference = document.getElementById('addReference');
-
-// Fetch reservations for dropdown
-async function populateReservationDropdown() {
-    addClientReservation.innerHTML = '<option value="">Select Reservation</option>';
-    try {
-        const res = await fetch('/stJohnCmsApp/cms.api/fetchReservations.php');
-        const data = await res.json();
-        if (data.success && data.data) {
-            data.data.forEach(r => {
-                const label = `ID:${r.reservationId} | Lot: ${r.area}-${r.block}-${r.lotNumber} | User: ${r.userId}`;
-                const opt = document.createElement('option');
-                opt.value = r.reservationId;
-                opt.textContent = label;
-                addClientReservation.appendChild(opt);
-            });
-        }
-    } catch (e) {
-        addClientReservation.innerHTML = '<option value="">Error loading reservations</option>';
-    }
-}
-
-if (addPaymentBtn) {
-    addPaymentBtn.addEventListener('click', () => {
-        populateReservationDropdown();
-        // Set default month to current month
-        const now = new Date();
-        addMonthDue.value = now.toLocaleString('default', { month: 'long' });
-        addAmountPaid.value = '';
-        addPaymentMethod.value = '3'; // Cash
-        addReference.value = '';
-    });
-}
-
-if (addPaymentForm) {
-    addPaymentForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-    const formData = new FormData(addPaymentForm);
-    // Map paymentMethodId to backend values (1: GCash, 2: Bank, 3: Cash)
-    const paymentMethodId = formData.get('paymentMethodId');
-    formData.set('paymentMethodId', paymentMethodId);
-    // Add paymentType to backend
-    const paymentType = formData.get('paymentType');
-    formData.set('paymentType', paymentType);
-    // Add dummy userId if needed (handled by backend session)
-        try {
-            const res = await fetch('/stJohnCmsApp/cms.api/save_payment.php', {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-            });
-            const result = await res.json();
-            if (result.status === 'success') {
-                alert('Payment added successfully!');
-                addPaymentForm.reset();
-                var modal = bootstrap.Modal.getInstance(addPaymentModal);
-                modal && modal.hide();
-                // Optionally reload payment records table
-                location.reload();
-            } else {
-                alert(result.message || 'Failed to add payment.');
-            }
-        } catch (err) {
-            alert('Error submitting payment.');
-        }
-    });
-}
 // adminFinancial.js
 document.addEventListener('DOMContentLoaded', function () {
 
-    // --- 1. MOCK DATA & STATE ---
-
-    const today = new Date();
-    const months = [];
-    // Generate the last 12 month labels for dropdown and chart
-    for (let i = 0; i < 12; i++) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        months.push(d.toLocaleString('en-US', { year: 'numeric', month: 'long' }));
-    }
-
-    // Mock file objects for proof simulation
-    const mockFile = { name: 'GCash-05-2024.jpg', type: 'image/jpeg', dataURL: 'mock-image-data-url' };
-    const mockPDF = { name: 'BankTransfer-04-2024.pdf', type: 'application/pdf', dataURL: 'mock-pdf-data-url' };
-    
+    // --- 1. STATE MANAGEMENT ---
     let paymentRecords = [];
     let currentPage = 1;
     const recordsPerPage = 10;
     let currentFilteredRecords = [];
-
-    // Helper to convert paymentMethodId to readable name
-    function getMethodName(id) {
-        switch (parseInt(id)) {
-            case 1: return 'GCash';
-            case 2: return 'Bank Transfer';
-            case 3: return 'Cash';
-            default: return 'N/A';
-        }
-    }
-
-    // ...existing code...
-
-    // Initialize empty payments DataTable
-    if (window.jQuery && $('#paymentsTable').length) {
-        $('#paymentsTable').DataTable({
-            data: [], // Empty data
-            columns: [
-                { title: 'Client Name' },
-                { title: 'Lot' },
-                { title: 'Amount Paid' },
-                { title: 'Status' },
-                { title: 'Payment Method' },
-                { title: 'Reference/OR No.' },
-                { title: 'Date Paid' },
-                { title: 'Actions', orderable: false, searchable: false }
-            ]
-        });
-    }
     
     // --- 2. DOM ELEMENTS & MODALS ---
     const tableBody = document.getElementById('paymentTableBody');
@@ -131,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const monthFilter = document.getElementById('paymentMonthFilter');
     const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
     const proofViewerModal = new bootstrap.Modal(document.getElementById('proofViewerModal'));
-    const cancelReservationModal = new bootstrap.Modal(document.getElementById('cancelReservationModal')); // Added
+    const cancelReservationModal = new bootstrap.Modal(document.getElementById('cancelReservationModal'));
 
     // Pagination elements
     const prevPageBtn = document.getElementById('prevPageBtn');
@@ -144,9 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Logout Links
     const logoutLinks = document.querySelectorAll('#logoutLinkDesktop, #logoutLinkMobile');
     
-    // --- 3. LOGOUT LOGIC 🔥 NEW CODE FROM PROMPT ---
-
-
+    // --- 3. LOGOUT LOGIC ---
     const handleLogout = (e) => {
         e.preventDefault(); // Stop the link from navigating immediately
         
@@ -163,13 +44,44 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = redirectPath; 
         } else {
             // Fallback to a known path if href is empty or not set
-            // Assumes a relative path from current file
             window.location.href = "../../../frontend/auth/login/login.php";
         }
     };
     
-    // --- 4. HELPER FUNCTIONS (Rest of the original code) ---
-
+    // --- 4. API FUNCTIONS ---
+    async function fetchFinancialData() {
+        try {
+            const response = await fetch('/stJohnCmsApp/cms.api/adminFinancialData.php', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin'
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                paymentRecords = data.data.payments;
+                updateSummary(data.data.summary);
+                renderIncomeChart(data.data.chartData);
+                populateMonthFilter();
+                applyFilters();
+            } else {
+                throw new Error(data.message || 'Failed to fetch financial data');
+            }
+        } catch (error) {
+            console.error('Error fetching financial data:', error);
+            showToast('Error loading financial data: ' + error.message, 'danger');
+        }
+    }
+    
+    // --- 5. HELPER FUNCTIONS ---
     const getRecordById = (id) => paymentRecords.find(r => r.id === id);
 
     const getStatusClass = (status) => {
@@ -192,52 +104,19 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => toast.remove(), 3000);
     }
 
-    // --- 5. CORE LOGIC (Summary & Chart) ---
-
-    function updateSummary() {
-        const incomeRecords = paymentRecords
-            .filter(r => (r.status === 'Paid' || r.status === 'Partially Paid' || r.status === 'Completed') && r.amountPaid > 0);
-
-        const totalIncomeYTD = incomeRecords
-            .filter(r => r.date.getFullYear() === today.getFullYear())
-            .reduce((sum, r) => sum + r.amountPaid, 0);
-
-        const incomeThisMonth = incomeRecords
-            .filter(r => r.date.getMonth() === today.getMonth() && r.date.getFullYear() === today.getFullYear())
-            .reduce((sum, r) => sum + r.amountPaid, 0);
-
-        const pendingCount = paymentRecords.filter(r => r.status === 'Pending').length;
-        const deferredCount = paymentRecords.filter(r => r.status === 'Deferred').length;
-
-        document.getElementById('totalIncomeYTD').textContent = `₱${totalIncomeYTD.toFixed(2).toLocaleString('en-US')}`;
-        document.getElementById('incomeThisMonth').textContent = `₱${incomeThisMonth.toFixed(2).toLocaleString('en-US')}`;
-        document.getElementById('attentionCount').textContent = `${pendingCount} Pending / ${deferredCount} Deferred`;
-        
-        renderIncomeChart(incomeRecords);
+    // --- 6. SUMMARY & CHART FUNCTIONS ---
+    function updateSummary(summary) {
+        document.getElementById('totalIncomeYTD').textContent = `₱${summary.totalIncomeYTD.toFixed(2).toLocaleString('en-US')}`;
+        document.getElementById('incomeThisMonth').textContent = `₱${summary.incomeThisMonth.toFixed(2).toLocaleString('en-US')}`;
+        document.getElementById('attentionCount').textContent = `${summary.pendingCount} Pending / ${summary.deferredCount} Deferred`;
     }
     
-    function renderIncomeChart(records) {
+    function renderIncomeChart(chartData) {
         const ctx = document.getElementById('monthlyIncomeChart');
         if (!ctx) return;
 
-        const monthlyData = {};
-        const labels = [];
-        for (let i = 11; i >= 0; i--) {
-            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-            const monthLabel = d.toLocaleString('en-US', { year: 'numeric', month: 'short' }); 
-            labels.push(monthLabel);
-            monthlyData[monthLabel] = 0;
-        }
-
-        records.forEach(r => {
-            const recordDate = r.date;
-            const monthLabel = recordDate.toLocaleString('en-US', { year: 'numeric', month: 'short' });
-            if (monthlyData.hasOwnProperty(monthLabel)) {
-                monthlyData[monthLabel] += r.amountPaid;
-            }
-        });
-
-        const dataValues = labels.map(label => monthlyData[label]);
+        const labels = chartData.map(item => item.month);
+        const dataValues = chartData.map(item => item.amount);
         
         if (window.incomeChart) {
             window.incomeChart.destroy();
@@ -279,95 +158,95 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- 6. TABLE RENDERING & FILTERING ---
+    // --- 7. TABLE RENDERING & FILTERING ---
+    function populateMonthFilter() {
+        const months = [...new Set(paymentRecords.map(r => r.monthDue))].sort();
+        monthFilter.innerHTML = '<option value="all">Filter by Month (All)</option>';
+        months.forEach(month => {
+            const option = document.createElement('option');
+            option.value = month;
+            option.textContent = month;
+            monthFilter.appendChild(option);
+        });
+    }
 
-    // function populateMonthFilter() {
-    //     monthFilter.innerHTML = '<option value="all">Filter by Month (All)</option>';
-    //     months.forEach(month => {
-    //         const option = document.createElement('option');
-    //         option.value = month;
-    //         option.textContent = month;
-    //         monthFilter.appendChild(option);
-    //     });
-    // }
+    function renderTable(data) {
+        tableBody.innerHTML = '';
+        const start = (currentPage - 1) * recordsPerPage;
+        const end = start + recordsPerPage;
+        const pageRecords = data.slice(start, end);
 
-    // function renderTable(data) {
-    //     tableBody.innerHTML = '';
-    //     const start = (currentPage - 1) * recordsPerPage;
-    //     const end = start + recordsPerPage;
-    //     const pageRecords = data.slice(start, end);
+        const noMessage = document.getElementById('noPaymentsMessage');
+        const totalPages = Math.ceil(data.length / recordsPerPage);
 
-    //     const noMessage = document.getElementById('noPaymentsMessage');
-    //     const totalPages = Math.ceil(data.length / recordsPerPage);
+        noMessage.classList.add('d-none');
+        const tableContainer = tableBody.closest('.table-responsive');
+        if (tableContainer) {
+            tableContainer.style.display = 'block';
+        }
 
-    //     noMessage.classList.add('d-none');
-    //     // Check if the table-responsive element exists before trying to access its style
-    //     const tableContainer = tableBody.closest('.table-responsive');
-    //     if (tableContainer) {
-    //         tableContainer.style.display = 'block';
-    //     }
+        if (pageRecords.length === 0) {
+            if (tableContainer) {
+                tableContainer.style.display = 'none';
+            }
+            noMessage.classList.remove('d-none');
+            document.getElementById('pageInfo').textContent = `Page 0 of ${totalPages || 1}`;
+            prevPageBtn.disabled = true;
+            nextPageBtn.disabled = true;
+            return;
+        }
 
-    //     if (pageRecords.length === 0) {
-    //         if (tableContainer) {
-    //             tableContainer.style.display = 'none';
-    //         }
-    //         noMessage.classList.remove('d-none');
-    //         document.getElementById('pageInfo').textContent = `Page 0 of ${totalPages || 1}`;
-    //         prevPageBtn.disabled = true;
-    //         nextPageBtn.disabled = true;
-    //         return;
-    //     }
-
-    //     pageRecords.forEach(record => {
-    //         const row = tableBody.insertRow();
-    //         row.dataset.recordId = record.id;
+        pageRecords.forEach(record => {
+            const row = tableBody.insertRow();
+            row.dataset.recordId = record.id;
             
-    //         row.innerHTML = `
-    //             <td>${record.clientName}</td>
-    //             <td>${record.lot}</td>
-    //             <td>${record.monthDue}</td>
-    //             <td>₱${record.amountPaid.toFixed(2).toLocaleString('en-US')}</td>
-    //             <td>${record.method}</td>
-    //             <td>${record.reference}</td>
-    //             <td><span class="${getStatusClass(record.status)}">${record.status}</span></td>
-    //             <td class="text-center">
-    //                 <button class="action-btn btn-view-proof" title="View Proof" data-id="${record.id}" ${record.method === 'Cash' || !record.proof || record.method === 'N/A' ? 'disabled' : ''}><i class="fas fa-eye"></i></button>
-    //                 <button class="action-btn btn-edit-payment" title="Edit/Validate Payment" data-id="${record.id}"><i class="fas fa-edit"></i></button>
-    //             </td>
-    //         `;
-    //     });
-        
-    //     attachTableListeners();
-        
-    //     // Update Pagination Controls
-    //     document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
-    //     prevPageBtn.disabled = currentPage === 1;
-    //     nextPageBtn.disabled = currentPage >= totalPages;
-    // }
-
-    // function applyFilters() {
-    //     const searchTerm = searchInput.value.toLowerCase();
-    //     const status = statusFilter.value;
-    //     const month = monthFilter.value;
-
-    //     const filtered = paymentRecords.filter(r => {
-    //         const matchesSearch = r.clientName.toLowerCase().includes(searchTerm) || 
-    //                                  r.lot.toLowerCase().includes(searchTerm) ||
-    //                                  r.reference.toLowerCase().includes(searchTerm);
+            const hasProof = record.document && record.method !== 'Cash' && record.method !== 'N/A';
             
-    //         const matchesStatus = status === 'all' || r.status === status;
-    //         const matchesMonth = month === 'all' || r.monthDue === month;
+            row.innerHTML = `
+                <td>${record.clientName}</td>
+                <td>${record.lot}</td>
+                <td>${record.monthDue}</td>
+                <td>₱${record.amountPaid.toFixed(2).toLocaleString('en-US')}</td>
+                <td>${record.method}</td>
+                <td>${record.reference}</td>
+                <td><span class="${getStatusClass(record.status)}">${record.status}</span></td>
+                <td class="text-center">
+                    <button class="action-btn btn-view-proof" title="View Proof" data-id="${record.id}" ${!hasProof ? 'disabled' : ''}><i class="fas fa-eye"></i></button>
+                    <button class="action-btn btn-edit-payment" title="Edit/Validate Payment" data-id="${record.id}"><i class="fas fa-edit"></i></button>
+                </td>
+            `;
+        });
+        
+        attachTableListeners();
+        
+        // Update Pagination Controls
+        document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage >= totalPages;
+    }
 
-    //         return matchesSearch && matchesStatus && matchesMonth;
-    //     });
+    function applyFilters() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const status = statusFilter.value;
+        const month = monthFilter.value;
 
-    //     currentFilteredRecords = filtered;
-    //     currentPage = 1;
-    //     renderTable(currentFilteredRecords);
-    // }
+        const filtered = paymentRecords.filter(r => {
+            const matchesSearch = r.clientName.toLowerCase().includes(searchTerm) || 
+                                     r.lot.toLowerCase().includes(searchTerm) ||
+                                     r.reference.toLowerCase().includes(searchTerm);
+            
+            const matchesStatus = status === 'all' || r.status === status;
+            const matchesMonth = month === 'all' || r.monthDue === month;
+            
+            return matchesSearch && matchesStatus && matchesMonth;
+        });
+
+        currentFilteredRecords = filtered;
+        currentPage = 1;
+        renderTable(currentFilteredRecords);
+    }
     
-    // --- 7. MODAL HANDLERS ---
-    
+    // --- 8. MODAL HANDLERS ---
     function openPaymentModal(id) {
         const record = getRecordById(id);
         if (!record) return;
@@ -382,97 +261,84 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('editStatus').value = record.status;
         document.getElementById('editReference').value = record.reference;
 
-        // Logic for the HIDDEN proof elements (for consistency, though they are not visible)
-        const hasProof = record.proof && record.method !== 'Cash' && record.method !== 'N/A';
-        proofStatusValue.textContent = hasProof ? record.proof.name : (record.method === 'Cash' ? 'N/A (Cash/OR)' : 'None Uploaded');
+        // Logic for the proof elements
+        const hasProof = record.document && record.method !== 'Cash' && record.method !== 'N/A';
+        proofStatusValue.textContent = hasProof ? 'Document Available' : (record.method === 'Cash' ? 'N/A (Cash/OR)' : 'None Uploaded');
         viewProofBtn.disabled = !hasProof;
         viewProofBtn.onclick = hasProof ? () => openProofViewerModal(record.id) : null;
 
         paymentModal.show();
     }
 
-    // START OF MODIFIED PROOF VIEWER LOGIC
     function openProofViewerModal(id) {
         const record = getRecordById(id);
-        if (!record || !record.proof || record.method === 'Cash' || record.method === 'N/A') {
+        if (!record || !record.document || record.method === 'Cash' || record.method === 'N/A') {
             alert("No digital proof available for this record.");
             return; 
         }
 
-        const proof = record.proof;
-        const img = document.getElementById('proofImage'); // The <img> element
-        const canvas = document.getElementById('proofCanvas'); // The <canvas> for PDF
-        const placeholder = document.getElementById('proofPlaceholder'); // The message placeholder
-        const downloadLink = document.getElementById('proofDownloadLink');
-        const loadingMessage = document.getElementById('proofLoadingMessage'); // The loading element
+        console.log('Opening proof viewer for record:', record);
 
-        // 1. Reset all view elements
+        const img = document.getElementById('proofImage');
+        const canvas = document.getElementById('proofCanvas');
+        const placeholder = document.getElementById('proofPlaceholder');
+        const downloadLink = document.getElementById('proofDownloadLink');
+        const loadingMessage = document.getElementById('proofLoadingMessage');
+
+        // Reset all view elements
         img.classList.add('d-none');
         canvas.classList.add('d-none');
         placeholder.classList.add('d-none');
         loadingMessage.classList.add('d-none');
         
-        // 2. Update modal header/details
+        // Update modal header/details
         document.getElementById('proofClientName').textContent = record.clientName;
 
-        // 3. Setup download link (always available if proof exists)
+        // Setup download link
         downloadLink.disabled = false;
-        downloadLink.href = proof.dataURL; 
-        downloadLink.download = proof.name;
+        downloadLink.href = `/stJohnCmsApp/cms.api/getDocument.php?doc=payment&id=${record.id}`;
+        downloadLink.download = record.document;
 
-        // 4. Handle file preview based on type
-        if (proof.type.startsWith('image/')) {
-            
-            // --- IMAGE PREVIEW LOGIC ---
-            // For production, proof.dataURL should be the actual file path
-            img.src = `https://via.placeholder.com/800x600/EFBF04/000000?text=Digital+Proof+for+${record.clientName}`; 
+        console.log('Document URL:', downloadLink.href);
+        console.log('Document filename:', record.document);
+
+        // Handle file preview based on file extension
+        const fileExtension = record.document.split('.').pop().toLowerCase();
+        console.log('File extension:', fileExtension);
+        
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+            // Image preview
+            img.src = `/stJohnCmsApp/cms.api/getDocument.php?doc=payment&id=${record.id}`;
             img.classList.remove('d-none');
             
-        } else if (proof.type === 'application/pdf' && window.pdfjsLib) {
-            
-            // --- PDF PREVIEW LOGIC (Requires PDF.js library) ---
-            loadingMessage.classList.remove('d-none'); // Show loading indicator
-            canvas.classList.remove('d-none');
-
-            const pdfUrl = proof.dataURL; 
-            
-            window.pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
-                
-                // Get the first page
-                pdf.getPage(1).then(page => {
-                    const viewport = page.getViewport({ scale: 1.5 });
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    const renderContext = {
-                        canvasContext: canvas.getContext('2d'),
-                        viewport: viewport
-                    };
-                    page.render(renderContext).promise.then(() => {
-                        loadingMessage.classList.add('d-none'); // Hide loading indicator on success
-                    });
-                });
-            }).catch(error => {
-                console.error('Error loading PDF:', error);
-                loadingMessage.classList.add('d-none');
-                placeholder.textContent = `Error loading PDF: ${error.message}. Please click Download.`;
+            // Add error handling for image loading
+            img.onerror = function() {
+                console.error('Failed to load image:', img.src);
+                img.classList.add('d-none');
+                placeholder.textContent = `Failed to load image: ${record.document}. Click Download to view.`;
                 placeholder.classList.remove('d-none');
-                canvas.classList.add('d-none');
-            });
-
-        } else {
+            };
             
-            // --- Fallback for unsupported types (e.g., DOCX, XLS) ---
-            placeholder.textContent = `File uploaded: ${proof.name}. Document type (${proof.type}) not viewable inline. Click Download.`;
+            img.onload = function() {
+                console.log('Image loaded successfully');
+            };
+            
+        } else if (fileExtension === 'pdf') {
+            // PDF preview - show placeholder for now
+            placeholder.textContent = `PDF Document: ${record.document}. Click Download to view.`;
+            placeholder.classList.remove('d-none');
+            
+        } else {
+            // Other file types
+            placeholder.textContent = `File uploaded: ${record.document}. Document type not viewable inline. Click Download.`;
             placeholder.classList.remove('d-none');
         }
 
         proofViewerModal.show();
     }
-    // END OF MODIFIED PROOF VIEWER LOGIC
 
-    // --- 8. Modal Save Logic Update ---
-    function savePaymentChanges(e) {
+    // --- 9. Modal Save Logic ---
+    async function savePaymentChanges(e) {
         e.preventDefault();
         
         const id = parseInt(document.getElementById('editPaymentId').value);
@@ -484,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const newStatus = document.getElementById('editStatus').value; 
         const newAmountPaid = parseFloat(document.getElementById('editAmountPaid').value);
 
-        // Simple validation based on flow
+        // Simple validation
         if ((newStatus === 'Paid' || newStatus === 'Partially Paid' || newStatus === 'Completed') && newAmountPaid <= 0) {
             alert("Successful status requires a payment amount greater than zero.");
             return;
@@ -495,20 +361,54 @@ document.addEventListener('DOMContentLoaded', function () {
              }
         }
         
-        // Update record
-        record.amountPaid = newAmountPaid;
-        record.method = newMethod;
-        record.reference = newReference; 
-        record.status = newStatus;
-
-        paymentModal.hide();
-        updateSummary(); 
-        renderTable(currentFilteredRecords);
-        showToast(`Record ${id} updated to status: ${newStatus}`, newStatus === 'Paid' || newStatus === 'Completed' ? 'success' : 'warning');
+        try {
+            // Show loading state
+            const saveBtn = document.querySelector('#paymentModal .btn-primary');
+            const originalText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+            
+            // Send update to server
+            const response = await fetch('/stJohnCmsApp/cms.api/updatePayment.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    paymentId: id,
+                    status: newStatus,
+                    amountPaid: newAmountPaid,
+                    paymentMethod: newMethod,
+                    reference: newReference
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                paymentModal.hide();
+                
+                // Refresh data from server to get updated status
+                await fetchFinancialData();
+                
+                showToast(`Record ${id} updated to status: ${newStatus}`, newStatus === 'Paid' || newStatus === 'Completed' ? 'success' : 'warning');
+            } else {
+                throw new Error(result.message || 'Failed to update payment record');
+            }
+            
+        } catch (error) {
+            console.error('Error updating payment:', error);
+            showToast('Error updating payment: ' + error.message, 'danger');
+        } finally {
+            // Restore button state
+            const saveBtn = document.querySelector('#paymentModal .btn-primary');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
     }
 
-    // --- 9. EVENT LISTENERS ---
-    
+    // --- 10. EVENT LISTENERS ---
     function attachTableListeners() {
         tableBody.querySelectorAll('.btn-edit-payment').forEach(btn => {
             btn.addEventListener('click', () => openPaymentModal(parseInt(btn.dataset.id)));
@@ -521,35 +421,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Filter and Pagination Listeners
-    // searchInput.addEventListener('input', applyFilters);
-    // statusFilter.addEventListener('change', applyFilters);
-    // monthFilter.addEventListener('change', applyFilters);
-    // document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-    //     searchInput.value = '';
-    //     statusFilter.value = 'all';
-    //     monthFilter.value = 'all';
-    //     applyFilters();
-    // });
+    searchInput.addEventListener('input', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+    monthFilter.addEventListener('change', applyFilters);
+    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+        searchInput.value = '';
+        statusFilter.value = 'all';
+        monthFilter.value = 'all';
+        applyFilters();
+    });
 
-    // document.getElementById('prevPageBtn').addEventListener('click', () => {
-    //     if (currentPage > 1) { currentPage--; renderTable(currentFilteredRecords); }
-    // });
-    // document.getElementById('nextPageBtn').addEventListener('click', () => {
-    //     const totalPages = Math.ceil(currentFilteredRecords.length / recordsPerPage);
-    //     if (currentPage < totalPages) { currentPage++; renderTable(currentFilteredRecords); }
-    // });
+    document.getElementById('prevPageBtn').addEventListener('click', () => {
+        if (currentPage > 1) { currentPage--; renderTable(currentFilteredRecords); }
+    });
+    document.getElementById('nextPageBtn').addEventListener('click', () => {
+        const totalPages = Math.ceil(currentFilteredRecords.length / recordsPerPage);
+        if (currentPage < totalPages) { currentPage++; renderTable(currentFilteredRecords); }
+    });
 
     document.getElementById('paymentForm').addEventListener('submit', savePaymentChanges);
     
- 
     logoutLinks.forEach(link => {
         if (link) {
             link.addEventListener("click", handleLogout);
         }
     });
 
-    // --- 10. INITIALIZATION ---
-    // populateMonthFilter();
-    // updateSummary();
-    // applyFilters();
+    // --- 11. INITIALIZATION ---
+    fetchFinancialData();
 });

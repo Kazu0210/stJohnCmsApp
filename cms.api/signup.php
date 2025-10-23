@@ -3,6 +3,10 @@ include("db_connect.php");
 
 // Set proper headers
 header('Content-Type: text/html; charset=UTF-8');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header('Content-Type: application/json');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Input validation and sanitization

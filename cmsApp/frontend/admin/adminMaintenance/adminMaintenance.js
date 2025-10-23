@@ -27,7 +27,7 @@ const fetchMaintenanceRequests = async () => {
                     client: request.clientName || 'Unknown Client',
                     contact: request.contactNumber ? 
                         `${request.contactNumber} / ${request.email || ''}` : 
-                        request.username || 'No contact info',
+                        request.email || 'No contact info',
                     lotNo: `${area}-${block}-${lotNumber}`.replace(/^-*|-*$/g, '') || 'Not specified',
                     areaBlock: area,
                     rowNo: block,
@@ -48,6 +48,7 @@ const fetchMaintenanceRequests = async () => {
             return [];
         }
     } catch (error) {
+        console.error('Error fetching maintenance requests:', error);
         return [];
     }
 };
@@ -66,6 +67,7 @@ const fetchMaintenanceCounts = async () => {
             return null;
         }
     } catch (error) {
+        console.error('Error fetching maintenance counts:', error);
         return null;
     }
 };
@@ -128,20 +130,18 @@ const renderTable = (data, page) => {
 
     paginatedData.forEach((record) => {
         const isCompletedOrCancelled = record.status === 'Completed' || record.status === 'Cancelled';
-        const isInProgress = record.status === 'In Progress';
         const row = document.createElement('tr');
 
         row.innerHTML = `
             <td>${record.client}</td>
             <td class="text-center">${record.areaBlock}</td>
-            <td class="text-center">${record.block}</td>
+            <td class="text-center">${record.areaBlock}</td> 
             <td class="text-center">${record.rowNo}</td>
             <td class="text-center">${record.lotNoOnly}</td>
             <td>${formatDateTime(record.requested)}</td>
             <td class="text-center">${getStatusBadge(record.status)}</td>
             <td class="text-center text-nowrap">
                 <button class="btn btn-sm btn-info text-white view-btn" title="View/Update" data-id="${record.id}" data-bs-toggle="modal" data-bs-target="#requestModal"><i class="fas fa-eye"></i></button>
-                <button class="btn btn-sm btn-warning inprogress-btn" title="Mark In Progress" data-id="${record.id}" ${isCompletedOrCancelled || isInProgress ? 'disabled' : ''}><i class="fas fa-spinner"></i></button>
                 <button class="btn btn-sm btn-success complete-btn" title="Mark Completed" data-id="${record.id}" ${isCompletedOrCancelled ? 'disabled' : ''}><i class="fas fa-check"></i></button>
                 <button class="btn btn-sm btn-danger cancel-btn" title="Cancel Request" data-id="${record.id}" ${isCompletedOrCancelled ? 'disabled' : ''}><i class="fas fa-times"></i></button>
             </td>
@@ -327,7 +327,7 @@ const handlePaginationClick = (e) => {
 window.handleLogout = (e) => {
     e.preventDefault();
     if (confirm("Are you sure you want to log out?")) {
-        window.location.href = "../../../frontend/auth/login/login.php";
+        window.location.href = "/stJohnCmsApp/cms.api/logout.php";
     }
 };
 
@@ -362,23 +362,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const eventType = (element.tagName === 'INPUT') ? 'keyup' : 'change';
         element.addEventListener(eventType, applyFilters);
     });
-        // Event delegation for action buttons
-        document.getElementById('maintenanceTableBody').addEventListener('click', async (e) => {
-            const target = e.target.closest('button');
-            if (!target) return;
-            const id = target.getAttribute('data-id');
-            if (!id) return;
-
-            if (target.classList.contains('inprogress-btn')) {
-                await updateRecordStatus(id, 'In Progress');
-            } else if (target.classList.contains('view-btn')) {
-                showRequestDetails(id);
-            } else if (target.classList.contains('complete-btn')) {
-                updateRecordStatus(id, 'Completed');
-            } else if (target.classList.contains('cancel-btn')) {
-                updateRecordStatus(id, 'Cancelled');
-            }
-        });
+    document.getElementById('maintenanceTableBody').addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+        const id = parseInt(target.dataset.id);
+        if (target.classList.contains('view-btn')) {
+            showRequestDetails(id);
+        } else if (target.classList.contains('complete-btn')) {
+            updateRecordStatus(id, 'Completed');
+        } else if (target.classList.contains('cancel-btn')) {
+            updateRecordStatus(id, 'Cancelled');
+        }
+    });
     document.getElementById('logoutLinkDesktop')?.addEventListener('click', handleLogout);
     document.getElementById('logoutLinkMobile')?.addEventListener('click', handleLogout);
 });

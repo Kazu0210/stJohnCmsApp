@@ -42,26 +42,87 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log(`Requesting: ${reportType} report for range ${startDate} to ${endDate} in ${format} format.`);
 
-        // --- Backend API Call Simulation ---
-        setTimeout(() => {
+        // --- Backend API Call ---
+        fetch(`/stJohnCmsApp/cms.api/generateReport.php?type=${reportType}&start=${startDate}&end=${endDate}&format=${format}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication required. Please log in again.');
+                } else if (response.status === 403) {
+                    throw new Error('Access denied. Admin or Secretary role required.');
+                } else if (response.status === 400) {
+                    throw new Error('Invalid request parameters. Please check your date range.');
+                } else if (response.status === 500) {
+                    throw new Error('Server error occurred while generating report.');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            }
+            return response.json();
+        })
+        .then(data => {
             // Re-enable button and reset text
             button.disabled = false;
             button.innerHTML = `<i class="fas fa-file-${format === 'pdf' ? 'pdf' : 'excel'}"></i> ${format.toUpperCase()}`;
             
-            // Success feedback
-            alert(`✅ ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report (${format.toUpperCase()}) successfully prepared for download.`);
+            if (data.status === 'success') {
+                // Success feedback with more detailed information
+                const reportName = reportType.charAt(0).toUpperCase() + reportType.slice(1);
+                const totalRecords = data.metadata?.totalRecords || 0;
+                const generatedAt = data.metadata?.generatedAt || 'Unknown';
+                
+                alert(`✅ ${reportName} Report (${format.toUpperCase()}) generated successfully!\n\n📊 Total Records: ${totalRecords}\n📅 Date Range: ${startDate} to ${endDate}\n⏰ Generated: ${generatedAt}\n\nNote: Report data is available in the browser console for review.`);
+                
+                // Display report data in console for debugging
+                console.group(`📊 ${reportName} Report - ${format.toUpperCase()}`);
+                console.log('Report Metadata:', data.metadata);
+                console.log('Report Data:', data.data);
+                
+                if (data.data && data.data.summary) {
+                    console.log('Report Summary:', data.data.summary);
+                }
+                console.groupEnd();
+                
+                // TODO: In production, implement actual file generation and download
+                // For now, we'll show the data structure
+                console.log(`💡 In production, this would generate a downloadable ${format.toUpperCase()} file.`);
+                
+            } else {
+                throw new Error(data.message || 'Unknown error occurred while generating report');
+            }
+        })
+        .catch(error => {
+            // Re-enable button and reset text
+            button.disabled = false;
+            button.innerHTML = `<i class="fas fa-file-${format === 'pdf' ? 'pdf' : 'excel'}"></i> ${format.toUpperCase()}`;
             
-            // In a real application, you would trigger the file download here
-            // window.open(`/api/reports/generate?type=${reportType}&start=${startDate}&end=${endDate}&format=${format}`);
+            // Enhanced error feedback
+            console.error('Report generation error:', error);
             
-        }, 2000); // Simulated 2-second API processing time
+            const reportName = reportType.charAt(0).toUpperCase() + reportType.slice(1);
+            alert(`❌ Error generating ${reportName} Report (${format.toUpperCase()}):\n\n${error.message}\n\nPlease check your date range and try again. If the problem persists, contact the system administrator.`);
+        });
     };
 
     // Initialize listeners and optionally set default date for ALL date range forms
     document.querySelectorAll('[data-report-type]').forEach(form => {
-        // Optionally pre-fill the date range to today's date for a quicker test
-        // setDefaultDates(form, true); 
-        // setDefaultDates(form, false); 
+        // Set default date range to last 30 days for convenience
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+        
+        const startInput = form.querySelector('input[type="date"]:first-of-type');
+        const endInput = form.querySelector('input[type="date"]:last-of-type');
+        
+        if (startInput && endInput) {
+            startInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+            endInput.value = today.toISOString().split('T')[0];
+        }
         
         // Attach listener to all report buttons within the form
         form.querySelectorAll('.generate-report-btn').forEach(button => {

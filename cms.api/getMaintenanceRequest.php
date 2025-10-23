@@ -1,68 +1,65 @@
 <?php
-session_start();
+// FILE: /cms.api/getMaintenanceRequest.php
 require_once "db_connect.php";
+session_start();
+// Enable CORS for cross-origin requests
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json");
 
-header('Content-Type: application/json');
+$userId = $_SESSION['user_id'] ?? null;
+$role = $_SESSION['role'] ?? 'Client';
 
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "User not logged in",
-        "data" => []
-    ]);
-    exit;
-}
-
-$userId = $_SESSION['user_id'];
-$mode = $_GET['mode'] ?? 'history'; // default: request history
-
-if ($mode === 'lots') {
-    // ✅ Fetch user's reserved lots (for <select> dropdown)
+// ✅ Admin sees all, Client sees only their own
+if ($role === 'Admin') {
     $sql = "SELECT 
-                r.reservationId, 
-                r.clientName, 
-                r.area, 
-                r.block, 
-                r.rowNumber,
-                r.lotNumber, 
-                r.lotTypeId,
-                lt.typeName AS lot_type_name,
-                lt.price,
-                lt.monthlyPayment
-            FROM reservations r
-            LEFT JOIN lot_types lt ON r.lotTypeId = lt.lotTypeId
-            WHERE r.userId = ?
-            ORDER BY r.clientName, lt.typeName, r.area, r.block, r.rowNumber, r.lotNumber";
-} 
-else {
-    // ✅ Fetch maintenance request history
-    $sql = "SELECT 
-                m.requestId, 
-                m.serviceType, 
-                m.status, 
-                m.requestedDate, 
+                m.requestId,
+                m.userId,
+                u.fullName AS clientName,
+                m.serviceType,
+                m.status,
+                m.requestedDate,
                 m.notes,
-                r.area, 
-                r.block, 
-                r.rowNumber, 
-                r.lotNumber
+                r.area,
+                r.block,
+                r.rowNumber,
+                r.lotNumber,
+                lt.typeName AS lot_type_name
             FROM maintenancerequest m
             JOIN reservations r ON m.reservationId = r.reservationId
+            JOIN users u ON m.userId = u.userId
+            LEFT JOIN lot_types lt ON r.lotTypeId = lt.lotTypeId
+            ORDER BY m.requestedDate DESC";
+} else {
+    $sql = "SELECT 
+                m.requestId,
+                m.serviceType,
+                m.status,
+                m.requestedDate,
+                m.notes,
+                r.area,
+                r.block,
+                r.rowNumber,
+                r.lotNumber,
+                lt.typeName AS lot_type_name
+            FROM maintenancerequest m
+            JOIN reservations r ON m.reservationId = r.reservationId
+            LEFT JOIN lot_types lt ON r.lotTypeId = lt.lotTypeId
             WHERE m.userId = ?
             ORDER BY m.requestedDate DESC";
 }
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "SQL prepare failed: " . $conn->error,
-        "data" => []
-    ]);
+    echo json_encode(["status" => "error", "message" => "SQL prepare failed: " . $conn->error, "data" => []]);
     exit;
 }
 
-$stmt->bind_param("i", $userId);
+if ($role !== 'Admin') {
+    $stmt->bind_param("i", $userId);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 

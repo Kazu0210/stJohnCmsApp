@@ -3,6 +3,9 @@
 // Handles file upload for clientValidId and updates the reservation record.
 
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 require 'db_connect.php'; 
 
 // --- 1. Configuration and Validation ---

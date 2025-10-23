@@ -1,247 +1,313 @@
 body {
-  font-family: "Poppins", sans-serif;
-  background-color: #fffbea;
-  margin: 0;
-  padding: 0;
-  color: #222;
+    font-family: "Poppins", sans-serif;
+    background-color: #fffbea;
+    margin: 0;
+    padding: 0;
+    color: #222;
 }
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
 }
 
 /* Map container fix */
 .map-container {
-  max-width: 900px;           /* control width */
-  margin: 0 auto -20px auto;  /* remove bottom space (negative margin) */
-  transform: translateY(-20px); /* elevate map slightly */
-  box-shadow: 0 8px 15px rgba(0,0,0,0.2); /* optional: lift effect */
+    max-width: 900px;
+    margin: 0 auto -20px auto;
+    transform: translateY(-20px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
 }
 
 /* Make iframe take full container height */
 .map-container iframe {
-  width: 100%;
-  height: 450px; /* fixed height you want */
-  border: none;
+    width: 100%;
+    height: 450px; /* Default fixed height */
+    border: none;
 }
 
 /* NAVBAR */
 .navbar {
-  background-color: #ffcc00;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    background-color: #ffcc00;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .navbar-brand {
-  font-weight: 700;
-  color: #000 !important;
+    font-weight: 700;
+    color: #000 !important;
 }
 
 .nav-link {
-  color: #000 !important;
-  font-weight: 500;
-  margin: 0 6px;
-  transition: color .3s ease;
+    color: #000 !important;
+    font-weight: 500;
+    margin: 0 6px;
+    transition: color .3s ease;
 }
 .nav-link:hover { color: #fff !important; }
 
 /* HERO */
 .hero {
-  text-align: center;
-  background: linear-gradient(to bottom, #fffbe0, #fff);
-  padding: 60px 20px;
+    text-align: center;
+    background: linear-gradient(to bottom, #fffbe0, #fff);
+    padding: 60px 20px;
 }
 .hero h1 { font-size: 2.3rem; font-weight: 700; }
 .hero p { color: #444; }
 
 /* LOGIN BOX */
 .login-box {
-  background: #fff;
-  border-radius: 12px;
-  max-width: 400px;
+    background: #fff;
+    border-radius: 12px;
+    max-width: 400px;
 }
 .input-icon, .password-toggle-icon {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  left: 12px;
-  color: #888;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 12px;
+    color: #888;
 }
 .password-toggle-icon {
-  right: 12px; left: auto; cursor: pointer;
+    right: 12px; left: auto; cursor: pointer;
 }
 
 /* ABOUT SECTION */
 .about-section {
-  background-color: #fffef5;
-  text-align: center;
-  padding: 60px 15px;
+    background-color: #fffef5;
+    text-align: center;
+    padding: 60px 15px;
 }
 .about-card img {
-  border-radius: 12px 12px 0 0;
-  cursor: pointer;
-  transition: transform 0.3s ease;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    transition: transform 0.3s ease;
 }
 .about-card img:hover { transform: scale(1.05); }
 
 /* APPOINTMENT FORM */
 .appointment-section {
-  background-color: #fffbe5;
-  padding: 60px 15px;
+    background-color: #fffbe5;
+    padding: 60px 15px;
 }
 .appointment-form {
-  background: #fff;
-  border-radius: 15px;
-  padding: 25px;
-  border: 1px solid #ddd;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    background: #fff;
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 .appointment-form input,
 .appointment-form textarea {
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
 }
 .submit-appointment {
-  background: #ffcc00;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-weight: 600;
-  width: 100%;
-  transition: 0.3s;
+    background: #ffcc00;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    width: 100%;
+    transition: 0.3s;
 }
 .submit-appointment:hover { background: #ffd633; }
 
 /* CALENDAR LAYOUT */
 .calendar-card {
-  background: #fff;
-  border-radius: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 15px;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 15px;
 }
 
 /* Make grid cells fit nicely inside the card */
 .calendar-card .grid {
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
 }
 
 .header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #ffcc00;
-  padding: 10px;
-  border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffcc00;
+    padding: 10px;
+    border-radius: 8px;
 }
 .grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-  margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-top: 8px;
+}
+.weekday {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    color: #444;
 }
 .day {
-  border: 1px solid #eee;
-  border-radius: 10px;
-  padding: 4px;
-  min-height: 60px;
-  background: #fffef5;
-  position: relative;
-  transition: box-shadow 0.3s, background-color 0.3s;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 4px;
+    min-height: 60px;
+    background: #fffef5;
+    position: relative;
+    transition: box-shadow 0.3s, background-color 0.3s;
 }
 .day:hover { background-color: #fff6cc; transform: scale(1.02); }
 .other-month { opacity: 0.4; }
 .selected { outline: 2px solid #ffcc00; }
 .date-num { font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
 .appt-badge {
-  position: absolute;
-  top: 6px; right: 8px;
-  background: #ffcc00;
-  border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 0.75rem;
+    position: absolute;
+    top: 6px; right: 8px;
+    background: #ffcc00;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.75rem;
 }
 .mini-item {
-  font-size: 0.7rem;
-  background: #ffeb99;
-  border-radius: 5px;
-  margin-top: 2px;
-  padding: 2px 4px;
+    font-size: 0.7rem;
+    background: #ffeb99;
+    border-radius: 5px;
+    margin-top: 2px;
+    padding: 2px 4px;
 }
 .more { font-size: 0.7rem; color: #555; }
 
 /* FOOTER */
 footer {
-  background: #000;
-  color: #fff;
-  text-align: center;
-  padding: 25px 0;
+    background: #000;
+    color: #fff;
+    text-align: center;
+    padding: 25px 0;
 }
 
 /* MODAL */
 .modal-backdrop {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
 }
 .modal-form {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  width: 95%;
-  max-width: 420px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    width: 95%;
+    max-width: 420px;
 }
-
-/* ====== RESPONSIVENESS ====== */
-@media (max-width: 700px) {
-  .grid { grid-template-columns: repeat(4, 1fr); }
+.details-card {
+    padding: 15px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #ffcc00;
 }
-@media (max-width: 768px) {
-  .grid { grid-template-columns: repeat(2, 1fr); }
-  .hero h1 { font-size: 1.8rem; }
-  .appointment-form { padding: 20px; }
+.details-card .card-body {
+    padding: 10px;
 }
-@media (max-width: 480px) {
-  .grid { grid-template-columns: repeat(1, 1fr); }
-  .header-row { flex-direction: column; gap: 8px; }
-  .day { min-height: 60px; }
-  .navbar-brand span.d-sm-none { display: inline; }
+.muted {
+    color: #6c757d;
 }
 
 /* small extra for selected day visual */
 .day.selected {
-  background-color: rgba(255, 204, 0, 0.15);
-  border-radius: 8px;
+    background-color: rgba(255, 204, 0, 0.15);
+    border-radius: 8px;
 }
 
 /* appointment dot indicator (red) */
 .day.has-appointment::after {
-  content: "";
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #e63946;
+    content: "";
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00ff08;
 }
 
 .day .light-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  position: absolute;
-  bottom: 6px;
-  right: 6px;
-  box-shadow: 0 0 6px currentColor;
-  animation: pulseLight 1.8s infinite alternate;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    box-shadow: 0 0 6px currentColor;
+    animation: none;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ========================================= */
+/* ====== RESPONSIVENESS (HEIGHT REDUCTION) ====== */
+/* ========================================= */
+
+@media (max-width: 991px) {
+    /* Apply moderate height reduction adjustments for tablet/small desktop view */
+    .calendar-card {
+        padding: 10px;
+    }
+    .day {
+        min-height: 50px;
+        padding: 2px;
+        border-radius: 6px;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Aggressive height reduction for mobile phones */
+    
+    /* 1. Reduce Map Height */
+    .map-container iframe {
+        height: 300px; /* Reduced fixed height to save vertical space */
+    }
+    
+    /* 2. Compact Calendar Cells Further */
+    .calendar-card {
+        padding: 8px; 
+    }
+    .day {
+        min-height: 40px; /* Further reduction on cell height */
+        padding: 2px;     
+    }
+    .date-num { 
+        font-size: 0.75rem; /* Smaller date number */
+    }
+    
+    /* 3. Stack Calendar Header Nicely */
+    .calendar-card .header-row {
+        flex-direction: column; 
+        gap: 8px;
+    }
+    
+    /* Ensure the 7 column grid remains intact, letting cells scale down */
+    .grid {
+        grid-template-columns: repeat(7, 1fr) !important;
+    }
+
+    /* Adjust login text for tiny screens */
+    .navbar-brand span.d-sm-none { 
+        display: inline !important; 
+    }
+    .navbar-brand span.d-sm-inline { 
+        display: none !important; 
+    }
 }

@@ -1,45 +1,70 @@
 <?php
-require_once "db_connect.php";
+// clientAppointment.php - FINAL VERSION (clientId REMOVED)
+
+// 🛑 TEMPORARY FIX: Suppress error output so it doesn't break JSON
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(E_ALL);
+
+// Ensure your db_connect.php is in the correct path relative to this file
+require_once "db_connect.php"; 
 header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
-// POST: Save new appointment
+// =========================================================================
+// POST: Save New Appointment
+// =========================================================================
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $data = json_decode(file_get_contents("php://input"), true);
+    // CRUCIAL: Read the raw JSON input stream
+    $data = json_decode(file_get_contents("php://input"), true); 
 
+    // Extract data using the keys sent from login.js
     $clientName = $data["user_name"] ?? "";
-    $clientAddress = $data["user_address"] ?? "";
+    $clientEmail = $data["user_email"] ?? "";
+    $clientAddress = $data["user_address"] ?? ""; 
     $clientContactNumber = $data["user_phone"] ?? "";
     $dateRequested = $data["appointment_date"] ?? "";
     $time = $data["appointment_time"] ?? "";
     $purpose = $data["appointment_purpose"] ?? "";
 
-    if (!$clientName || !$clientContactNumber || !$dateRequested) {
-        echo json_encode(["status" => "error", "message" => "Missing required fields."]);
+    // Basic Server-side validation
+    if (!$clientName || !$clientEmail || !$clientAddress || !$clientContactNumber || !$dateRequested || !$time || !$purpose) {
+        http_response_code(400); 
+        echo json_encode(["status" => "error", "message" => "Missing required fields in API payload."]);
         exit;
     }
 
+    // Use prepared statement to insert data securely
     $stmt = $conn->prepare("
         INSERT INTO appointments (
-            clientId,
-            clientName,
-            clientAddress,
-            clientContactNumber,
-            dateRequested,
-            time,
-            purpose,
-            statusId,
-            createdAt
+            /* ❌ clientId column removed from list */
+            clientName, clientEmail, clientAddress, clientContactNumber, 
+            dateRequested, time, purpose, status 
         ) VALUES (
-            NULL, ?, ?, ?, ?, ?, ?, 0, NOW()
+            ?, ?, ?, ?, ?, ?, ?, 'scheduled'
         )
     ");
 
-    $stmt->bind_param("ssssss", $clientName, $clientAddress, $clientContactNumber, $dateRequested, $time, $purpose);
+    // 🛑 FIX: Bind parameters: Only 7 strings ('s' x 7) are now required.
+    $stmt->bind_param("sssssss", 
+        $clientName, 
+        $clientEmail, 
+        $clientAddress,
+        $clientContactNumber, 
+        $dateRequested, 
+        $time, 
+        $purpose
+    );
 
     if ($stmt->execute()) {
-        echo json_encode(["status" => "success", "message" => "Appointment saved successfully."]);
+        echo json_encode(["status" => "success", "message" => "Appointment request submitted successfully."]);
     } else {
-        echo json_encode(["status" => "error", "message" => "Database error: " . $stmt->error]);
+        http_response_code(500);
+        // Return SQL error detail for debugging
+        echo json_encode(["status" => "error", "message" => "Database INSERT failed: " . $stmt->error]);
     }
 
     $stmt->close();
@@ -47,13 +72,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     exit;
 }
 
-// GET: Fetch all appointments
+// =========================================================================
+// GET: Fetch All Appointments (This block remains correct)
+// =========================================================================
+
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
-    $result = $conn->query("SELECT appointmentId AS id, clientName AS client, dateRequested AS date, time, purpose AS notes FROM appointments");
-    $rows = [];
-    while ($row = $result->fetch_assoc()) {
-        $rows[] = $row;
+    if ($conn->connect_error) {
+        http_response_code(503); 
+        echo json_encode(["status" => "error", "message" => "Database connection failed! Check db_connect.php."]);
+        exit;
     }
+    
+    $result = $conn->query("SELECT 
+        appointmentId AS id, 
+        clientName AS client, 
+        dateRequested AS date, 
+        time, 
+        purpose AS notes,
+        status
+        FROM appointments");
+        
+    $rows = [];
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = $row;
+        }
+    } else {
+        http_response_code(500); 
+        echo json_encode(["status" => "error", "message" => "Query failed: " . $conn->error]);
+        $conn->close();
+        exit;
+    }
+    
     echo json_encode($rows);
     $conn->close();
 }

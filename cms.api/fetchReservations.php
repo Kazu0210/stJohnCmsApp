@@ -3,6 +3,10 @@ require_once "db_connect.php";
 session_start();
 
 header('Content-Type: application/json');
+// Enable CORS for cross-origin requests
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 // For admin dashboard, get ALL reservations (remove session check)
 // if (!isset($_SESSION['user_id'])) {

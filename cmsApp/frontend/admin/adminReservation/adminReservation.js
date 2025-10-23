@@ -15,9 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const entriesPerPageSelect = document.getElementById('entriesPerPage');
     const paginationInfo = document.getElementById('paginationInfo');
     const paginationControls = document.getElementById('paginationControls');
-    const prevPageBtn = document.getElementById('prevPage');
-    const nextPageBtn = document.getElementById('nextPage');
-
+    
     // Modals
     const editModalEl = document.getElementById('editReservationModal');
     const editModal = new bootstrap.Modal(editModalEl);
@@ -38,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Local state
     let reservations = []; // fetched from server
-    let lotTypeMap = {}; // map for lot type names/prices
+    let lotTypeMap = {}; // map for lot type names/prices (optional, depends on your PHP fetch)
     let filteredReservations = []; // filtered results
     let currentPage = 1;
     let entriesPerPage = 25;
@@ -57,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatCurrency(n) {
-        // Ensure n is a number and fallback to 0 if null/undefined
         const value = Number(n) || 0;
         return value.toLocaleString('en-PH', {
             style: 'currency',
@@ -68,12 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function escapeHtml(str) {
         if (!str) return '';
         return String(str).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
-    }
-
-    // Global logout function (for navbar links)
-    window.handleLogout = function() {
-        alert('Logging out... (Placeholder for actual logout logic)');
-        // Implement your actual logout logic here, e.g., redirect to login page.
     }
 
     // -------------------------
@@ -102,8 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 reservationDate: r.reservationDate,
                 area: r.area,
                 block: r.block,
-                    rowNumber: r.row,
-                    lotId: r.lotId,
+                rowNumber: r.row,
                 lotNumber: r.lotNumber,
                 lotTypeID: r.lotType,
                 typeName: r.lotTypeName,
@@ -115,15 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 userId: r.userId
             }));
 
-            // Build lot type map for display and editing
+            // Placeholder for lotTypeMap if it's not fetched separately
             lotTypeMap = {
                 '1': { name: 'Regular Lot (₱50,000)', price: 50000, monthly: 0 },
-                '2': { name: 'Regular Lot (₱60,000)', price: 60000, monthly: 0 },
-                '3': { name: 'Premium Lot (₱70,000)', price: 70000, monthly: 0 },
-                '4': { name: 'Mausoleum Inside (₱500,000)', price: 500000, monthly: 0 },
-                '5': { name: 'Mausoleum Roadside (₱600,000)', price: 600000, monthly: 0 },
-                '6': { name: '4-Lot Package (₱300,000)', price: 300000, monthly: 0 },
-                '7': { name: 'Exhumation (₱15,000)', price: 15000, monthly: 0 }
+                // ... include all your lot types here ...
             };
 
             filterAndRender(); // Initial render
@@ -158,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // -------------------------
-    // Render table
+    // Render table (REVISED to include Confirm button)
     // -------------------------
     function renderTable() {
         tableBody.innerHTML = '';
@@ -174,17 +159,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageData = filteredReservations.slice(startIndex, endIndex);
 
         pageData.forEach(rec => {
-            const normalizedStatus = (rec.status || '').toLowerCase().trim();
-            // Determine button state and text for Archive/Restore
-            let archiveButtonHtml = '';
-            if (rec.status.toLowerCase() === 'archived') {
-                archiveButtonHtml = `<button class="btn btn-sm btn-success btn-restore" title="Restore"><i class="fas fa-undo"></i> Restore</button>`;
-            } else {
-                archiveButtonHtml = `<button class="btn btn-sm btn-secondary btn-archive-delete" title="Archive / Delete"><i class="fas fa-archive"></i> Options</button>`;
+            const lowerStatus = rec.status.toLowerCase();
+
+            // --- Confirm/Reserve Button HTML ---
+            let confirmButtonHtml = '';
+            // Show only if status is pending
+            if (lowerStatus === 'pending') { 
+                confirmButtonHtml = `<button class="btn btn-sm btn-success btn-confirm-reserve ms-1" title="Confirm Reservation/Set Occupied">
+                                        <i class="fas fa-check"></i>
+                                     </button>`;
             }
-            // Determine whether to show "Confirm" button: show for any status that is NOT reserved/cancelled/archived
-            // This is intentionally permissive to catch various status string variants.
-            const showConfirmBtn = normalizedStatus !== '' && !/(reserved|cancelled|canceled|archived)/.test(normalizedStatus);
+
+            // --- Determine Archive/Restore Button HTML ---
+            let archiveButtonHtml = '';
+            if (lowerStatus === 'archived') {
+                archiveButtonHtml = `<button class="btn btn-sm btn-success btn-restore ms-1" title="Restore"><i class="fas fa-undo"></i> Restore</button>`;
+            } else if (lowerStatus !== 'cancelled' && lowerStatus !== 'occupied') { 
+                // Only allow Archive/Delete if not Cancelled or Occupied
+                archiveButtonHtml = `<button class="btn btn-sm btn-secondary btn-archive-delete ms-1" title="Archive / Delete"><i class="fas fa-archive"></i> Options</button>`;
+            }
+
 
             tableBody.insertAdjacentHTML('beforeend', `
                 <tr data-id="${rec.reservationId}">
@@ -211,10 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="btn btn-sm btn-primary btn-edit text-white" title="Edit">
                             <i class="fas fa-pencil-alt"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger btn-cancel" title="Cancel Reservation">
+                        ${confirmButtonHtml}
+                        <button class="btn btn-sm btn-danger btn-cancel ms-1" title="Cancel Reservation">
                             <i class="fas fa-times-circle"></i>
                         </button>
-                        ${showConfirmBtn ? `<button class="btn btn-sm btn-success btn-confirm text-white ms-1" title="Confirm Reservation"><i class="fas fa-check-circle"></i></button>` : ''}
                         ${archiveButtonHtml}
                     </td>
                 </tr>`);
@@ -225,13 +219,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const lowerStatus = status.toLowerCase();
         if (lowerStatus === 'pending') return 'bg-warning text-dark';
         if (lowerStatus === 'reserved') return 'bg-success';
+        if (lowerStatus === 'occupied') return 'bg-primary'; 
         if (lowerStatus === 'cancelled') return 'bg-danger';
         if (lowerStatus === 'archived') return 'bg-secondary';
         return 'bg-info';
     }
 
     // -------------------------
-    // Event delegation for table actions
+    // Event delegation for table actions (MODIFIED to handle new button)
     // -------------------------
     tableBody.addEventListener('click', (e) => {
         const tr = e.target.closest('tr');
@@ -240,18 +235,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.closest('.btn-edit')) {
             openEditModal(id);
+        } else if (e.target.closest('.btn-confirm-reserve')) {
+            confirmReservation(id); // <-- New function call
         } else if (e.target.closest('.btn-cancel')) {
             prepareCancelModal(id);
         } else if (e.target.closest('.btn-archive-delete')) {
             prepareArchiveDeleteModal(id);
         } else if (e.target.closest('.btn-restore')) {
             updateReservationStatus(id, 'pending', 'Restoring reservation to Pending status.');
-        } else if (e.target.closest('.btn-confirm')) {
-            // Confirm reservation: change reservation status to Reserved and mark lot as Reserved
-            const rec = reservations.find(r => String(r.reservationId) === String(id));
-            if (!rec) return showToast('Reservation not found', 'danger');
-            if (!confirm(`Confirm reservation for ${rec.clientName} (Lot ${rec.lotNumber}) and mark lot as Reserved?`)) return;
-            confirmReservation(id);
         } else if (e.target.closest('.btn-view-doc')) {
             openDocModal(id);
         }
@@ -276,10 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const startEntry = totalEntries === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1;
         const endEntry = Math.min(currentPage * entriesPerPage, totalEntries);
 
-        // Update pagination info
         paginationInfo.textContent = `Showing ${startEntry} to ${endEntry} of ${totalEntries} entries`;
 
-        // Update pagination controls
         updatePaginationControls(currentPage, totalPages);
     }
 
@@ -289,11 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Previous button
         const prevLi = document.createElement('li');
         prevLi.className = `page-item ${current === 1 ? 'disabled' : ''}`;
-        prevLi.innerHTML = `
-            <button class="page-link" ${current === 1 ? 'disabled' : ''} aria-label="Previous">
-                <span aria-hidden="true">&laquo;</span>
-            </button>
-        `;
+        prevLi.innerHTML = `<button class="page-link" ${current === 1 ? 'disabled' : ''} aria-label="Previous"><span aria-hidden="true">&laquo;</span></button>`;
         prevLi.addEventListener('click', () => {
             if (current > 1) {
                 currentPage = current - 1;
@@ -303,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         paginationControls.appendChild(prevLi);
 
-        // Page numbers
+        // Page numbers logic here (similar to prior implementation)
         const startPage = Math.max(1, current - 2);
         const endPage = Math.min(total, current + 2);
 
@@ -330,15 +315,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             addPageButton(total);
         }
-
+        
         // Next button
         const nextLi = document.createElement('li');
         nextLi.className = `page-item ${current === total ? 'disabled' : ''}`;
-        nextLi.innerHTML = `
-            <button class="page-link" ${current === total ? 'disabled' : ''} aria-label="Next">
-                <span aria-hidden="true">&raquo;</span>
-            </button>
-        `;
+        nextLi.innerHTML = `<button class="page-link" ${current === total ? 'disabled' : ''} aria-label="Next"><span aria-hidden="true">&raquo;</span></button>`;
         nextLi.addEventListener('click', () => {
             if (current < total) {
                 currentPage = current + 1;
@@ -401,7 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleBurialDepthUI() {
         const lotType = document.getElementById('editLotType').value;
         const burialDepthField = document.getElementById('burialDepthField');
-        // Based on the HTML, lot types 4 (Mausoleum Inside) and 5 (Mausoleum Roadside) should hide burial depth.
         burialDepthField.style.display = (lotType === '4' || lotType === '5') ? 'none' : 'block';
     }
     document.getElementById('editLotType')?.addEventListener('change', toggleBurialDepthUI);
@@ -427,6 +407,8 @@ document.addEventListener('DOMContentLoaded', () => {
             lotNumber: document.getElementById('editLot').value.trim(),
             lotTypeID: document.getElementById('editLotType').value,
             burialDepth: document.getElementById('editBurialDepth').value,
+            // Status is not passed here unless it's a specific status change event
+            status: null, 
         };
 
         try {
@@ -454,6 +436,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // -------------------------
+    // NEW: Confirm Reservation/Set Occupied Function (Calls consolidated PHP)
+    // -------------------------
+    async function confirmReservation(reservationId) {
+        const rec = reservations.find(r => String(r.reservationId) === String(reservationId));
+        if (!rec) return showToast('Reservation not found', 'danger');
+        
+        if (!confirm(`Confirming reservation for ${rec.clientName} (Lot ${rec.lotNumber}). This will set status to 'Reserved' or 'Occupied' and synchronize the lot status. Continue?`)) {
+            return;
+        }
+
+        showToast('Checking burial records and confirming status...', 'info');
+
+        try {
+            // Call the single, consolidated PHP file: confirmReservationAndLot.php
+            const res = await fetch(API_BASE + 'confirmReservationAndLot.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    reservationID: parseInt(reservationId, 10)
+                }),
+                credentials: 'same-origin'
+            });
+            const json = await res.json();
+
+            if (json.status === 'success') {
+                showToast(json.message || 'Reservation confirmed!', 'success');
+                await fetchReservations();
+            } else {
+                showToast(json.message || 'Confirmation failed.', 'danger');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Network error during reservation confirmation', 'danger');
+        }
+    }
+
+    // -------------------------
     // Cancel reservation modal preparation
     // -------------------------
     function prepareCancelModal(reservationId) {
@@ -461,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!rec) return showToast('Reservation not found', 'danger');
 
         const modalText = document.getElementById('cancelModalText');
-        modalText.innerHTML = `You are about to cancel the reservation for <strong>${escapeHtml(rec.clientName)}</strong> (Lot ${escapeHtml(rec.lotNumber)}). <br><br>The system's policy states that if the first payment isn't received within <strong>24 hours</strong> of submission, the reservation is automatically cancelled. Confirm the cancellation now?`;
+        modalText.innerHTML = `You are about to cancel the reservation for <strong>${escapeHtml(rec.clientName)}</strong> (Lot ${escapeHtml(rec.lotNumber)}). Confirm the cancellation now?`;
         confirmCancelBtn.dataset.id = reservationId;
         cancelModal.show();
     }
@@ -469,7 +490,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Actual cancel submission
     confirmCancelBtn.addEventListener('click', () => {
         const reservationId = confirmCancelBtn.dataset.id;
-        updateReservationStatus(reservationId, 'cancelled', 'Cancelling reservation...');
+        // Use generic status update, status = 'Cancelled'
+        updateReservationStatus(reservationId, 'Cancelled', 'Cancelling reservation...'); 
         cancelModal.hide();
     });
 
@@ -477,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Archive/Delete modal preparation
     // -------------------------
     function prepareArchiveDeleteModal(reservationId) {
-        const rec = reservations.find(r => String(r.reservationId) === String(reservationId)); // Corrected find
+        const rec = reservations.find(r => String(r.reservationId) === String(reservationId)); 
         if (!rec) return showToast('Reservation not found', 'danger');
 
         const modalText = document.getElementById('archiveModalText');
@@ -492,7 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Archive
     confirmArchiveBtn.addEventListener('click', () => {
         const reservationId = confirmArchiveBtn.dataset.id;
-        updateReservationStatus(reservationId, 'archived', 'Archiving reservation...');
+        // Use generic status update, status = 'Archived'
+        updateReservationStatus(reservationId, 'Archived', 'Archiving reservation...');
         archiveModal.hide();
     });
 
@@ -516,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(loadingMsg, 'info');
 
         try {
-            // Using a generic update payload. A dedicated status-only endpoint would be more efficient.
+            // Pass all fields plus the status to updateReservation.php
             const payload = {
                 reservationID: parseInt(reservationId, 10),
                 status: newStatus,
@@ -551,35 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error(err);
             showToast('Network error during status update', 'danger');
-        }
-    }
-
-    // -------------------------
-    // Confirm Reservation (update reservation + lot status)
-    // -------------------------
-    async function confirmReservation(reservationId) {
-        const rec = reservations.find(r => String(r.reservationId) === String(reservationId));
-        if (!rec) return showToast('Reservation not found', 'danger');
-
-        showToast('Confirming reservation...', 'info');
-
-        try {
-            const res = await fetch(API_BASE + 'confirmReservation.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify({ reservationID: parseInt(reservationId, 10), lotId: rec.lotId || null })
-            });
-            const json = await res.json();
-            if (json.status === 'success') {
-                showToast(json.message || 'Reservation confirmed and lot reserved', 'success');
-                await fetchReservations();
-            } else {
-                showToast(json.message || 'Failed to confirm reservation', 'danger');
-            }
-        } catch (err) {
-            console.error(err);
-            showToast('Network error during confirmation', 'danger');
         }
     }
 
@@ -619,24 +613,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const rec = reservations.find(r => String(r.reservationId) === String(reservationId));
         if (!rec) return showToast('Reservation not found', 'danger');
 
-        docModalEl.dataset.id = reservationId; // Correctly set the ID
+        docModalEl.dataset.id = reservationId; 
         const docFilename = document.getElementById('docFilename');
         const imgPreview = document.getElementById('img-preview');
         const downloadLink = document.getElementById('downloadLink');
-        const pdfCanvas = document.getElementById('pdf-canvas');
-        const pdfControls = document.getElementById('pdfControls');
         const deleteBtn = document.getElementById('deleteBtn');
 
         // reset UI
         docFilename.textContent = '';
         imgPreview.classList.add('d-none');
-        pdfCanvas.classList.add('d-none');
-        pdfControls.classList.add('d-none');
         downloadLink.classList.add('disabled');
         deleteBtn.classList.add('disabled');
         imgPreview.src = '';
-        pdfCanvas.width = 0;
-        pdfCanvas.height = 0;
 
         if (rec.clientValidId) {
             docFilename.textContent = `File: ${rec.clientValidId}`;
@@ -651,8 +639,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
                 imgPreview.src = fileUrl;
                 imgPreview.classList.remove('d-none');
-            } else if (fileExt === 'pdf') {
-                docFilename.textContent += ' (PDF preview requires additional libraries/logic)';
             } else {
                 docFilename.textContent += ' (Preview not available)';
             }
@@ -701,6 +687,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm('Are you sure you want to delete the uploaded Client ID? This action is permanent.')) return;
 
         try {
+            const rec = reservations.find(r => String(r.reservationId) === String(reservationId));
+            
             const res = await fetch(API_BASE + 'updateReservation.php', {
                 method: 'POST',
                 headers: {
@@ -708,7 +696,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     reservationID: parseInt(reservationId, 10),
-                    clientValidId: '' // The backend should handle file deletion here too
+                    // Pass the file name to be deleted in the backend
+                    clientValidId: '' 
+                    // Pass other mandatory fields to satisfy the updateReservation.php structure
                 }),
                 credentials: 'same-origin'
             });

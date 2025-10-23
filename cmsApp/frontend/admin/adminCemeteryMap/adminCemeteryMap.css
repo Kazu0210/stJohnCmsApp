@@ -22,9 +22,9 @@
 /* --- Global --- */
 body {
     font-family: 'Segoe UI', sans-serif;
-    background-color: #f8f9fa; /* Replaced var(--light-bg) */
-    color: #333333; /* Replaced var(--text-color) */
-    padding-top: 56px; /* Navbar height for mobile */
+    background-color: #f8f9fa;
+    color: #333333;
+    padding-top: 56px;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -46,12 +46,12 @@ main {
     font-weight: bold;
     font-size: 1.1rem;
 }
-.navbar-brand, 
-.navbar .nav-link, 
+.navbar-brand,
+.navbar .nav-link,
 .dropdown-item {
     color: #000000 !important;
 }
-.navbar .nav-link:hover, 
+.navbar .nav-link:hover,
 .navbar .nav-link.active {
     font-weight: bold;
 }
@@ -69,69 +69,69 @@ main {
 /* --- MAIN CONTENT & CARD --- */
 /* ----------------------------------- */
 .main-content {
-  padding: 20px;
-  background-color: #fff;
-  color: #000;
+    padding: 20px;
+    background-color: #fff;
+    color: #000;
 }
 
 .page-header h1 {
-  font-size: 28px;
-  color: #222;
-  margin-bottom: 5px;
+    font-size: 28px;
+    color: #222;
+    margin-bottom: 5px;
 }
 
 .page-header p {
-  color: #555;
-  margin-bottom: 20px;
+    color: #555;
+    margin-bottom: 20px;
 }
 
 /* --- MAP SECTION --- */
 .map-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .map-legend-container {
-  background: #f9f9f9;
-  border-left: 5px solid #efbf04;
-  padding: 10px 15px;
-  border-radius: 8px;
-  width: fit-content;
+    background: #f9f9f9;
+    border-left: 5px solid #efbf04;
+    padding: 10px 15px;
+    border-radius: 8px;
+    width: fit-content;
 }
 
 .map-legend-container h4 {
-  font-size: 16px;
-  margin-bottom: 8px;
+    font-size: 16px;
+    margin-bottom: 8px;
 }
 
 /* Horizontal Legend Layout */
 .map-legend-container ul {
-  display: flex;
-  align-items: center;
-  gap: 1rem; /* space between items */
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex-wrap: wrap; /* allows wrapping on smaller screens */
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
 }
 
 .map-legend-container li {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
 }
 
 .map-legend-container h4 {
-  margin-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .legend-color {
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    display: inline-block;
 }
 
 /* Maintain your color codes */
@@ -140,371 +140,401 @@ main {
 .legend-color.reserved { background: gold; }
 .legend-color.occupied { background: red; }
 
-/* --- MAP CONTAINER --- */
+/* --- MAP CONTAINER (Corrected for Equal Height) --- */
 .map-container-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    /* Essential for equal height: children stretch to match the tallest item */
+    align-items: stretch; 
 }
 
 .map-placeholder {
-  position: relative;
-  flex: 2;
-  min-width: 600px;
-  height: 500px;
-  border: 2px solid #ddd;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #f5f5f5;
+    position: relative;
+    flex: 2;
+    min-width: 300px;
+    
+    /* Set fixed height to match lot-actions-panel for side-by-side view */
+    height: 500px; 
+    padding-bottom: 0;
+    max-height: 500px;
+
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f5f5f5;
+
+    transition: all 300ms ease;
+    will-change: width, height, transform;
+    z-index: 1;
+    display: block;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 /* === Expand / Fullscreen map styles === */
-.map-placeholder {
-  transition: all 300ms ease;
-  will-change: width, height, transform;
-  z-index: 1;
-}
-
-/* full-screen-ish expanded state (leaves room for top nav) */
 .map-placeholder.expanded {
-  position: fixed;
-  top: 72px;              /* leave room for navbar — tweak if needed */
-  left: 20px;
-  right: 20px;
-  bottom: 20px;
-  width: auto !important;
-  height: calc(100vh - 112px) !important; /* keep a bit of margin for header/footer */
-  border-radius: 10px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.45);
-  background: #fff;
-  z-index: 2050;
+    position: fixed;
+    top: 72px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    width: auto !important;
+    height: calc(100vh - 112px) !important;
+    padding-bottom: 0 !important;
+    max-height: none !important; 
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+    background: #fff;
+    z-index: 2050;
 }
 
 /* ensure the ol map fills the expanded container */
 .map-placeholder.expanded #map,
 .map-placeholder.expanded .ol-viewport {
-  width: 100% !important;
-  height: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* place expand button above map content when expanded */
 .map-placeholder .expand-btn {
-  transition: box-shadow 220ms;
-  z-index: 2100;
+    transition: box-shadow 220ms;
+    z-index: 2100;
 }
 .map-placeholder.expanded .expand-btn {
-  right: 32px;
-  bottom: 28px;
+    right: 32px;
+    bottom: 28px;
 }
 
 /* prevent body scroll when map is expanded */
 body.map-expanded {
-  overflow: hidden;
+    overflow: hidden;
 }
 
-
-#map {
-  width: 100%;
-  height: 100%;
-}
 
 /* --- EXPAND BUTTON --- */
 .expand-btn {
-  position: absolute;
-  bottom: 15px;
-  right: 15px;
-  background-color: #efbf04;
-  border: none;
-  color: #000;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background-color: #efbf04;
+    border: none;
+    color: #000;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
 }
 
 .expand-btn:hover {
-  background-color: #d6a904;
+    background-color: #d6a904;
 }
 
 /* --- LOT ACTIONS PANEL --- */
 .lot-actions-panel {
-  flex: 1;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  padding: 20px;
-  max-height: 500px;
-  overflow-y: auto;
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    padding: 20px;
+    /* This height constraint is the target height for the map */
+    max-height: 500px; 
+    overflow-y: auto;
 }
 
 .lot-actions-panel h3 {
-  margin-bottom: 15px;
-  color: #222;
+    margin-bottom: 15px;
+    color: #222;
 }
 
 .lot-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .lot-list-header input {
-  width: 55%;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
+    width: 55%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
 }
 
 .lot-list {
-  margin-top: 10px;
-  border-top: 1px solid #eee;
-  padding-top: 10px;
+    margin-top: 10px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
 }
 
 .pagination-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
 }
 
 .pagination-btn {
-  background: #efbf04;
-  border: none;
-  color: #000;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
+    background: #efbf04;
+    border: none;
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 .pagination-btn:hover {
-  background: #d6a904;
+    background: #d6a904;
 }
 
 .note {
-  font-size: 13px;
-  color: #666;
-  margin-top: 10px;
+    font-size: 13px;
+    color: #666;
+    margin-top: 10px;
 }
 
 /* --- MODALS --- */
 .modal {
-  display: none;
-  position: fixed;
-  z-index: 1050;
-  padding-top: 100px;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.5);
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    padding-top: 100px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
 }
 
 .modal-content {
-  background-color: #fff;
-  margin: auto;
-  padding: 20px 25px;
-  border: 1px solid #888;
-  border-radius: 10px;
-  width: 400px;
-  animation: fadeIn 0.3s ease;
+    background-color: #fff;
+    margin: auto;
+    padding: 20px 25px;
+    border: 1px solid #888;
+    border-radius: 10px;
+    width: 400px;
+    animation: fadeIn 0.3s ease;
 }
 
 .close-button {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 .close-button:hover {
-  color: #000;
+    color: #000;
 }
 
 /* --- FORM STYLES --- */
 .modal-content form label {
-  display: block;
-  margin-top: 10px;
-  font-weight: 600;
+    display: block;
+    margin-top: 10px;
+    font-weight: 600;
 }
 
 .modal-content form input,
 .modal-content form select {
-  width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
 }
 
 .btn {
-  margin-top: 15px;
-  padding: 10px 18px;
-  border-radius: 6px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
+    margin-top: 15px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
 }
 
 .btn-update {
-  background-color: #efbf04;
-  color: #000;
+    background-color: #efbf04;
+    color: #000;
 }
 
 .btn-update:hover {
-  background-color: #d6a904;
+    background-color: #d6a904;
 }
 
 .btn-remove {
-  background-color: #dc3545;
-  color: #fff;
+    background-color: #dc3545;
+    color: #fff;
 }
 
 .btn-remove:hover {
-  background-color: #b22a35;
+    background-color: #b22a35;
 }
 
 .btn-cancel {
-  background-color: #6c757d;
-  color: #fff;
+    background-color: #6c757d;
+    color: #fff;
 }
 
 .btn-cancel:hover {
-  background-color: #5a6268;
+    background-color: #5a6268;
 }
 
 .modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
 }
 
 @keyframes fadeIn {
-  from {opacity: 0;}
-  to {opacity: 1;}
+    from {opacity: 0;}
+    to {opacity: 1;}
 }
 
-.footer { 
-    background-color: #EFBF04; /* Replaced var(--gold) */
-    color: #000000; /* Replaced var(--black) */
-    padding: 1rem; 
-    margin-top: auto; 
-    font-size: 0.8rem; 
+.footer {
+    background-color: #EFBF04;
+    color: #000000;
+    padding: 1rem;
+    margin-top: auto;
+    font-size: 0.8rem;
 }
-.footer a { 
-    color: #000000; /* Replaced var(--black) */
-    text-decoration: none; 
+.footer a {
+    color: #000000;
+    text-decoration: none;
 }
-.footer a:hover { 
-    text-decoration: underline; 
+.footer a:hover {
+    text-decoration: underline;
 }
 
 /* ----------------------------- */
 /* --- MODAL STYLES (SHARED) --- */
 /* ----------------------------- */
-.modal-header { 
-    border-bottom-width: 2px; 
+.modal-header {
+    border-bottom-width: 2px;
 }
-.modal-footer { 
-    border-top: 1px solid #dee2e6; /* Replaced var(--border-color) */
+.modal-footer {
+    border-top: 1px solid #dee2e6;
 }
-.modal-body { 
-    max-height: 70vh; 
-    overflow-y: auto; 
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
 /* --- STANDARD MODAL STYLES (Edit, Confirmations) --- */
-.modal:not(#docModal) .modal-header { 
-    background-color: #EFBF04; /* Replaced var(--gold) */
-    color: #000000; /* Replaced var(--black) */
-    border-color: #ac8f1d; /* Replaced var(--dark-gold) */
+.modal:not(#docModal) .modal-header {
+    background-color: #EFBF04;
+    color: #000000;
+    border-color: #ac8f1d;
 }
-.modal:not(#docModal) .modal-header .btn-close { 
-    filter: invert(1) grayscale(100%) brightness(200%); 
+.modal:not(#docModal) .modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
-.modal-footer .btn-primary { 
-    background: #EFBF04; /* Replaced var(--gold) */
-    border: none; 
-    color: #000000; /* Replaced var(--black) */
-    font-weight: 500; 
+.modal-footer .btn-primary {
+    background: #EFBF04;
+    border: none;
+    color: #000000;
+    font-weight: 500;
 }
-.modal-footer .btn-primary:hover { 
-    background: #ac8f1d; /* Replaced var(--dark-gold) */
+.modal-footer .btn-primary:hover {
+    background: #ac8f1d;
 }
 
 /* --- DOCUMENT VIEWER MODAL (#docModal) --- */
-#docModal .modal-content { 
-    border-radius: 8px; 
+#docModal .modal-content {
+    border-radius: 8px;
 }
-#docModal .modal-header, 
-#docModal .modal-footer { 
-    padding: 10px 15px; 
-    background: #f5f5f5; 
+#docModal .modal-header,
+#docModal .modal-footer {
+    padding: 10px 15px;
+    background: #f5f5f5;
 }
-#docModal .modal-header { 
-    justify-content: space-between; 
+#docModal .modal-header {
+    justify-content: space-between;
 }
-#docModal .modal-title { 
-    font-size: 1rem; 
-    font-weight: bold; 
+#docModal .modal-title {
+    font-size: 1rem;
+    font-weight: bold;
 }
-#docModal .modal-body { 
-    padding: 15px; 
-    text-align: center; 
-    background-color: #ffffff; /* Replaced var(--white) */
+#docModal .modal-body {
+    padding: 15px;
+    text-align: center;
+    background-color: #ffffff;
 }
-#docModal .modal-body::-webkit-scrollbar { 
-    width: 10px; 
+#docModal .modal-body::-webkit-scrollbar {
+    width: 10px;
 }
-#docModal .modal-body::-webkit-scrollbar-track { 
-    background: #f0f0f0; 
+#docModal .modal-body::-webkit-scrollbar-track {
+    background: #f0f0f0;
 }
-#docModal .modal-body::-webkit-scrollbar-thumb { 
-    background: #c4c4c4; 
-    border-radius: 5px; 
+#docModal .modal-body::-webkit-scrollbar-thumb {
+    background: #c4c4c4;
+    border-radius: 5px;
 }
-#pdf-canvas, 
-#img-preview { 
-    border: 1px solid #dee2e6; /* Replaced var(--border-color) */
-    max-width: 100%; 
-    border-radius: 4px; 
+#pdf-canvas,
+#img-preview {
+    border: 1px solid #dee2e6;
+    max-width: 100%;
+    border-radius: 4px;
 }
-#docModal .modal-footer .btn, 
-#docModal .modal-footer .btn-primary { 
-    padding: 6px 12px; 
-    border: none; 
-    border-radius: 5px; 
-    color: #ffffff; /* Replaced var(--white) */
-    font-size: 0.9rem; 
+#docModal .modal-footer .btn,
+#docModal .modal-footer .btn-primary {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    color: #ffffff;
+    font-size: 0.9rem;
 }
-#docModal .modal-footer .btn-primary { 
-    background: #EFBF04; /* Replaced var(--gold) */
-    color: #000000; /* Replaced var(--black) */
+#docModal .modal-footer .btn-primary {
+    background: #EFBF04;
+    color: #000000;
 }
-#docModal .modal-footer .btn-primary:hover { 
-    background: #ac8f1d; /* Replaced var(--dark-gold) */
+#docModal .modal-footer .btn-primary:hover {
+    background: #ac8f1d;
 }
-#docModal .modal-footer .btn-danger { 
-    background: #dc3545; /* Replaced var(--danger) */
+#docModal .modal-footer .btn-danger {
+    background: #dc3545;
 }
-#docModal .modal-footer .btn-warning { 
-    background: #ffc107; /* Replaced var(--pending) */
-    color: #000000; /* Replaced var(--black) */
+#docModal .modal-footer .btn-warning {
+    background: #ffc107;
+    color: #000000;
 }
-#docModal .modal-footer .btn-secondary { 
-    background: #6c757d; /* Replaced var(--archived) */
+#docModal .modal-footer .btn-secondary {
+    background: #6c757d;
 }
 
 /* --------------------------------- */
 /* --- RESPONSIVE ADJUSTMENTS --- */
 /* --------------------------------- */
+/* Stacking map and side panel on smaller screens */
+@media (max-width: 1000px) {
+    .map-container-wrapper {
+        flex-direction: column;
+    }
+
+    .map-placeholder {
+        width: 100%;
+        /* Switch to aspect ratio when stacked vertically on mobile */
+        height: 0; 
+        padding-bottom: 56.25%;
+        max-height: none; /* remove desktop max height */
+    }
+
+    .lot-actions-panel {
+        width: 100%;
+        max-height: none;
+    }
+}
 
 @media (min-width: 768px) {
     body { padding-top: 62px; }
@@ -533,78 +563,78 @@ body.map-expanded {
 /* Button glow accent on hover/focus */
 .action-btn,
 .btn-icon {
-  transition: all 0.2s ease-in-out;
-  border: 1px solid transparent;
-  outline: none;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+    outline: none;
 }
 
 .action-btn:hover,
 .action-btn:focus,
 .btn-icon:hover,
 .btn-icon:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 6px 2px rgba(239, 191, 4, 0.6);
-  transform: translateY(-1px);
+    border-color: var(--gold);
+    box-shadow: 0 0 6px 2px rgba(239, 191, 4, 0.6);
+    transform: translateY(-1px);
 }
 
 /* Lot items — subtle elevation and glow */
 .lot-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fff;
-  border-radius: 0.5rem;
-  border: 1px solid #ddd;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.6rem;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-radius: 0.5rem;
+    border: 1px solid #ddd;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.6rem;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .lot-item:hover {
-  border-color: var(--gold);
-  box-shadow: 0 0 8px rgba(239, 191, 4, 0.4);
-  transform: translateY(-2px);
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(239, 191, 4, 0.4);
+    transform: translateY(-2px);
 }
 
 /* Pagination buttons — glow feedback */
 .pagination-btn:hover {
-  background-color: var(--gold);
-  color: var(--black);
-  border-color: var(--dark-gold);
-  box-shadow: 0 0 5px rgba(239, 191, 4, 0.6);
+    background-color: var(--gold);
+    color: var(--black);
+    border-color: var(--dark-gold);
+    box-shadow: 0 0 5px rgba(239, 191, 4, 0.6);
 }
 
 /* Expand Map Button — animated hover glow */
 #expandMapBtn {
-  background-color: var(--gold);
-  border: none;
-  color: var(--black);
-  font-weight: 600;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
+    background-color: var(--gold);
+    border: none;
+    color: var(--black);
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 #expandMapBtn:hover {
-  box-shadow: 0 0 10px rgba(239, 191, 4, 0.6);
-  transform: scale(1.03);
+    box-shadow: 0 0 10px rgba(239, 191, 4, 0.6);
+    transform: scale(1.03);
 }
 
 /* Modal borders with gold accent */
 .modal-content {
-  border-radius: 1rem;
-  border: 2px solid var(--gold);
-  box-shadow: 0 0 10px rgba(239, 191, 4, 0.4);
+    border-radius: 1rem;
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 10px rgba(239, 191, 4, 0.4);
 }
 
 /* Optional hover pulse animation */
 @keyframes pulseGlow {
-  0% { box-shadow: 0 0 0px rgba(239, 191, 4, 0.0); }
-  50% { box-shadow: 0 0 10px rgba(239, 191, 4, 0.6); }
-  100% { box-shadow: 0 0 0px rgba(239, 191, 4, 0.0); }
+    0% { box-shadow: 0 0 0px rgba(239, 191, 4, 0.0); }
+    50% { box-shadow: 0 0 10px rgba(239, 191, 4, 0.6); }
+    100% { box-shadow: 0 0 0px rgba(239, 191, 4, 0.0); }
 }
 
 .action-btn:hover,
 #expandMapBtn:hover {
-  animation: pulseGlow 1.2s ease-in-out;
+    animation: pulseGlow 1.2s ease-in-out;
 }

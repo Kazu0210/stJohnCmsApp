@@ -1,12 +1,10 @@
-// ✅ Configure PDF.js worker globally
+// lotReservation.js
 if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    // ---- API Base URL ----
-    const API_BASE_URL = "http://localhost/stJohnCmsApp/cms.api/";
 
     // ---- Elements ----
     const form = document.querySelector(".lot-reservation-form");
@@ -16,14 +14,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const depthOption = document.getElementById("depth_option");
     const burialDepthSelect = document.getElementById("burial_depth");
 
-    const lotIdInput = document.getElementById("lotId"); 
-    const areaInput = document.getElementById("area"); 
-    const blockInput = document.getElementById("block"); 
-    const rowNumberInput = document.getElementById("rowNumber"); 
-    const lotNumberInput = document.getElementById("lot_number"); 
+    // Elements to be auto-filled
+    const clientNameInput = document.getElementById("client_name");
+    const clientAddressInput = document.getElementById("client_address");
+    const clientContactInput = document.getElementById("client_contact");
+
+    const lotIdInput = document.getElementById("lotId");
+    const areaInput = document.getElementById("area");
+    const blockInput = document.getElementById("block");
+    const rowNumberInput = document.getElementById("rowNumber");
+    const lotNumberInput = document.getElementById("lot_number");
 
     const docModalEl = document.getElementById("docModal");
-    const docModal = docModalEl ? new bootstrap.Modal(docModalEl) : null;
+    // Ensure Bootstrap is loaded before attempting this
+    const docModal = docModalEl ? new bootstrap.Modal(docModalEl) : null; 
     const docFilename = document.getElementById("docFilename");
     const imgPreview = document.getElementById("img-preview");
     const pdfCanvas = document.getElementById("pdf-canvas");
@@ -40,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Get the modal body for centering content
     const modalBody = document.querySelector('.modal-body');
     
-    // 🛑 NEW: Pagination Element
+    // Pagination Element
     const historyTable = document.querySelector(".lot-history-table");
     const paginationContainer = document.getElementById("reservation-pagination");
 
@@ -49,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentFileInput = null, currentFileObj = null;
     let pdfDoc = null, currentPage = 1, totalPages = 1;
 
-    // 🛑 NEW: PAGINATION STATE
+    // PAGINATION STATE
     const recordsPerPage = 10;
     let currentPageNumber = 1;
     let totalPagesCount = 0;
@@ -57,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // ====================================================================
-    // 🛑 START: LOT DATA TRANSFER LOGIC (Retrieve from localStorage)
+    // START: LOT DATA TRANSFER LOGIC (Retrieve from localStorage)
     // ====================================================================
 
     const storedLotData = localStorage.getItem('selectedLotData');
@@ -89,17 +93,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // 4. Show confirmation and clear storage
-            alert(`✅ Lot ${lot.lotNumber} (Block: ${lot.block}) has been successfully pre-selected for reservation.`);
+            alert("Lot " + lot.lotNumber + " (Block: " + lot.block + ") has been successfully pre-selected for reservation.");
             localStorage.removeItem('selectedLotData');
 
         } catch (e) {
             console.error("Error parsing stored lot data:", e);
-            alert("⚠️ Error loading pre-selected lot details.");
+            alert("Warning: Error loading pre-selected lot details.");
         }
     }
     
     // ====================================================================
-    // 🛑 END: LOT DATA TRANSFER LOGIC
+    // END: LOT DATA TRANSFER LOGIC
     // ====================================================================
 
 
@@ -108,33 +112,52 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!link) return;
         link.addEventListener("click", e => {
             e.preventDefault();
-            localStorage.removeItem("user_token"); // Example: clear token on logout
-            window.location.href = "../../auth/login/login.html";
+            localStorage.removeItem("user_token");
+            window.location.href = "../../auth/login/login.php";
         });
     });
 
-    // ---- Load logged-in username ----
-    async function loadUserName() {
+    // ====================================================================
+    // MODIFIED: Load logged-in client details and pre-fill form
+    // ====================================================================
+    async function loadClientDetails() {
         try {
-            const res = await fetch(`${API_BASE_URL}displayname.php`, {
+            const res = await fetch(`/stJohnCmsApp/cms.api/displayname.php`, {
                 method: "GET", credentials: "include"
             });
             const data = await res.json();
+            
             const desktopNameEl = document.getElementById("user-name-display-desktop");
 
-            const displayName = (data.status === "success" && data.fullName) ? data.fullName : "Guest";
-            if (desktopNameEl) desktopNameEl.textContent = displayName;
+            if (data.status === "success" && data.fullName) {
+                const displayName = data.fullName;
+                if (desktopNameEl) desktopNameEl.textContent = displayName;
+                
+                // Auto-fill form fields
+                const userFullName = data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : displayName;
+                
+                // Only pre-fill if the fields are empty (to avoid overwriting pre-filled data)
+                if (clientNameInput && !clientNameInput.value) clientNameInput.value = userFullName || '';
+                if (clientAddressInput && data.address && !clientAddressInput.value) clientAddressInput.value = data.address;
+                if (clientContactInput && data.contactNumber && !clientContactInput.value) clientContactInput.value = data.contactNumber;
+
+            } else {
+                if (desktopNameEl) desktopNameEl.textContent = "Guest";
+            }
 
         } catch (err) {
-            console.error("Error fetching user:", err);
+            console.error("Error fetching client details:", err);
             const desktopNameEl = document.getElementById("user-name-display-desktop");
             if (desktopNameEl) desktopNameEl.textContent = "Error";
         }
     }
-    loadUserName();
+    loadClientDetails();
+    // ====================================================================
+    // END: Load logged-in client details
+    // ====================================================================
 
     // ====================================================================
-    // 🛑 START: PAGINATION LOGIC FUNCTIONS
+    // START: PAGINATION LOGIC FUNCTIONS
     // ====================================================================
 
     function renderTableRows(dataForPage) {
@@ -144,22 +167,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (dataForPage.length > 0) {
             dataForPage.forEach(row => {
                 const tr = document.createElement("tr");
-                // Determine if reservation is already cancelled (case-insensitive)
-                const isCancelled = row.status && String(row.status).toLowerCase() === 'cancelled';
-                // Robust id lookup: try common field names used in API/DB
-                const rowId = row.id || row.reservationID || row.reservationId || '';
-
-                const cancelBtnHtml = isCancelled
-                    ? `<button class="btn btn-sm btn-secondary cancel-reservation" data-id="${rowId}" title="Cancel" disabled><i class="fas fa-times"></i></button>`
-                    : `<button class="btn btn-sm btn-danger cancel-reservation" data-id="${rowId}" title="Cancel"><i class="fas fa-times"></i></button>`;
-
                 tr.innerHTML = `
                     <td>${row.clientName || "-"}</td>
                     <td>${row.address || "-"}</td>
                     <td>${row.contactNumber || "-"}</td>
                     <td class="text-center">
                         ${row.clientValidId ? 
-                            `<a href="#" class="view-history-doc text-decoration-underline text-primary" data-url="${API_BASE_URL}${row.clientValidId}" title="View Document">
+                            // FIX APPLIED HERE: Correctly using template literal ${}
+                            `<a href="#" class="view-history-doc text-decoration-underline text-primary" data-url="/stJohnCmsApp/cms.api/${row.clientValidId}" title="View Document">
                                 View
                                 </a>` 
                             : "N/A"}
@@ -170,18 +185,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${row.rowNumber || "-"}</td>
                     <td>${row.lotNumber || "-"}</td>
                     <td>${row.lotType || "N/A"}</td>
-                    <td>${row.price ? "₱" + Number(row.price).toLocaleString() : "-"}</td>
-                    <td>${row.status || "N/A"}</td>
-                    <td class="text-center">
-                        <div class="btn-group" role="group" aria-label="Actions">
-                            ${cancelBtnHtml}
-                        </div>
-                    </td>
+                    <td>${row.price ? "P" + Number(row.price).toLocaleString() : "-"}</td>
+                    <td>${row.status || "N/A"}</span></td>
                 `;
                 historyTableBody.appendChild(tr);
             });
         } else {
-            historyTableBody.innerHTML = `<tr><td colspan="13" class="text-center">No reservation history found.</td></tr>`;
+            historyTableBody.innerHTML = `<tr><td colspan="12" class="text-center">No reservation history found.</td></tr>`;
         }
     }
 
@@ -189,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!paginationContainer) return;
         paginationContainer.innerHTML = '';
         
-        if (totalPagesCount <= 1) return; // Hide pagination if only one page
+        if (totalPagesCount <= 1) return;
 
         const ul = document.createElement('ul');
         ul.className = 'pagination justify-content-center mt-3';
@@ -222,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // 1. Fetch data only if it hasn't been fetched yet
         if (fullReservationData.length === 0 && page === 1) {
             try {
-                const res = await fetch(`${API_BASE_URL}clientLotReservation.php`, {
+                const res = await fetch(`/stJohnCmsApp/cms.api/clientLotReservation.php`, {
                     method: "GET", credentials: "include"
                 });
                 const data = await res.json();
@@ -261,14 +271,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     // ====================================================================
-    // 🛑 END: PAGINATION LOGIC FUNCTIONS
+    // END: PAGINATION LOGIC FUNCTIONS
     // ====================================================================
 
 
     // Initial load
     loadReservationHistory();
     
-    // ✅ NEW: Pagination Click Handler (using event delegation on the container)
+    // Pagination Click Handler
     paginationContainer?.addEventListener('click', (e) => {
         e.preventDefault();
         const pageLink = e.target.closest('.page-link');
@@ -282,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ✅ MODIFIED: Event listener is now delegated to the table wrapper since tbody content is replaced
+    // Event listener is now delegated to the table wrapper since tbody content is replaced
     historyTable?.addEventListener("click", e => {
         const link = e.target.closest('.view-history-doc');
         if (link) {
@@ -292,39 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 // The 'true' here signifies this is from the history view, hiding unnecessary buttons
                 openFileInModal(null, docUrl, null, true); 
             }
-            return;
-        }
-
-        const cancelBtn = e.target.closest('.cancel-reservation');
-        if (cancelBtn) {
-            const id = cancelBtn.dataset.id;
-            if (!id) return alert('Unable to determine reservation id for cancellation.');
-            if (!confirm('Are you sure you want to cancel this reservation?')) return;
-            // Call cancelReservation API
-            (async () => {
-                try {
-                    const res = await fetch(`${API_BASE_URL}cancelReservation.php`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        // API expects key named reservationID (capital D)
-                        body: JSON.stringify({ reservationID: id }),
-                        credentials: 'include'
-                    });
-                    const data = await res.json();
-                    if (res.ok && data.status === 'success') {
-                        alert('Reservation cancelled.');
-                        // Refresh history
-                        fullReservationData = [];
-                        loadReservationHistory();
-                    } else {
-                        alert('Failed to cancel reservation: ' + (data.message || 'Unknown error'));
-                    }
-                } catch (err) {
-                    console.error('Cancel request failed', err);
-                    alert('An error occurred while cancelling.');
-                }
-            })();
-            return;
         }
     });
 
@@ -410,21 +387,21 @@ document.addEventListener("DOMContentLoaded", () => {
     form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // ✅ Validate contact number
+    // Validate contact number
     const clientContact = document.getElementById("client_contact")?.value.trim();
     if (!/^(09)\d{9}$/.test(clientContact)) {
-        alert("⚠️ Invalid Contact Number. It must be 11 digits and start with '09'.");
+        alert("Warning: Invalid Contact Number. It must be 11 digits and start with '09'.");
         return;
     }
 
-    // ✅ Confirm submission
-    if (!confirm("📌 Are you sure you want to submit this reservation request?")) {
+    // Confirm submission
+    if (!confirm("Are you sure you want to submit this reservation request?")) {
         return;
     }
 
     const formData = new FormData(form);
 
-    // ✅ CRITICAL: Ensure lotId is present in formData for the PHP lot update logic
+    // CRITICAL: Ensure lotId is present in formData for the PHP lot update logic
     const lotId = lotIdInput?.value.trim();
     if (lotId) {
         formData.append('lotId', lotId); 
@@ -438,16 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
             credentials: "include",
         });
 
-        let result;
-        try {
-            result = await res.json();
-        } catch (jsonErr) {
-            // Log the raw response for debugging
-            const rawText = await res.text();
-            console.error("Failed to parse JSON. Raw response:", rawText);
-            alert("❌ Server returned an invalid response. Check the console for details.");
-            return;
-        }
+        const result = await res.json(); 
 
         if (!res.ok) {
             throw new Error(`Server error (${res.status}): ${result.message || 'Unknown server error.'}`);
@@ -455,7 +423,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (result.status === "success") {
 
-            // 🛑 NEW CODE BLOCK: Update Lot Status on the Server using JSON
+            // Update Lot Status on the Server using JSON
             if (lotId) {
                 const updateStatus = "Pending"; // The status to set
 
@@ -474,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 try {
                     // --- 2. Update Lot Status via JSON API ---
-                    const updateRes = await fetch(`${API_BASE_URL}update_lot.php`, {
+                    const updateRes = await fetch(`/stJohnCmsApp/cms.api/update_lot.php`, {
                         method: "POST",
                         headers: {
                             'Content-Type': 'application/json' // CRITICAL for your PHP script
@@ -500,12 +468,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     console.error("Error calling update_lot.php:", updateError);
                 }
             } 
-            // 🛑 END NEW CODE BLOCK
+            // END NEW CODE BLOCK
 
-            alert("✅ Reservation submitted successfully! The lot is now marked Pending. Redirecting to the map...");
+            alert("Reservation submitted successfully! The lot is now marked Pending. Redirecting to the map...");
             form.reset();
 
-            // ✅ Reset uploaded files display
+            // Reset uploaded files display
             if (typeof fileMap !== "undefined") {
                 Object.keys(fileMap).forEach((key) => URL.revokeObjectURL(fileMap[key].url));
             }
@@ -514,27 +482,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 span.style.color = "#6c757d";
             });
 
-            // ✅ Refresh history table (resets full data and reloads page 1)
+            // Refresh history table (resets full data and reloads page 1)
             fullReservationData = [];
             loadReservationHistory(); 
 
-            // ✅ Redirect after success
+            // Redirect after success
             setTimeout(() => {
                 // Redirect to the map page so it can read the sessionStorage flag
-                window.location.href = "../cemeteryMap/cemeteryMap.html"; 
+                window.location.href = "../cemeteryMap/cemeteryMap.php"; 
             }, 1500);
         } else {
-            alert("❌ Error: " + (result.message || "Unknown error occurred."));
+            alert("Error: " + (result.message || "Unknown error occurred."));
         }
     } catch (err) {
         console.error("Reservation submission failed:", err);
-        alert("❌ An unexpected error occurred: " + err.message);
+        alert("An unexpected error occurred: " + err.message);
     }
 });
 
 
     // ---- File preview modal (Original logic preserved) ----
     function openFileInModal(file, url, inputEl, isHistoryView = false) {
+        // 🚨 Debugging: Confirm the function is called
+        console.log("Attempting to open modal for URL:", url); 
+        
         currentFileInput = inputEl;
         currentFileObj = file;
 
@@ -550,11 +521,12 @@ document.addEventListener("DOMContentLoaded", () => {
         pdfCanvas.style.display = "none";
         if (pdfControls) pdfControls.style.display = "none";
         
-        // ✅ ADDED: Center the content in the modal body to fix the left-alignment issue
+        // ADDED: Center the content in the modal body to fix the left-alignment issue
         if(modalBody) modalBody.classList.add('text-center');
 
 
         const fileType = file ? file.type : '';
+        // If file object is null (from history view), we rely on URL extension
         const isImage = fileType.startsWith("image/") || /\.(jpg|jpeg|png|gif)$/i.test(fileName);
         const isPdf = fileType === "application/pdf" || /\.pdf$/i.test(fileName);
 
@@ -567,6 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (downloadLink) { downloadLink.href = url; downloadLink.download = fileName; }
             docModal?.show();
         } else if (isPdf) {
+            // Need to handle both blob URL (local file) and history URL (server path)
             pdfjsLib.getDocument({ url }).promise.then(loadedPdf => {
                 pdfDoc = loadedPdf;
                 totalPages = pdfDoc.numPages;
@@ -581,6 +554,14 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             alert("Unsupported file type for preview. Use the download button instead.");
             if (downloadLink) { downloadLink.href = url; downloadLink.download = fileName; }
+            
+            // For unsupported types, still show the modal if possible, just without preview
+            if (docModal) {
+                 // Hide canvas/image in case it was showing something previously
+                imgPreview.style.display = "none"; 
+                pdfCanvas.style.display = "none";
+                docModal.show();
+            }
         }
     }
 

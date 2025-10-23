@@ -1,8 +1,8 @@
 <?php
-/**
- * Authentication Helper Functions
- * Include this file in pages that require authentication
- */
+
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {

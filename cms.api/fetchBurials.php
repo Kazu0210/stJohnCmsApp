@@ -1,6 +1,11 @@
 <?php
 session_start();
 require_once "db_connect.php";
+// Enable CORS for cross-origin requests
+header("Access-Control-Allow-Origin: http://localhost");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json");
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
@@ -24,7 +29,7 @@ try {
                     deathCertificate,
                     burialPermit,
                     createdAt
-                FROM reservations
+                FROM burials
                 WHERE userId = ?
                 ORDER BY createdAt DESC";
 

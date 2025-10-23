@@ -3,6 +3,9 @@ session_start();
 require_once "db_connect.php";
 
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 function sendResponse($success, $message = "", $data = []) {
     echo json_encode([

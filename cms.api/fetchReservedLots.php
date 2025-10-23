@@ -2,7 +2,10 @@
 header("Access-Control-Allow-Origin: http://localhost"); // Adjust if your client is on a different port
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Credentials: true");
-
+// Enable CORS for cross-origin requests
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 // Include your database connection file
 require_once 'database.php'; // Make sure this path is correct
 
