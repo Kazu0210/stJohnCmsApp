@@ -1,6 +1,10 @@
 <?php
+// update_lot.php - Corrected to include datePending logic
 session_start();
 header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 require "db_connect.php";
 
 // Check login and retrieve the current user's ID
@@ -9,7 +13,6 @@ if (!isset($_SESSION['user_id'])) {
     echo json_encode(["success" => false, "message" => "Unauthorized: User not logged in."]);
     exit;
 }
-// Store the authenticated user's ID
 $sessionUserId = (int)$_SESSION['user_id']; 
 
 // Decode JSON
@@ -31,11 +34,7 @@ $lotTypeId  = isset($data['lotTypeId']) ? (int)$data['lotTypeId'] : null;
 $buryDepth  = trim($data['buryDepth'] ?? '');
 $status     = trim($data['status'] ?? 'Available');
 
-// 🛑 CRITICAL FIX: Overwrite the $userId from the payload with the authenticated session ID
-// When the status is "Pending" (meaning a new reservation), we MUST link the lot to the user.
-// In all other cases (e.g., status is 'Available' and client wants to clear the link), 
-// we still use the authenticated user ID unless explicitly sending null.
-// Since the JS sends 'userId: null', we will enforce the use of the session ID here.
+// Enforce the authenticated user's ID for any reservation/update
 $userId = $sessionUserId;
 
 $allowedStatuses = ['Available','Pending','Reserved','Occupied'];
@@ -46,20 +45,24 @@ if (!in_array($status, $allowedStatuses)) {
 }
 
 try {
+    // 💡 CRITICAL: Conditional datePending logic 
+    // Set to NOW() if status is 'Pending', otherwise set to NULL (cleared).
+    $datePendingUpdate = ($status === 'Pending') ? ', datePending = NOW()' : ', datePending = NULL';
+
     $sql = "UPDATE lots SET 
         userId = ?, block = ?, area = ?, rowNumber = ?, lotNumber = ?, 
         lotTypeId = ?, buryDepth = ?, status = ?, updatedAt = NOW()
+        " . $datePendingUpdate . "  
         WHERE lotId = ?";
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) throw new Exception($conn->error);
 
-    // Now, $userId is guaranteed to be an integer (the $sessionUserId),
-    // so we can use the integer binding without the complicated NULL handling logic.
-    // The binding types are "issssissi" (i=userId, s=block, s=area, s=row, s=lot, i=lotTypeId, s=depth, s=status, i=lotId)
+    // Bind parameters: "issssissi"
+    // (i=userId, s=block, s=area, s=row, s=lot, i=lotTypeId, s=depth, s=status, i=lotId)
     $stmt->bind_param(
         "issssissi",
-        $userId, // Now uses $sessionUserId
+        $userId, 
         $block,
         $area,
         $rowNumber,
@@ -93,7 +96,3 @@ try {
 } finally {
     $conn->close();
 }
-// NOTE: Your original PHP had complex logic to bind NULL for userId.
-// Since we are now using the authenticated user's ID, that complex logic is no longer needed
-// and has been replaced by the simpler, correct integer binding ("i") for the userId field.
-?>

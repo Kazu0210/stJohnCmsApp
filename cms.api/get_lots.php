@@ -1,7 +1,10 @@
 <?php
-//get_lots.php
+//get_lots.php - Corrected to include the datePending column
 session_start();
 header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 require "db_connect.php"; // Ensure this connects to your database
 
 // ✅ Check user session
@@ -41,8 +44,8 @@ $totalRows = $totalResult->fetch_assoc()['total'] ?? 0;
 $totalPages = ceil($totalRows / $limit);
 $stmt->close();
 
-// --- Fetch paginated data including STATUS ---
-$sql = "SELECT lotId, userId, area, `block`, rowNumber, lotNumber, `type`, lotTypeId, buryDepth, `status`, geo, createdAt, updatedAt
+// --- Fetch paginated data including the new datePending column ---
+$sql = "SELECT lotId, userId, area, `block`, rowNumber, lotNumber, `type`, lotTypeId, buryDepth, `status`, datePending, geo, createdAt, updatedAt
         FROM lots $where
         ORDER BY createdAt DESC
         LIMIT ? OFFSET ?";
@@ -76,4 +79,3 @@ echo json_encode([
     "totalPages" => $totalPages,
     "totalRows" => $totalRows
 ]);
-// End of get_lots.php

@@ -1,71 +1,22 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Fetch payment progress for the logged-in user
-    async function fetchPaymentProgress(userId) {
+    async function fetchClientDashboardData() {
         try {
-            const response = await fetch(`../../../../cms.api/fetchUserReservations.php?userId=${userId}`, {
+            const response = await fetch("../../api/dashboard.php", {
                 method: "GET",
-                credentials: "include"
-            });
-            if (!response.ok) {
-                throw new Error("Failed to fetch payment progress");
-            }
-            const result = await response.json();
-            if (result.success && result.data.length > 0) {
-                // Aggregate payment data
-                let totalPaid = 0, totalAmount = 0;
-                result.data.forEach(r => {
-                    totalPaid += r.total_paid ? parseFloat(r.total_paid) : 0;
-                    totalAmount += r.total_amount ? parseFloat(r.total_amount) : 0;
-                });
-                return { totalPaid, totalAmount };
-            } else {
-                return { totalPaid: 0, totalAmount: 0 };
-            }
-        } catch (error) {
-            console.error("Fetch error:", error);
-            return { totalPaid: 0, totalAmount: 0 };
-        }
-    }
-    // Fetch maintenance requests for the logged-in user
-    async function fetchMaintenanceRequests(userId) {
-        try {
-            const response = await fetch(`../../../../cms.api/fetchClientMaintenanceRequests.php?userId=${userId}`, {
-                method: "GET",
-                credentials: "include"
-            });
-            if (!response.ok) {
-                throw new Error("Failed to fetch maintenance requests");
-            }
-            const result = await response.json();
-            if (result.success) {
-                return result.data;
-            } else {
-                return [];
-            }
-        } catch (error) {
-            console.error("Fetch error:", error);
-            return [];
-        }
-    }
-    // Fetch user's reserved lots from the database
-    async function fetchUserLots() {
-        try {
-            const response = await fetch("../../../../cms.api/fetchUserLots.php", {
-                method: "GET",
-                credentials: "include",
+                credentials: "include", // include cookies for PHP session
                 headers: {
                     "Content-Type": "application/json"
                 }
             });
 
             if (!response.ok) {
-                throw new Error("Failed to fetch user lots");
+                throw new Error("Failed to fetch dashboard data");
             }
 
             return await response.json();
         } catch (error) {
             console.error("Fetch error:", error);
-            return { status: "error", data: [] };
+            return null;
         }
     }
     
@@ -90,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function renderReservedLots(reservedLots) {
-        const tbody = document.querySelector(".custom-table tbody");
+        const tbody = document.querySelector(".maintenance-history-table tbody");
         tbody.innerHTML = "";
 
         if (!reservedLots || reservedLots.length === 0) {
@@ -104,29 +55,29 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${lot.clientName}</td>
                 <td>${lot.area}</td>
                 <td>${lot.block}</td>
-                <td>1</td>
-                <td>${lot.lotNumber}</td>
+                <td>${lot.row}</td>
+                <td>${lot.lot}</td>
                 <td><span class="status ${getStatusClass(lot.status)}">${lot.status}</span></td>
             `;
             tbody.appendChild(row);
         });
-
-        // Update the reserved lots count in the dashboard panels
-        document.getElementById('reservedLotsCount').textContent = reservedLots.length;
     }
 
-    function renderServiceRequests(requests) {
-        const listGroup = document.getElementById("serviceRequestsList");
+    function renderRequests(requests) {
+        const listGroup = document.querySelector(".service-requests .list-group");
         listGroup.innerHTML = "";
+
         if (!requests || requests.length === 0) {
-            listGroup.innerHTML = `<li class='list-group-item text-center'>No active requests</li>`;
+            listGroup.innerHTML = `<li class="list-group-item text-center">No active requests</li>`;
             return;
         }
+
         requests.forEach(req => {
             const li = document.createElement("li");
             li.className = "list-group-item d-flex justify-content-between align-items-center";
+            li.style.cssText = "border-left: 5px solid var(--gold); background-color: var(--light-bg); border-radius: 5px; margin-bottom: 8px;";
             li.innerHTML = `
-                <span>${req.serviceType} ${(req.lotNumber ? `(Lot ${req.lotNumber})` : '')}</span>
+                <div>${req.service}</div>
                 <span class="status ${getStatusClass(req.status)}">${req.status}</span>
             `;
             listGroup.appendChild(li);
@@ -135,10 +86,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function getStatusClass(status) {
         switch (status?.toLowerCase()) {
-            case "reserved": return "in-progress";
-            case "occupied": return "completed";
-            case "available": return "pending";
-            case "for reservation": return "pending";
             case "paid": return "completed";
             case "partially paid": return "pending";
             case "pending": return "pending";
@@ -176,39 +123,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-    // Initialize dashboard
-    async function initDashboard() {
-        const lotsResponse = await fetchUserLots();
-        if (lotsResponse.status === 'success') {
-            renderReservedLots(lotsResponse.data);
-        } else {
-            console.error("Failed to load lots:", lotsResponse.message);
-            renderReservedLots([]); // Show empty table
-        }
-
-        // Get userId from PHP session (injected into JS)
-        const userId = window.userId;
-        if (userId) {
-            // Payment Progress
-            const payment = await fetchPaymentProgress(userId);
-            const paid = payment.totalPaid || 0;
-            const total = payment.totalAmount || 0;
-            const percent = total > 0 ? Math.round((paid / total) * 100) : 0;
-            // Update payment progress card
-            document.querySelector('.card .progress-bar').style.width = percent + '%';
-            document.querySelector('.card .progress-bar').textContent = percent + '%';
-            document.querySelector('.card .progress').setAttribute('aria-valuenow', percent);
-            document.querySelector('.card .card-body p').textContent = `₱${paid.toLocaleString()} Paid / ₱${total.toLocaleString()} Total`;
-
-            // Service Requests
-            const requests = await fetchMaintenanceRequests(userId);
-            renderServiceRequests(requests);
-        } else {
-            renderServiceRequests([]);
-        }
-    }
-
-    // Expose to global scope in case it's called from outside
-    window.initDashboard = initDashboard;
     initDashboard();
 });

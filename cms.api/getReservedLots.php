@@ -1,13 +1,14 @@
-
 <?php
-// Ensure no whitespace before this line! Suppress error output for clean JSON
-error_reporting(0);
-ini_set('display_errors', 0);
+ini_set('display_errors', 0); // hide warnings from breaking JSON
+ini_set('display_startup_errors', 0);
+error_reporting(E_ALL);
+ob_clean();
+
+header('Content-Type: application/json');
 session_start();
 require_once "db_connect.php";
-header('Content-Type: application/json');
 
-// ✅ Check login
+// ✅ Ensure user is logged in
 if (!isset($_SESSION['user_id'])) {
     echo json_encode([
         "status" => "error",
@@ -31,8 +32,7 @@ $sql = "SELECT
             lt.typeName AS lot_type_name,
             COALESCE(lt.price, 0) AS price,
             COALESCE(lt.monthlyPayment, 0) AS monthlyPayment,
-            COALESCE(lt.description, '') AS description,
-            COALESCE(lt.paymentDescription, '') AS paymentDescription
+            COALESCE(lt.description, '') AS description
         FROM reservations r
         LEFT JOIN lot_types lt ON r.lotTypeId = lt.lotTypeId
         WHERE r.userId = ?
@@ -55,11 +55,9 @@ $result = $stmt->get_result();
 
 $lots = [];
 while ($row = $result->fetch_assoc()) {
-    // Ensure decimals are numbers, not strings
     $row['price'] = (float) $row['price'];
     $row['monthlyPayment'] = (float) $row['monthlyPayment'];
     $row['description'] = $row['description'] ?? '';
-    $row['paymentDescription'] = $row['paymentDescription'] ?? '';
 
     $lots[] = $row;
 }
@@ -71,4 +69,15 @@ echo json_encode([
 
 $stmt->close();
 $conn->close();
+
+// ✅ Catch any fatal errors and output JSON instead of HTML
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if ($error !== null) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "Server error: " . $error['message']
+        ]);
+    }
+});
 ?>

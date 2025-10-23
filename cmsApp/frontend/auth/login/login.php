@@ -4,11 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CMS Landing</title>
+  <link rel="stylesheet" href="./resources/ol.css">
+  <link rel="stylesheet" href="resources/fontawesome-all.min.css">
+  <link href="resources/photon-geocoder-autocomplete.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+  <link rel="stylesheet" href="./resources/qgis2web.css">
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <link rel="stylesheet" href="login.css"/>
+  <script type="text/javascript"
+          src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js">
+  </script>
 </head>
 <body>
 
@@ -72,10 +80,12 @@
       <h2 class="mb-3">Welcome to Blessed Saint John Memorial Gardens and Park</h2>
       <p class="mb-4">This sacred space offers peace and reflection for families and loved ones. Our cemetery map below guides you through available plots, mausoleums, and key landmarks.</p>
       <div class="map-container ratio ratio-16x9">
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3875.512307182782!2d120.28993441532256!3d16.03678694357756!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33915cf61e8a8ac9%3A0x2b6e3e841634ec4a!2sMangatarem%20Cemetery!5e0!3m2!1sen!2sph!4v1693483476431!5m2!1sen!2sph"
-          allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
-        </iframe>
+        <div id="map">
+              <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+              </div>
+        </div>
       </div>
     </div>
 
@@ -92,7 +102,7 @@
       <div class="row gx-3">
         <div class="col-lg-7">
           <!-- Appointment form (kept) -->
-          <form id="appointmentForm" class="appointment-form" onsubmit="handleLocalAppointmentSubmit && handleLocalAppointmentSubmit(event)">
+          <form id="appointmentForm" class="appointment-form">
             <div>
               <label for="user_name" class="required">Your Name</label>
               <input type="text" id="user_name" required aria-required="true" placeholder="Full name">
@@ -100,6 +110,10 @@
             <div>
               <label for="user_email" class="required">Your Email</label>
               <input type="email" id="user_email" required placeholder="name@example.com">
+            </div>
+            <div>
+                <label for="user_address" class="required">Your Address</label>
+                <input type="text" id="user_address" required placeholder="Full address (Street, City, Province)">
             </div>
             <div>
               <label for="user_phone" class="required">Contact Number</label>
@@ -171,10 +185,9 @@
     </div>
   </section>
 
-  <!-- Calendar add/edit modal (keeps your original markup but we wire it in JS) -->
 <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
   <form class="modal-form" id="apptForm" onsubmit="return false;">
-    <h3 style="margin-top:0" id="apptFormTitle">Add Appointment</h3>
+    <h3 style="margin-top:0" id="apptFormTitle">Edit Local Appointment</h3>
 
     <div class="field mb-2">
       <label for="apptClient">Client name:</label>
@@ -256,7 +269,18 @@
 </footer>
 
 <!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="resources/qgis2web_expressions.js"></script>
+<script src="./resources/functions.js"></script>
+<script src="./resources/ol.js"></script>
+<script src="./resources/ol-layerswitcher.js"></script>
+<script src="resources/photon-geocoder-autocomplete.min.js"></script>
+<script src="layers/nondescriptbuildings_1.js"></script><script src="layers/geo_2.js"></script>
+<script src="styles/nondescriptbuildings_1_style.js"></script><script src="styles/geo_2_style.js"></script>
+<script src="./layers/layers.js" type="text/javascript"></script> 
+<script src="./resources/Autolinker.min.js"></script>
+<script src="./resources/qgis2web.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="login.js"> </script>
 </body>
 </html>

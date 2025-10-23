@@ -281,6 +281,65 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Fetch dashboard data (financial and lot statistics)
+  fetch('../../../../cms.api/adminDashboardData.php')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        updateFinancialData(data.data.financial);
+        updateLotStatistics(data.data.lotStats);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching dashboard data:', error);
+    });
+
+  // Function to update financial data
+  function updateFinancialData(financial) {
+    const paymentsReceivedElement = document.getElementById('payments-received');
+    if (paymentsReceivedElement) {
+      paymentsReceivedElement.textContent = '₱' + numberWithCommas(financial.paymentsReceived);
+    }
+    
+    const outstandingBalancesElement = document.getElementById('outstanding-balances');
+    if (outstandingBalancesElement) {
+      outstandingBalancesElement.textContent = '₱' + numberWithCommas(financial.outstandingBalances);
+    }
+    
+    const upcomingDueElement = document.getElementById('upcoming-due');
+    if (upcomingDueElement) {
+      upcomingDueElement.textContent = financial.upcomingDue;
+    }
+  }
+
+  // Function to update lot statistics
+  function updateLotStatistics(lotStats) {
+    const availableLotsElement = document.getElementById('available-lots');
+    if (availableLotsElement) {
+      availableLotsElement.textContent = lotStats.availableLots;
+    }
+    
+    const reservedLotsElement = document.getElementById('reserved-lots');
+    if (reservedLotsElement) {
+      reservedLotsElement.textContent = lotStats.reservedLots;
+    }
+    
+    const occupiedLotsElement = document.getElementById('occupied-lots');
+    if (occupiedLotsElement) {
+      occupiedLotsElement.textContent = lotStats.occupiedLots;
+    }
+  }
+
+  // Helper function to format numbers with commas
+  function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
   // Fetch recent audit logs for Recent Activity card
   fetch('../../../../cms.api/fetchAuditLogs.php')
     .then(response => {
@@ -361,21 +420,4 @@ document.addEventListener('DOMContentLoaded', function() {
     contentElement.innerHTML = activityHtml;
     timeElement.textContent = latestTime;
   }
-
-  // Fetch lot classification counts and update dashboard
-  fetch('../../../../cms.api/fetchLotClassification.php')
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        const counts = data.data;
-        document.getElementById('available-lot-count').textContent = counts.Available || 0;
-        document.getElementById('reserved-lot-count').textContent = counts.Reserved || 0;
-        document.getElementById('occupied-lot-count').textContent = counts.Occupied || 0;
-      } else {
-        console.error('Failed to fetch lot classification:', data.message);
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching lot classification:', error);
-    });
 });
