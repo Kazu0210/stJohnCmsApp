@@ -67,14 +67,15 @@ function updateAppointmentStatus($conn, $appointmentId, $status) {
 }
 
 // Function to update appointment date and time (for reschedule)
-function updateAppointmentDateTime($conn, $appointmentId, $date, $time) {
-    $stmt = $conn->prepare("UPDATE appointments SET dateRequested = ?, time = ?, status = 'scheduled', updatedAt = CURRENT_TIMESTAMP WHERE appointmentId = ?");
+function updateAppointmentDateTime($conn, $appointmentId, $date, $startTime, $endTime = null) {
+    // Update both appointment_start_time and appointment_end_time, and keep legacy `time` in sync (start)
+    $stmt = $conn->prepare("UPDATE appointments SET dateRequested = ?, appointment_start_time = ?, appointment_end_time = ?, `time` = ?, status = 'scheduled', updatedAt = CURRENT_TIMESTAMP WHERE appointmentId = ?");
     
     if (!$stmt) {
         sendResponse(false, "Error preparing statement: " . $conn->error);
     }
     
-    $stmt->bind_param("ssi", $date, $time, $appointmentId);
+    $stmt->bind_param("ssssi", $date, $startTime, $endTime, $startTime, $appointmentId);
     
     if ($stmt->execute()) {
         if ($stmt->affected_rows > 0) {
@@ -132,13 +133,14 @@ try {
                 
             case 'reschedule':
                 $newDate = isset($input['newDate']) ? $input['newDate'] : null;
-                $newTime = isset($input['newTime']) ? $input['newTime'] : null;
+                $newStart = isset($input['newStart']) ? $input['newStart'] : null;
+                $newEnd = isset($input['newEnd']) ? $input['newEnd'] : null;
                 
-                if (!$newDate || !$newTime) {
-                    sendResponse(false, "Missing required fields for reschedule: newDate and newTime");
+                if (!$newDate || !$newStart || !$newEnd) {
+                    sendResponse(false, "Missing required fields for reschedule: newDate, newStart and newEnd");
                 }
                 
-                updateAppointmentDateTime($conn, $appointmentId, $newDate, $newTime);
+                updateAppointmentDateTime($conn, $appointmentId, $newDate, $newStart, $newEnd);
                 sendResponse(true, "Appointment rescheduled successfully");
                 break;
                 

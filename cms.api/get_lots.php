@@ -7,12 +7,12 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 require "db_connect.php"; // Ensure this connects to your database
 
-// ✅ Check user session
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(["success" => false, "message" => "User not logged in"]);
-    exit;
-}
+// // ✅ Check user session
+// if (!isset($_SESSION['user_id'])) {
+//     http_response_code(401);
+//     echo json_encode(["success" => false, "message" => "User not logged in"]);
+//     exit;
+// }
 
 $search = isset($_GET['search']) ? trim($_GET['search']) : "";
 $page   = isset($_GET['page']) ? intval($_GET['page']) : 1;

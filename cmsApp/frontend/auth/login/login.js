@@ -294,7 +294,7 @@ function renderCalendar(month, year) {
         num.textContent = d;
         dayEl.appendChild(num);
 
-        const dayAppts = appointments.filter(a => a.date === dateStr);
+    const dayAppts = appointments.filter(a => a.date === dateStr);
         if (dayAppts.length > 0) {
             const indicator = document.createElement('div');
             indicator.className = 'light-indicator';
@@ -306,9 +306,12 @@ function renderCalendar(month, year) {
             const hasConfirmed = dayAppts.some(a => a.status === 'confirmed'); 
             const hasCancelled = dayAppts.some(a => a.status === 'cancelled');
 
+            // Determine if any appointment lacks a start time (use either appointment_start_time or legacy time)
+            const hasMissingStart = dayAppts.some(a => !(a.appointment_start_time || a.time));
+
             if (hasCancelled) { color = 'gray'; } 
             else if (hasConfirmed) { color = 'green'; } 
-            else if (dayAppts.some(a => !a.time)) { color = 'red'; } 
+            else if (hasMissingStart) { color = 'red'; } 
             else if (diffDays === 0) { color = 'green'; } 
             else if (diffDays <= 2 && diffDays > 0) { color = 'blue'; } 
             else if (diffDays < 0) { color = 'gray'; } 
@@ -332,13 +335,51 @@ function renderCalendar(month, year) {
     }
 }
 
-function openDay(dateStr){
+async function openDay(dateStr) {
     selectedDate = dateStr;
     Array.from(calendarGrid.querySelectorAll('.day'))
         .forEach(d => d.classList.toggle('selected', d.dataset.date === dateStr));
 
     selectedDayHeading.textContent = new Date(dateStr).toLocaleDateString();
-    updateSidebar(dateStr);
+
+    // Fetch latest appointments for the selected date from the backend
+    try {
+        const res = await fetch(`/stJohnCmsApp/cms.api/fetchAllAppointments.php`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+            // Filter appointments for the selected date
+            const appts = data.data.filter(a => a.dateRequested === dateStr);
+            updateSidebarWithAppointments(dateStr, appts);
+        } else {
+            updateSidebarWithAppointments(dateStr, []);
+        }
+    } catch (err) {
+        console.error('Failed to fetch appointments for day:', err);
+        updateSidebarWithAppointments(dateStr, []);
+    }
+}
+
+function updateSidebarWithAppointments(dateStr, appts) {
+    dayApptsEl.innerHTML = '';
+    if(appts.length === 0){
+        dayApptsEl.innerHTML = `<div class="empty">No appointments for this day. Click a day to see appointments.</div>`;
+    } else {
+        appts.forEach(a => {
+            const card = document.createElement('div');
+            card.className = 'card mb-2';
+            const statusText = a.status ? `Status: <strong>${a.status}</strong>` : 'Status: Unknown';
+            const start = a.start_time || a.time || '';
+            const end = a.end_time || '';
+            const timeDisplay = start ? (end ? `${start} - ${end}` : start) : '';
+            card.innerHTML = `<div class="card-body p-2">
+                <div style="font-weight:700">${a.clientName || a.client || '—'}</div>
+                <div class="muted small">${timeDisplay ? timeDisplay + ' • ' : ''}${a.purpose || a.notes || ''}</div>
+                <div class="muted small">${statusText}</div>
+            </div>`;
+            dayApptsEl.appendChild(card);
+        });
+    }
+    apptCountEl.textContent = appts.length;
 }
 
 function updateSidebar(dateStr){
@@ -351,11 +392,15 @@ function updateSidebar(dateStr){
             const card = document.createElement('div');
             card.className = 'card mb-2';
             const statusText = a.status ? `Status: <strong>${a.status}</strong>` : 'Status: Unknown (Local)';
+            // Prefer appointment_start_time/appointment_end_time if present, fall back to legacy a.time
+            const start = a.appointment_start_time || a.time || '';
+            const end = a.appointment_end_time || '';
+            const timeDisplay = start ? (end ? `${start} - ${end}` : start) : '';
             card.innerHTML = `<div class="card-body p-2">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div>
                         <div style="font-weight:700">${a.client || '—'}</div>
-                        <div class="muted small">${a.time ? a.time + ' • ' : ''}${a.notes ? a.notes : ''}</div>
+                        <div class="muted small">${timeDisplay ? timeDisplay + ' • ' : ''}${a.notes ? a.notes : ''}</div>
                         <div class="muted small">${statusText}</div> 
                     </div>
                     <div style="display:flex;flex-direction:column;gap:6px">
@@ -409,7 +454,7 @@ function openEditById(id){
     editingId.value = a.id;
     apptClient.value = a.client || '';
     apptDate.value = a.date || '';
-    apptTime.value = a.time || '';
+    apptTime.value = a.appointment_start_time || a.time || '';
     apptNotes.value = a.notes || '';
     
     deleteBtn.style.display = 'inline-block'; 
@@ -504,7 +549,7 @@ renderCalendar(currentMonth, currentYear);
 
 async function loadAppointmentsFromDB() {
     try {
-        const res = await fetch("/stJohnCmsApp/cms.api/clientAppointment.php"); 
+        const res = await fetch("/stJohnCmsApp/cms.api/fetchAllAppointments.php");
         
         if (!res.ok) {
             const errorText = await res.text();
@@ -524,85 +569,3 @@ async function loadAppointmentsFromDB() {
 loadAppointmentsFromDB();
 
 loadLots();
-
-document.getElementById("appointmentForm").addEventListener("submit", async function (e) {
-    e.preventDefault(); 
-
-    const appointmentMessage = document.getElementById("appointmentMessage");
-    appointmentMessage.textContent = ""; 
-    
-    const userName = document.getElementById("user_name").value.trim();
-    const userEmail = document.getElementById("user_email").value.trim();
-    const userAddress = document.getElementById("user_address").value.trim();
-    const userPhone = document.getElementById("user_phone").value.trim();
-    const appointmentDate = document.getElementById("appointment_date").value.trim();
-    const appointmentTime = document.getElementById("appointment_time").value.trim();
-    const appointmentPurpose = document.getElementById("appointment_purpose").value.trim();
-
-    if (!userName || !userEmail || !userAddress || !userPhone || !appointmentDate || !appointmentTime || !appointmentPurpose) {
-        appointmentMessage.style.color = "red";
-        appointmentMessage.textContent = "Please fill in all required fields.";
-        return;
-    }
-    if (!/^\S+@\S+\.\S+$/.test(userEmail)) {
-        appointmentMessage.style.color = "red";
-        appointmentMessage.textContent = "Please enter a valid email address.";
-        return;
-    }
-    const selectedTime = appointmentTime; 
-    const minTime = "07:00";
-    const maxTime = "16:00";
-    if (selectedTime < minTime || selectedTime > maxTime) {
-        appointmentMessage.style.color = "red";
-        appointmentMessage.textContent = "Appointment time must be between 7 AM and 4 PM.";
-        return;
-    }
-    
-    const formData = {
-        user_name: userName,
-        user_email: userEmail,
-        user_address: userAddress,
-        user_phone: userPhone,
-        appointment_date: appointmentDate,
-        appointment_time: appointmentTime,
-        appointment_purpose: appointmentPurpose,
-    };
-
-    try {
-        const res = await fetch("/stJohnCmsApp/cms.api/clientAppointment.php", { 
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
-        });
-
-        if (!res.ok) {
-            let errorData;
-            try {
-                errorData = await res.json();
-                appointmentMessage.textContent = errorData.message || `Server Error: HTTP ${res.status}`;
-            } catch (e) {
-                const errorText = await res.text();
-                appointmentMessage.textContent = `Server Execution Error (${res.status}). Check PHP file for syntax/connection errors.`;
-                console.error("Raw Server Response (Likely PHP Fatal Error):", errorText.substring(0, 500));
-            }
-            appointmentMessage.style.color = "red";
-            return;
-        }
-
-        const data = await res.json(); 
-        appointmentMessage.textContent = data.message;
-        
-        if (data.status === "success") {
-            appointmentMessage.style.color = "green";
-            document.getElementById("appointmentForm").reset();
-            await loadAppointmentsFromDB();
-        } else {
-            appointmentMessage.style.color = "red"; 
-        }
-
-    } catch (err) {
-        console.error("Fetch/Parsing Error:", err);
-        appointmentMessage.textContent = `Client-side error: ${err.message}. Check browser console for details.`;
-        appointmentMessage.style.color = "red";
-    }
-});

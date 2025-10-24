@@ -1,14 +1,14 @@
 <?php
-// Enforce session and authentication for this admin page
+// Include authentication helper
 require_once '../../../../cms.api/auth_helper.php';
 
-// Require authentication - will redirect to login if not authenticated
+// Require authentication - redirect to login if not logged in
 requireAuth('../../auth/login/login.php');
 
-// Allow only admin or secretary roles
+// Require admin or secretary role for this page
 requireAdminOrSecretary('../../auth/login/login.php');
 
-// Provide current user data for the navbar component
+// Get current user information
 $userId = getCurrentUserId();
 $userName = getCurrentUserName();
 $userRole = getCurrentUserRole();
@@ -34,7 +34,10 @@ $userRole = getCurrentUserRole();
   </head>
 
   <body>
-  <?php include_once __DIR__ . '/../components/adminNavbar.php'; ?>
+  <?php
+  // Use a robust relative include to pull in the shared admin navbar component
+  include_once __DIR__ . '/../components/adminNavbar.php';
+  ?>
 
     <!-- MAIN CONTENT (Unchanged) -->
     <main class="main-content">

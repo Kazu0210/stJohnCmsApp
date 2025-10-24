@@ -197,9 +197,15 @@ $userRole = getCurrentUserRole();
                         <label for="newAppointmentDate" class="form-label">New Date</label>
                         <input type="date" class="form-control" id="newAppointmentDate" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="newAppointmentTime" class="form-label">New Time</label>
-                        <input type="time" class="form-control" id="newAppointmentTime" required>
+                    <div class="row g-2">
+                        <div class="col-6 mb-3">
+                            <label for="newAppointmentStart" class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="newAppointmentStart" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label for="newAppointmentEnd" class="form-label">End Time</label>
+                            <input type="time" class="form-control" id="newAppointmentEnd" required>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

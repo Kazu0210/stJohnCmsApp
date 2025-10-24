@@ -110,12 +110,13 @@ function updateAppointmentStatus(appointmentId, action, row) {
 }
 
 // --- Update Appointment Reschedule via API ---
-function updateAppointmentReschedule(appointmentId, newDate, newTime, row) {
+function updateAppointmentReschedule(appointmentId, newDate, newStart, newEnd, row) {
     const requestData = {
         appointmentId: parseInt(appointmentId),
         action: 'reschedule',
         newDate: newDate,
-        newTime: newTime
+        newStart: newStart,
+        newEnd: newEnd
     };
     
     fetch('../../../../cms.api/updateAppointment.php', {
@@ -133,7 +134,7 @@ function updateAppointmentReschedule(appointmentId, newDate, newTime, row) {
     })
     .then(data => {
         if (data.success) {
-            // Update the UI with new date and time
+            // Update the UI with new date and time range
             if (row) {
                 const detailsCell = row.querySelector('.appointment-details');
                 const readableDate = new Date(newDate).toLocaleDateString('en-US', { 
@@ -142,15 +143,10 @@ function updateAppointmentReschedule(appointmentId, newDate, newTime, row) {
                     year: 'numeric' 
                 });
                 
-                // Convert time to 12-hour format
-                const timeParts = newTime.split(':');
-                const hours = parseInt(timeParts[0]);
-                const minutes = timeParts[1];
-                const ampm = hours >= 12 ? 'PM' : 'AM';
-                const displayHours = hours % 12 || 12;
-                const readableTime = `${displayHours}:${minutes} ${ampm}`;
+                const readableStart = formatDisplayTime(newStart);
+                const readableEnd = formatDisplayTime(newEnd);
                 
-                detailsCell.innerHTML = `Date: ${readableDate} <br>Time: ${readableTime}`;
+                detailsCell.innerHTML = `Date: ${readableDate} <br>Time: ${readableStart} - ${readableEnd}`;
                 
                 // Update status to 'scheduled'
                 updateStatusUI(row, 'scheduled');
@@ -234,8 +230,11 @@ function populateAppointmentTable(appointments) {
         const statusClass = getStatusClass(appointment.status);
         
         // Format date and time
-        const appointmentDate = formatDisplayDate(appointment.dateRequested);
-        const appointmentTime = formatDisplayTime(appointment.time);
+    const appointmentDate = formatDisplayDate(appointment.dateRequested);
+    // Prefer appointment_start_time/appointment_end_time if present, else fallback to legacy appointment.time
+    const start = appointment.appointment_start_time || appointment.time || '';
+    const end = appointment.appointment_end_time || '';
+    const appointmentTime = start ? (end ? `${formatDisplayTime(start)} - ${formatDisplayTime(end)}` : formatDisplayTime(start)) : 'No time';
         const createdAt = formatDisplayDateTime(appointment.createdAt);
         
         row.setAttribute('data-status', statusClass);
@@ -372,7 +371,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const rescheduleModal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
     const rescheduleClientName = document.getElementById('rescheduleClientName');
     const newAppointmentDate = document.getElementById('newAppointmentDate');
-    const newAppointmentTime = document.getElementById('newAppointmentTime');
+    const newAppointmentStart = document.getElementById('newAppointmentStart');
+    const newAppointmentEnd = document.getElementById('newAppointmentEnd');
     const saveRescheduleBtn = document.getElementById('saveRescheduleBtn');
     
     const rowsPerPage = 10;
@@ -480,9 +480,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (action === 'reschedule') {
             rescheduleClientName.textContent = clientName;
-            newAppointmentDate.value = '';
-            newAppointmentTime.value = '';
-            rescheduleModal.show();
+                newAppointmentDate.value = '';
+                newAppointmentStart.value = '';
+                newAppointmentEnd.value = '';
+                rescheduleModal.show();
             return;
         }
 
@@ -503,10 +504,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Save Reschedule Button Handler ---
     saveRescheduleBtn.addEventListener('click', () => {
         const newDate = newAppointmentDate.value;
-        const newTime = newAppointmentTime.value;
+        const newStart = newAppointmentStart.value;
+        const newEnd = newAppointmentEnd.value;
 
-        if (!newDate || !newTime) {
-            alert("Please select both a new date and time.");
+        if (!newDate || !newStart || !newEnd) {
+            alert("Please select a date, start time, and end time.");
+            return;
+        }
+
+        if (newEnd <= newStart) {
+            alert("End time must be later than start time.");
             return;
         }
         
@@ -516,8 +523,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const rescheduleButton = currentRescheduleRow.querySelector('button[data-action="reschedule"]');
         const appointmentId = rescheduleButton.getAttribute('data-id');
         
-        // Update appointment via API
-        updateAppointmentReschedule(appointmentId, newDate, newTime, currentRescheduleRow);
+        // Update appointment via API (send newStart/newEnd)
+        updateAppointmentReschedule(appointmentId, newDate, newStart, newEnd, currentRescheduleRow);
         
         rescheduleModal.hide();
         currentRescheduleRow = null;
