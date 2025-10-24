@@ -23,15 +23,19 @@ try {
         exit;
     }
 
-    // Include total price for the lot (totalAmount) and totalPaid from payments table
-    $sql = "SELECT r.reservationId, r.area, r.block, r.lotNumber, r.userId, r.createdAt, r.status, r.payment_type,
-                   COALESCE(r.total_amount, lt.price, 0) AS total_amount,
+    // Select reservation fields that exist in your schema and compute totals from related tables
+    $sql = "SELECT r.reservationId,
+                   r.area,
+                   r.block,
+                   r.lotNumber,
+                   r.userId,
+                   r.createdAt,
+                   r.status,
+                   COALESCE(lt.price, 0) AS total_amount,
                    (
                        SELECT COALESCE(SUM(p.amount), 0) FROM payments p
                        WHERE p.reservationId = r.reservationId AND p.status IN ('Confirmed','Completed')
-                   ) AS total_paid,
-                   COALESCE(r.amount_paid, 0) AS amount_paid,
-                   COALESCE(r.amount_due, 0) AS amount_due
+                   ) AS total_paid
             FROM reservations r
             LEFT JOIN lots l ON r.lotId = l.lotId
             LEFT JOIN lot_types lt ON l.lotTypeId = lt.lotTypeId
@@ -49,9 +53,17 @@ try {
 
     $reservations = [];
     while ($row = $result->fetch_assoc()) {
-        // Cast numeric fields to proper types
-        $row['totalAmount'] = isset($row['totalAmount']) ? (float)$row['totalAmount'] : 0.0;
-        $row['totalPaid'] = isset($row['totalPaid']) ? (float)$row['totalPaid'] : 0.0;
+        // Normalize numeric fields and provide camelCase aliases for compatibility
+        $row['total_amount'] = isset($row['total_amount']) ? (float)$row['total_amount'] : 0.0;
+        $row['totalPaid'] = isset($row['total_paid']) ? (float)$row['total_paid'] : 0.0; // keep camelCase used elsewhere
+        $row['totalPaid_snake'] = isset($row['total_paid']) ? (float)$row['total_paid'] : 0.0;
+        // Also expose camelCase totalAmount for older callers
+        $row['totalAmount'] = $row['total_amount'];
+
+        // Ensure reservationId and userId are integers
+        if (isset($row['reservationId'])) $row['reservationId'] = (int)$row['reservationId'];
+        if (isset($row['userId'])) $row['userId'] = (int)$row['userId'];
+
         $reservations[] = $row;
     }
 
