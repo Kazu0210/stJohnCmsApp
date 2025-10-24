@@ -37,7 +37,7 @@ foreach ($required as $field) {
     }
 }
 
-$stmt = $conn->prepare("INSERT INTO appointments (clientName, clientAddress, clientContactNumber, dateRequested, start_time, end_time, purpose, statusId, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'pending', NOW())");
+$stmt = $conn->prepare("INSERT INTO appointments (clientName, clientAddress, clientContactNumber, dateRequested, start_time, end_time, purpose, statusId, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'scheduled', NOW())");
 if (!$stmt) {
     sendResponse(false, 'Database error: ' . $conn->error);
 }
