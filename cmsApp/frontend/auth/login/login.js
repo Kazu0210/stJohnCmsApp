@@ -335,13 +335,51 @@ function renderCalendar(month, year) {
     }
 }
 
-function openDay(dateStr){
+async function openDay(dateStr) {
     selectedDate = dateStr;
     Array.from(calendarGrid.querySelectorAll('.day'))
         .forEach(d => d.classList.toggle('selected', d.dataset.date === dateStr));
 
     selectedDayHeading.textContent = new Date(dateStr).toLocaleDateString();
-    updateSidebar(dateStr);
+
+    // Fetch latest appointments for the selected date from the backend
+    try {
+        const res = await fetch(`/stJohnCmsApp/cms.api/fetchAllAppointments.php`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+            // Filter appointments for the selected date
+            const appts = data.data.filter(a => a.dateRequested === dateStr);
+            updateSidebarWithAppointments(dateStr, appts);
+        } else {
+            updateSidebarWithAppointments(dateStr, []);
+        }
+    } catch (err) {
+        console.error('Failed to fetch appointments for day:', err);
+        updateSidebarWithAppointments(dateStr, []);
+    }
+}
+
+function updateSidebarWithAppointments(dateStr, appts) {
+    dayApptsEl.innerHTML = '';
+    if(appts.length === 0){
+        dayApptsEl.innerHTML = `<div class="empty">No appointments for this day. Click a day to see appointments.</div>`;
+    } else {
+        appts.forEach(a => {
+            const card = document.createElement('div');
+            card.className = 'card mb-2';
+            const statusText = a.status ? `Status: <strong>${a.status}</strong>` : 'Status: Unknown';
+            const start = a.start_time || a.time || '';
+            const end = a.end_time || '';
+            const timeDisplay = start ? (end ? `${start} - ${end}` : start) : '';
+            card.innerHTML = `<div class="card-body p-2">
+                <div style="font-weight:700">${a.clientName || a.client || '—'}</div>
+                <div class="muted small">${timeDisplay ? timeDisplay + ' • ' : ''}${a.purpose || a.notes || ''}</div>
+                <div class="muted small">${statusText}</div>
+            </div>`;
+            dayApptsEl.appendChild(card);
+        });
+    }
+    apptCountEl.textContent = appts.length;
 }
 
 function updateSidebar(dateStr){
