@@ -160,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- 7. TABLE RENDERING & FILTERING ---
     function populateMonthFilter() {
+        if (!monthFilter) return;
         const months = [...new Set(paymentRecords.map(r => r.monthDue))].sort();
         monthFilter.innerHTML = '<option value="all">Filter by Month (All)</option>';
         months.forEach(month => {
@@ -226,9 +227,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function applyFilters() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const status = statusFilter.value;
-        const month = monthFilter.value;
+    if (!searchInput || !statusFilter || !monthFilter) return;
+    const searchTerm = searchInput.value.toLowerCase();
+    const status = statusFilter.value;
+    const month = monthFilter.value;
 
         const filtered = paymentRecords.filter(r => {
             const matchesSearch = r.clientName.toLowerCase().includes(searchTerm) || 
@@ -421,25 +423,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Filter and Pagination Listeners
-    searchInput.addEventListener('input', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
-    monthFilter.addEventListener('change', applyFilters);
-    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-        searchInput.value = '';
-        statusFilter.value = 'all';
-        monthFilter.value = 'all';
-        applyFilters();
-    });
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+    if (monthFilter) monthFilter.addEventListener('change', applyFilters);
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            if (statusFilter) statusFilter.value = 'all';
+            if (monthFilter) monthFilter.value = 'all';
+            applyFilters();
+        });
+    }
 
-    document.getElementById('prevPageBtn').addEventListener('click', () => {
-        if (currentPage > 1) { currentPage--; renderTable(currentFilteredRecords); }
-    });
-    document.getElementById('nextPageBtn').addEventListener('click', () => {
-        const totalPages = Math.ceil(currentFilteredRecords.length / recordsPerPage);
-        if (currentPage < totalPages) { currentPage++; renderTable(currentFilteredRecords); }
-    });
+    const prevPageBtnEl = document.getElementById('prevPageBtn');
+    if (prevPageBtnEl) {
+        prevPageBtnEl.addEventListener('click', () => {
+            if (currentPage > 1) { currentPage--; renderTable(currentFilteredRecords); }
+        });
+    }
+    const nextPageBtnEl = document.getElementById('nextPageBtn');
+    if (nextPageBtnEl) {
+        nextPageBtnEl.addEventListener('click', () => {
+            const totalPages = Math.ceil(currentFilteredRecords.length / recordsPerPage);
+            if (currentPage < totalPages) { currentPage++; renderTable(currentFilteredRecords); }
+        });
+    }
 
-    document.getElementById('paymentForm').addEventListener('submit', savePaymentChanges);
+    const paymentForm = document.getElementById('paymentForm');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', savePaymentChanges);
+    }
     
     logoutLinks.forEach(link => {
         if (link) {
