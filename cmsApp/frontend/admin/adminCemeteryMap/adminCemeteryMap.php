@@ -1,3 +1,18 @@
+<?php
+// Enforce session and authentication for this admin page
+require_once '../../../../cms.api/auth_helper.php';
+
+// Require authentication - will redirect to login if not authenticated
+requireAuth('../../auth/login/login.php');
+
+// Allow only admin or secretary roles
+requireAdminOrSecretary('../../auth/login/login.php');
+
+// Provide current user data for the navbar component
+$userId = getCurrentUserId();
+$userName = getCurrentUserName();
+$userRole = getCurrentUserRole();
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -19,7 +34,7 @@
   </head>
 
   <body>
-    <?php include '../components/adminNavbar.php'; ?>
+  <?php include_once __DIR__ . '/../components/adminNavbar.php'; ?>
 
     <!-- MAIN CONTENT (Unchanged) -->
     <main class="main-content">
