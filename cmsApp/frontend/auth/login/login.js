@@ -511,7 +511,7 @@ renderCalendar(currentMonth, currentYear);
 
 async function loadAppointmentsFromDB() {
     try {
-        const res = await fetch("/stJohnCmsApp/cms.api/clientAppointment.php"); 
+        const res = await fetch("/stJohnCmsApp/cms.api/fetchAllAppointments.php");
         
         if (!res.ok) {
             const errorText = await res.text();
