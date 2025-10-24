@@ -294,7 +294,7 @@ function renderCalendar(month, year) {
         num.textContent = d;
         dayEl.appendChild(num);
 
-        const dayAppts = appointments.filter(a => a.date === dateStr);
+    const dayAppts = appointments.filter(a => a.date === dateStr);
         if (dayAppts.length > 0) {
             const indicator = document.createElement('div');
             indicator.className = 'light-indicator';
@@ -306,9 +306,12 @@ function renderCalendar(month, year) {
             const hasConfirmed = dayAppts.some(a => a.status === 'confirmed'); 
             const hasCancelled = dayAppts.some(a => a.status === 'cancelled');
 
+            // Determine if any appointment lacks a start time (use either appointment_start_time or legacy time)
+            const hasMissingStart = dayAppts.some(a => !(a.appointment_start_time || a.time));
+
             if (hasCancelled) { color = 'gray'; } 
             else if (hasConfirmed) { color = 'green'; } 
-            else if (dayAppts.some(a => !a.time)) { color = 'red'; } 
+            else if (hasMissingStart) { color = 'red'; } 
             else if (diffDays === 0) { color = 'green'; } 
             else if (diffDays <= 2 && diffDays > 0) { color = 'blue'; } 
             else if (diffDays < 0) { color = 'gray'; } 
@@ -351,11 +354,15 @@ function updateSidebar(dateStr){
             const card = document.createElement('div');
             card.className = 'card mb-2';
             const statusText = a.status ? `Status: <strong>${a.status}</strong>` : 'Status: Unknown (Local)';
+            // Prefer appointment_start_time/appointment_end_time if present, fall back to legacy a.time
+            const start = a.appointment_start_time || a.time || '';
+            const end = a.appointment_end_time || '';
+            const timeDisplay = start ? (end ? `${start} - ${end}` : start) : '';
             card.innerHTML = `<div class="card-body p-2">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div>
                         <div style="font-weight:700">${a.client || '—'}</div>
-                        <div class="muted small">${a.time ? a.time + ' • ' : ''}${a.notes ? a.notes : ''}</div>
+                        <div class="muted small">${timeDisplay ? timeDisplay + ' • ' : ''}${a.notes ? a.notes : ''}</div>
                         <div class="muted small">${statusText}</div> 
                     </div>
                     <div style="display:flex;flex-direction:column;gap:6px">
@@ -409,7 +416,7 @@ function openEditById(id){
     editingId.value = a.id;
     apptClient.value = a.client || '';
     apptDate.value = a.date || '';
-    apptTime.value = a.time || '';
+    apptTime.value = a.appointment_start_time || a.time || '';
     apptNotes.value = a.notes || '';
     
     deleteBtn.style.display = 'inline-block'; 
@@ -536,10 +543,11 @@ document.getElementById("appointmentForm").addEventListener("submit", async func
     const userAddress = document.getElementById("user_address").value.trim();
     const userPhone = document.getElementById("user_phone").value.trim();
     const appointmentDate = document.getElementById("appointment_date").value.trim();
-    const appointmentTime = document.getElementById("appointment_time").value.trim();
+    const appointmentStartTime = document.getElementById("appointment_start_time").value.trim();
+    const appointmentEndTime = document.getElementById("appointment_end_time").value.trim();
     const appointmentPurpose = document.getElementById("appointment_purpose").value.trim();
 
-    if (!userName || !userEmail || !userAddress || !userPhone || !appointmentDate || !appointmentTime || !appointmentPurpose) {
+    if (!userName || !userEmail || !userAddress || !userPhone || !appointmentDate || !appointmentStartTime || !appointmentEndTime || !appointmentPurpose) {
         appointmentMessage.style.color = "red";
         appointmentMessage.textContent = "Please fill in all required fields.";
         return;
@@ -549,12 +557,17 @@ document.getElementById("appointmentForm").addEventListener("submit", async func
         appointmentMessage.textContent = "Please enter a valid email address.";
         return;
     }
-    const selectedTime = appointmentTime; 
     const minTime = "07:00";
     const maxTime = "16:00";
-    if (selectedTime < minTime || selectedTime > maxTime) {
+    // Basic ordering and range validation (HH:MM string compare works for 24-hour times)
+    if (appointmentStartTime < minTime || appointmentStartTime > maxTime || appointmentEndTime < minTime || appointmentEndTime > maxTime) {
         appointmentMessage.style.color = "red";
-        appointmentMessage.textContent = "Appointment time must be between 7 AM and 4 PM.";
+        appointmentMessage.textContent = "Appointment times must be between 7 AM and 4 PM.";
+        return;
+    }
+    if (appointmentEndTime <= appointmentStartTime) {
+        appointmentMessage.style.color = "red";
+        appointmentMessage.textContent = "End time must be later than start time.";
         return;
     }
     
@@ -564,7 +577,10 @@ document.getElementById("appointmentForm").addEventListener("submit", async func
         user_address: userAddress,
         user_phone: userPhone,
         appointment_date: appointmentDate,
-        appointment_time: appointmentTime,
+        // Keep existing 'appointment_time' for backward compatibility (use start time)
+        appointment_time: appointmentStartTime,
+        appointment_start_time: appointmentStartTime,
+        appointment_end_time: appointmentEndTime,
         appointment_purpose: appointmentPurpose,
     };
 

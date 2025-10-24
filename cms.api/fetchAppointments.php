@@ -38,7 +38,8 @@ function validateConnection($conn) {
 
 // Function to fetch all appointments
 function fetchAllAppointments($conn) {
-    $sql = "SELECT * FROM appointments ORDER BY dateRequested DESC, time DESC";
+    // Order by start time (new column appointment_start_time). Keep compatibility with legacy 'time' if present.
+    $sql = "SELECT * FROM appointments ORDER BY dateRequested DESC, appointment_start_time DESC";
     $result = $conn->query($sql);
     
     if ($result === false) {
@@ -55,7 +56,7 @@ function fetchAllAppointments($conn) {
 
 // Function to fetch appointments by client ID
 function fetchAppointmentsByClientId($conn, $clientId) {
-    $stmt = $conn->prepare("SELECT * FROM appointments WHERE clientId = ? ORDER BY dateRequested DESC, time DESC");
+    $stmt = $conn->prepare("SELECT * FROM appointments WHERE clientId = ? ORDER BY dateRequested DESC, appointment_start_time DESC");
     
     if (!$stmt) {
         sendResponse(false, "Error preparing statement: " . $conn->error);
@@ -80,7 +81,7 @@ function fetchAppointmentsByClientId($conn, $clientId) {
 
 // Function to fetch appointments by status ID
 function fetchAppointmentsByStatusId($conn, $statusId) {
-    $stmt = $conn->prepare("SELECT * FROM appointments WHERE statusId = ? ORDER BY dateRequested DESC, time DESC");
+    $stmt = $conn->prepare("SELECT * FROM appointments WHERE statusId = ? ORDER BY dateRequested DESC, appointment_start_time DESC");
     
     if (!$stmt) {
         sendResponse(false, "Error preparing statement: " . $conn->error);
@@ -105,7 +106,7 @@ function fetchAppointmentsByStatusId($conn, $statusId) {
 
 // Function to fetch appointments by status string
 function fetchAppointmentsByStatus($conn, $status) {
-    $stmt = $conn->prepare("SELECT * FROM appointments WHERE status = ? ORDER BY dateRequested DESC, time DESC");
+    $stmt = $conn->prepare("SELECT * FROM appointments WHERE status = ? ORDER BY dateRequested DESC, appointment_start_time DESC");
     
     if (!$stmt) {
         sendResponse(false, "Error preparing statement: " . $conn->error);

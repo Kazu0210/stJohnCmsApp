@@ -28,10 +28,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $clientContactNumber = $data["user_phone"] ?? "";
     $dateRequested = $data["appointment_date"] ?? "";
     $time = $data["appointment_time"] ?? "";
+    // New fields: start and end times (optional for backward compatibility)
+    $startTime = $data["appointment_start_time"] ?? $time;
+    $endTime = $data["appointment_end_time"] ?? null;
     $purpose = $data["appointment_purpose"] ?? "";
 
     // Basic Server-side validation
-    if (!$clientName || !$clientEmail || !$clientAddress || !$clientContactNumber || !$dateRequested || !$time || !$purpose) {
+    // Require startTime as the effective appointment time for new requests
+    if (!$clientName || !$clientEmail || !$clientAddress || !$clientContactNumber || !$dateRequested || !$startTime || !$purpose) {
         http_response_code(400); 
         echo json_encode(["status" => "error", "message" => "Missing required fields in API payload."]);
         exit;
@@ -42,20 +46,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         INSERT INTO appointments (
             /* ❌ clientId column removed from list */
             clientName, clientEmail, clientAddress, clientContactNumber, 
-            dateRequested, time, purpose, status 
+            dateRequested, `time`, appointment_start_time, appointment_end_time, purpose, status 
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, 'scheduled'
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled'
         )
     ");
 
-    // 🛑 FIX: Bind parameters: Only 7 strings ('s' x 7) are now required.
-    $stmt->bind_param("sssssss", 
+    // Bind parameters: 9 strings (use s for time strings; endTime may be null)
+    $stmt->bind_param("sssssssss", 
         $clientName, 
         $clientEmail, 
         $clientAddress,
         $clientContactNumber, 
         $dateRequested, 
-        $time, 
+        $startTime, 
+        $startTime,
+        $endTime,
         $purpose
     );
 
@@ -87,7 +93,10 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
         appointmentId AS id, 
         clientName AS client, 
         dateRequested AS date, 
-        time, 
+        -- return legacy 'time' for backwards compatibility (mapped to start time)
+        appointment_start_time AS time,
+        appointment_start_time,
+        appointment_end_time,
         purpose AS notes,
         status
         FROM appointments");

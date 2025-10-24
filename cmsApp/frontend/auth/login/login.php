@@ -123,9 +123,15 @@
               <label for="appointment_date" class="required">Preferred Date</label>
               <input type="date" id="appointment_date" required>
             </div>
-            <div>
-              <label for="appointment_time" class="required">Preferred Time</label>
-              <input type="time" id="appointment_time" min="07:00" max="16:00" required>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <div style="flex:1;min-width:140px">
+                <label for="appointment_start_time" class="required">Start Time</label>
+                <input type="time" id="appointment_start_time" min="07:00" max="16:00" required>
+              </div>
+              <div style="flex:1;min-width:140px">
+                <label for="appointment_end_time" class="required">End Time</label>
+                <input type="time" id="appointment_end_time" min="07:00" max="16:00" required>
+              </div>
             </div>
             <div>
               <label for="appointment_purpose" class="required">Purpose of Visit</label>
