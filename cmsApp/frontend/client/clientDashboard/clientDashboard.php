@@ -61,6 +61,99 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['email'])) {
             <!-- Upcoming Payment card removed per request -->
         </section>
 
+        <!-- Quick Actions -->
+        <section class="row g-3 mb-4 quick-actions">
+            <div class="col-12">
+                <h3 class="mb-2">Quick actions</h3>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="../clientReservations.php" class="action-card card text-decoration-none" aria-label="My Reservations">
+                    <div class="card-body d-flex gap-3 align-items-center">
+                        <div class="action-icon bg-gold text-center rounded-3 p-2">
+                            <i class="fa-solid fa-calendar-check fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">My Reservations</div>
+                            <small class="text-muted">View and manage your reservations</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="../lotReservation/lotReservation.php" class="action-card card text-decoration-none" aria-label="Reserve a Lot">
+                    <div class="card-body d-flex gap-3 align-items-center">
+                        <div class="action-icon bg-gold text-center rounded-3 p-2">
+                            <i class="fa-solid fa-location-dot fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Reserve a Lot</div>
+                            <small class="text-muted">Find and reserve available lots</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Payments quick-action removed as requested -->
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="../burialRequest/burialRequest.php" class="action-card card text-decoration-none" aria-label="Burial Request">
+                    <div class="card-body d-flex gap-3 align-items-center">
+                        <div class="action-icon bg-gold text-center rounded-3 p-2">
+                            <i class="fa-solid fa-file-invoice fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Burial Request</div>
+                            <small class="text-muted">Submit or track burial requests</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="../burialRecord/burialRecord.php" class="action-card card text-decoration-none" aria-label="Burial Records">
+                    <div class="card-body d-flex gap-3 align-items-center">
+                        <div class="action-icon bg-gold text-center rounded-3 p-2">
+                            <i class="fa-solid fa-book fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Burial Records</div>
+                            <small class="text-muted">View burial records</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="../maintenanceServiceRequest/maintenanceServiceRequest.php" class="action-card card text-decoration-none" aria-label="Maintenance Request">
+                    <div class="card-body d-flex gap-3 align-items-center">
+                        <div class="action-icon bg-gold text-center rounded-3 p-2">
+                            <i class="fa-solid fa-tools fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Maintenance</div>
+                            <small class="text-muted">Request maintenance for a lot</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="../cemeteryMap/cemeteryMap.php" class="action-card card text-decoration-none" aria-label="Cemetery Map">
+                    <div class="card-body d-flex gap-3 align-items-center">
+                        <div class="action-icon bg-gold text-center rounded-3 p-2">
+                            <i class="fa-solid fa-map-location-dot fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Cemetery Map</div>
+                            <small class="text-muted">View cemetery layout</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
         <div class="row g-4">
             <div class="col-xl-7">
                 <div class="card h-100">

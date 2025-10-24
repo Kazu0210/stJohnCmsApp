@@ -149,6 +149,45 @@ main {
     background-color: #f0f3f6;
 }
 
+/* --- Quick Actions --- */
+.quick-actions h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.action-card {
+    display: block;
+    color: inherit;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+.action-card .card-body { padding: 0.9rem 1rem; }
+.action-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 30px var(--shadow-medium);
+}
+.action-card:focus-visible {
+    outline: 3px solid rgba(239,191,4,0.25);
+    outline-offset: 3px;
+}
+.action-icon {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--black);
+}
+.bg-gold { background-color: var(--gold); }
+
+/* Ensure icons are vertically centered on small screens */
+@media (max-width: 575.98px) {
+    .action-card .card-body { gap: 0.75rem; }
+    .action-icon { width: 40px; height: 40px; }
+}
+
 /* Status Badges & Other Elements */
 .status {
     display: inline-block;
