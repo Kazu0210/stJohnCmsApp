@@ -95,8 +95,8 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
         dateRequested AS date, 
         -- return legacy 'time' for backwards compatibility (mapped to start time)
         appointment_start_time AS time,
-        appointment_start_time,
-        appointment_end_time,
+        start_time,
+        end_time,
         purpose AS notes,
         status
         FROM appointments");
