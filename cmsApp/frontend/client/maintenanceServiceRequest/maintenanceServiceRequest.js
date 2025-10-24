@@ -32,7 +32,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Load Reserved Lots
     // ============================
     async function loadReservedLots() {
-        const res = await fetch(`${API_BASE_URL}getReservedLotsMaintenance.php`, { credentials: "include" });
+        // Use the new API which can accept session-backed user id when none is provided
+        const res = await fetch(`${API_BASE_URL}fetchClientReservedLots.php`, { credentials: "include" });
         const result = await res.json();
         const data = result.data || [];
         reservationSelect.innerHTML = '<option value="">-- Select Lot --</option>';

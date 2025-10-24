@@ -2,7 +2,11 @@
 ini_set('display_errors', 0); // hide warnings from breaking JSON
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
-ob_clean();
+
+// Only clear output buffer if one exists to avoid non-fatal notices
+if (ob_get_level() > 0) {
+    @ob_clean();
+}
 
 header('Content-Type: application/json');
 session_start();
@@ -71,13 +75,22 @@ $stmt->close();
 $conn->close();
 
 // ✅ Catch any fatal errors and output JSON instead of HTML
+// Only output JSON on shutdown for fatal errors so we don't append JSON
+// to a successful response when non-fatal warnings/notices occurred.
 register_shutdown_function(function () {
     $error = error_get_last();
     if ($error !== null) {
-        echo json_encode([
-            "status" => "error",
-            "message" => "Server error: " . $error['message']
-        ]);
+        $fatal_types = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+        if (isset($error['type']) && in_array($error['type'], $fatal_types, true)) {
+            // Ensure correct content type and return a single JSON object
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+            }
+            echo json_encode([
+                "status" => "error",
+                "message" => "Server error: " . $error['message']
+            ]);
+        }
     }
 });
 ?>
