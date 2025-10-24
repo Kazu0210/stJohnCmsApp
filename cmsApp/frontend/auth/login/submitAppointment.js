@@ -25,7 +25,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 formEntries.appointment_purpose = document.getElementById('appointment_purpose')?.value || '';
             }
             console.log('Form Data:', formEntries);
-            // TODO: Call submitAppointment(formEntries)
+
+            // Send data to backend to store in appointments table
+            fetch('submitAppointment.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formEntries)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Appointment submitted successfully!');
+                    appointmentForm.reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(async err => {
+                // Try to get and log the raw response text for debugging
+                try {
+                    const res = await fetch('submitAppointment.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formEntries)
+                    });
+                    const text = await res.text();
+                    console.error('Raw response:', text);
+                } catch(fetchErr) {
+                    console.error('Fetch error:', fetchErr);
+                }
+                alert('Submission failed. Please try again.');
+                console.error(err);
+            });
+            
         });
     }
 });
