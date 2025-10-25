@@ -86,7 +86,6 @@ $(document).ready(function() {
                                             dataType: 'json',
                                             success: function(res) {
                                                 if (res.success) {
-                                                    alert('Payment approved successfully.');
                                                     location.reload();
                                                 } else {
                                                     alert(res.message || 'Failed to approve payment.');

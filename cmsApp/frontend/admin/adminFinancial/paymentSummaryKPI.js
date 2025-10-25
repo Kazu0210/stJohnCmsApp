@@ -13,5 +13,5 @@ fetch('../../../../cms.api/fetchPaymentSummaryKPI.php')
     document.getElementById('totalIncomeYTD').textContent = '₱0.00';
     document.getElementById('incomeThisMonth').textContent = '₱0.00';
     document.getElementById('attentionCount').textContent = '0 Pending / 0 Deferred';
-    console.error('Error fetching payment summary:', error);
+    // console.error('Error fetching payment summary:', error);
   });

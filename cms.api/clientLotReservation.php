@@ -111,7 +111,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // --- 4. Define Status and Timestamp ---
     // Status for a new client reservation request.
-    $reservationStatus = "Pending"; 
+    $reservationStatus = isset($_POST['status']) && !empty($_POST['status']) ? trim($_POST['status']) : 'For Reservation';
     $createdAt = date("Y-m-d H:i:s");
 
     // --- 5. Prepare Database Statements ---

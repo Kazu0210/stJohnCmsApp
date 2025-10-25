@@ -336,5 +336,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="lotReservation.js" defer></script>
+    <script src="submitLotReservation.js"></script>
 </body>
 </html>

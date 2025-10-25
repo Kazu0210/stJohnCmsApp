@@ -1,4 +1,8 @@
 <?php
+// Prevent whitespace before output and suppress error output for clean JSON
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
 // updatePaymentStatus.php
 require_once 'db_connect.php';
 header('Content-Type: application/json');
