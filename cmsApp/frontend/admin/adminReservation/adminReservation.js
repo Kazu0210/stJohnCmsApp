@@ -543,33 +543,29 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(loadingMsg, 'info');
 
         try {
-            // Pass all fields plus the status to updateReservation.php
-            const payload = {
-                reservationID: parseInt(reservationId, 10),
-                status: newStatus,
-                clientName: rec.clientName,
-                address: rec.address,
-                contactNumber: rec.contactNumber,
-                reservationDate: rec.reservationDate,
-                area: rec.area,
-                block: rec.block,
-                rowNumber: rec.rowNumber,
-                lotNumber: rec.lotNumber,
-                lotTypeID: rec.lotTypeID,
-                burialDepth: rec.burialDepth
-            };
+            // Pass all fields plus the status to updateReservation.php as form data
+            const formData = new FormData();
+            formData.append('reservationID', parseInt(reservationId, 10));
+            formData.append('status', newStatus);
+            formData.append('clientName', rec.clientName);
+            formData.append('address', rec.address);
+            formData.append('contactNumber', rec.contactNumber);
+            formData.append('reservationDate', rec.reservationDate);
+            formData.append('area', rec.area);
+            formData.append('block', rec.block);
+            formData.append('rowNumber', rec.rowNumber);
+            formData.append('lotNumber', rec.lotNumber);
+            formData.append('lotTypeID', rec.lotTypeID);
+            formData.append('burialDepth', rec.burialDepth);
 
             const res = await fetch(API_BASE + 'updateReservation.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload),
+                body: formData,
                 credentials: 'same-origin'
             });
             const json = await res.json();
 
-            if (json.status === 'success') {
+            if (json.success) {
                 showToast(json.message || `Status changed to ${newStatus}!`, 'success');
                 await fetchReservations();
             } else {
