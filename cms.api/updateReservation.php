@@ -83,6 +83,11 @@ if (
         $user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
         $action = "Update Reservation";
         $details = "Reservation ID {$reservationID} updated by User ID {$user_id}";
+        // If status is being set to Archived, log a specific audit
+        if (strtolower($status) === 'archived') {
+            $action = "Archive Reservation";
+            $details = "Reservation ID {$reservationID} archived by User ID {$user_id}";
+        }
         try {
             log_audit($user_id, $action, $details);
         } catch (Exception $e) {

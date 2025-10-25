@@ -50,19 +50,31 @@ try {
     
     $affectedRows = $deleteStmt->affected_rows;
     $deleteStmt->close();
-    $conn->close();
 
     if ($affectedRows > 0) {
         // --- 3. Delete the physical file (after successful DB deletion) ---
         if ($fileName && file_exists($uploadDir . $fileName)) {
             unlink($uploadDir . $fileName);
         }
-        
+        // --- 4. Audit log ---
+        require_once 'audit_helper.php';
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+        $action = "Delete Reservation";
+        $details = "Reservation ID {$reservationID} permanently deleted by User ID {$user_id}";
+        try {
+            log_audit($user_id, $action, $details);
+        } catch (Exception $e) {
+            error_log('Audit log failed: ' . $e->getMessage());
+        }
         echo json_encode(['status' => 'success', 'message' => "Reservation ID $reservationID permanently deleted."]);
     } else {
         http_response_code(404);
         echo json_encode(['status' => 'error', 'message' => 'Reservation not found or already deleted.']);
     }
+    $conn->close();
 
 } catch (Exception $e) {
     http_response_code(500);
