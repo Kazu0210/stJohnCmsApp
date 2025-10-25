@@ -1,10 +1,17 @@
+
 <?php
 // Enable error reporting for debugging (you can remove this in production)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Include your database connection
 include 'db_connect.php'; // Make sure this file defines $conn (mysqli connection)
+include 'audit_helper.php';
 
 // Validate if all required POST fields exist
 if (
@@ -73,6 +80,14 @@ if (
 
     // Execute and check if successful
     if ($stmt->execute()) {
+        $user_id = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+        $action = "Update Reservation";
+        $details = "Reservation ID {$reservationID} updated by User ID {$user_id}";
+        try {
+            log_audit($user_id, $action, $details);
+        } catch (Exception $e) {
+            error_log('Audit log failed: ' . $e->getMessage());
+        }
         echo json_encode(['success' => true, 'message' => 'Reservation updated successfully']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Error updating reservation: ' . $stmt->error]);
