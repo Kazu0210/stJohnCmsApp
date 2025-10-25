@@ -1,87 +1,87 @@
 <?php
-session_start();
-header('Content-Type: application/json');
-require 'db_connect.php'; 
+// Enable error reporting for debugging (you can remove this in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Invalid request method.']);
-    exit;
-}
+// Include your database connection
+include 'db_connect.php'; // Make sure this file defines $conn (mysqli connection)
 
-$rawInput = file_get_contents('php://input');
-$data = json_decode($rawInput, true);
+// Validate if all required POST fields exist
+if (
+    isset($_POST['reservationID']) &&
+    isset($_POST['clientName']) &&
+    isset($_POST['address']) &&
+    isset($_POST['contactNumber']) &&
+    isset($_POST['reservationDate']) &&
+    isset($_POST['area']) &&
+    isset($_POST['block']) &&
+    isset($_POST['rowNumber']) &&
+    isset($_POST['lotNumber']) &&
+    isset($_POST['lotTypeID']) &&
+    isset($_POST['burialDepth'])
+) {
+    // Get data from POST
+    $reservationID   = intval($_POST['reservationID']);
+    $clientName      = trim($_POST['clientName']);
+    $address         = trim($_POST['address']);
+    $contactNumber   = trim($_POST['contactNumber']);
+    $reservationDate = trim($_POST['reservationDate']);
+    $area            = trim($_POST['area']);
+    $block           = trim($_POST['block']);
+    $rowNumber       = trim($_POST['rowNumber']);
+    $lotNumber       = trim($_POST['lotNumber']);
+    $lotTypeID       = intval($_POST['lotTypeID']);
+    $burialDepth     = trim($_POST['burialDepth']);
+    $status          = isset($_POST['status']) ? $_POST['status'] : null;
 
-if (!isset($data['reservationID'])) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Missing required parameter: reservationID.']);
-    exit;
-}
+    // Prepare SQL update statement (using prepared statements for safety)
+    $stmt = $conn->prepare("
+        UPDATE reservations 
+        SET clientName = ?, 
+            address = ?, 
+            contactNumber = ?, 
+            reservationDate = ?, 
+            area = ?, 
+            block = ?, 
+            rowNumber = ?, 
+            lotNumber = ?, 
+            lotTypeId = ?, 
+            burialDepth = ?, 
+            status = ?
+        WHERE reservationId = ?
+    ");
 
-$reservationID = (int)$data['reservationID'];
+    if ($stmt === false) {
+        die(json_encode(['success' => false, 'message' => 'Prepare failed: ' . $conn->error]));
+    }
 
-$clientName      = $data['clientName'] ?? null;
-$address         = $data['address'] ?? null;
-$contactNumber   = $data['contactNumber'] ?? null;
-$reservationDate = $data['reservationDate'] ?? null;
-$area            = $data['area'] ?? null;
-$block           = $data['block'] ?? null;
-$rowNumber       = $data['rowNumber'] ?? null;
-$lotNumber       = $data['lotNumber'] ?? null;
-$lotTypeID       = $data['lotTypeID'] ?? null;
-$burialDepth     = $data['burialDepth'] ?? null;
-$status          = $data['status'] ?? null; 
-$clientValidId   = $data['clientValidId'] ?? null; 
+    $stmt->bind_param(
+        "ssssssssissi",
+        $clientName,
+        $address,
+        $contactNumber,
+        $reservationDate,
+        $area,
+        $block,
+        $rowNumber,
+        $lotNumber,
+        $lotTypeID,
+        $burialDepth,
+        $status,
+        $reservationID
+    );
 
-$paramTypes = 'sssssssssssssssi';
-$bindParams = [
-    $clientName, 
-    $address, 
-    $contactNumber, 
-    $reservationDate, 
-    $area, 
-    $block, 
-    $rowNumber, 
-    $lotNumber, 
-    $lotTypeID, 
-    $burialDepth, 
-    $status, $status, 
-    $clientValidId, $clientValidId, 
-    $reservationID
-];
+    // Execute and check if successful
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Reservation updated successfully']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Error updating reservation: ' . $stmt->error]);
+    }
 
-$sql = "
-UPDATE reservations
-SET clientName = ?,
-    address = ?,
-    contactNumber = ?,
-    reservationDate = ?,
-    area = ?,
-    block = ?,
-    rowNumber = ?,
-    lotNumber = ?,
-    lotTypeID = ?,
-    burialDepth = ?,
-    status = IF(? IS NULL, status, ?),
-    clientValidId = IF(? IS NULL, clientValidId, ?),
-    updatedAt = NOW()
-WHERE reservationID = ?
-";
-
-$stmt = $conn->prepare($sql);
-if ($stmt === false) {
-    echo json_encode(['status' => 'error', 'message' => $conn->error]);
-    exit;
-}
-
-$stmt->bind_param($paramTypes, ...$bindParams);
-$stmt->execute();
-
-if ($conn->affected_rows > 0) {
-    echo json_encode(['status' => 'success', 'message' => 'Reservation record updated successfully.']);
+    $stmt->close();
 } else {
-    echo json_encode(['status' => 'success', 'message' => 'Update successful (no new changes).']);
+    echo json_encode(['success' => false, 'message' => 'Missing required POST data']);
 }
 
-$stmt->close();
 $conn->close();
+?>

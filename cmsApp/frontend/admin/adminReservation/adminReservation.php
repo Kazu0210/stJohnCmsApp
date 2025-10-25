@@ -171,7 +171,7 @@ $userRole = getCurrentUserRole();
                         <div class="col-md-6"><label for="editClientContact" class="form-label">Contact Number</label><input type="text" class="form-control" id="editClientContact"></div>
                         
                         <h6 class="col-12 mt-4">Reservation Details</h6>
-                        <div class="col-md-6"><label for="editReservationDate" class="form-label">Reservation Date</label><input type="date" class="form-control" id="editReservationDate"></div>
+                        <div class="col-md-6"><label for="editReservationDate" class="form-label">Reservation Date</label><input type="date" class="form-control" id="editReservationDate" value="<?php echo date('Y-m-d'); ?>"></div>
                         <div class="col-md-3"><label for="editArea" class="form-label">Area</label><input type="text" class="form-control" id="editArea"></div>
                         <div class="col-md-3"><label for="editBlock" class="form-label">Block</label><input type="text" class="form-control" id="editBlock"></div>
                         <div class="col-md-3"><label for="editRow" class="form-label">Row</label><input type="text" class="form-control" id="editRow"></div>

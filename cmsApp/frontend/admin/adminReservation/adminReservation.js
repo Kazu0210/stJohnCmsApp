@@ -366,7 +366,19 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('editClientName').value = rec.clientName || '';
         document.getElementById('editClientAddress').value = rec.address || '';
         document.getElementById('editClientContact').value = rec.contactNumber || '';
-        document.getElementById('editReservationDate').value = rec.reservationDate || '';
+    document.getElementById('editReservationDate').value = formatDateForInput(rec.reservationDate);
+    // Helper to format date as YYYY-MM-DD for input[type=date]
+    function formatDateForInput(dateStr) {
+        if (!dateStr) return '';
+        // If already in YYYY-MM-DD, return as is
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        // Try to parse and format
+        const d = new Date(dateStr);
+        if (isNaN(d)) return '';
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${d.getFullYear()}-${month}-${day}`;
+    }
         document.getElementById('editArea').value = rec.area || '';
         document.getElementById('editBlock').value = rec.block || '';
         document.getElementById('editRow').value = rec.rowNumber || '';
@@ -392,9 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
     editForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const reservationId = editModalEl.dataset.id;
-        if (!reservationId) return showToast('No reservation selected', 'danger');
-
-        // Build payload from form fields.
         const payload = {
             reservationID: parseInt(reservationId, 10),
             clientName: document.getElementById('editClientName').value.trim(),
@@ -407,31 +416,26 @@ document.addEventListener('DOMContentLoaded', () => {
             lotNumber: document.getElementById('editLot').value.trim(),
             lotTypeID: document.getElementById('editLotType').value,
             burialDepth: document.getElementById('editBurialDepth').value,
-            // Status is not passed here unless it's a specific status change event
-            status: null, 
+            status: null
         };
+        console.log('Form data payload:', payload);
+
+        const formData = new FormData();
+        for (const key in payload) {
+            formData.append(key, payload[key]);
+        }
 
         try {
-            const res = await fetch(API_BASE + 'updateReservation.php', {
+            const response = await fetch('../../../../cms.api/updateReservation.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload),
-                credentials: 'same-origin'
+                body: formData
             });
-            const json = await res.json();
-
-            if (json.status === 'success') {
-                showToast(json.message || 'Changes saved!', 'success');
-                editModal.hide();
-                await fetchReservations();
-            } else {
-                showToast(json.message || 'Update failed', 'danger');
-            }
-        } catch (err) {
-            console.error(err);
-            showToast('Network error during update', 'danger');
+            const result = await response.text();
+            console.log('Server response:', result);
+            // Refresh the page after update
+            window.location.reload();
+        } catch (error) {
+            console.error('Error:', error);
         }
     });
 
