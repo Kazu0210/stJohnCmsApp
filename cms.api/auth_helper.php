@@ -142,4 +142,12 @@ function checkSessionTimeout($timeout = 86400) {
     }
     return true;
 }
+
+function log_audit($user_id, $action, $details = null) {
+    require_once 'db_connect.php'; // adjust path as needed
+    $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)");
+    $stmt->bind_param("iss", $user_id, $action, $details);
+    $stmt->execute();
+    $stmt->close();
+}
 ?>
