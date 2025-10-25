@@ -404,6 +404,9 @@ document.addEventListener('DOMContentLoaded', () => {
     editForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const reservationId = editModalEl.dataset.id;
+        // Find the reservation record to get the current status
+        const rec = reservations.find(r => String(r.reservationId) === String(reservationId));
+        const currentStatus = rec && rec.status ? rec.status : '';
         const payload = {
             reservationID: parseInt(reservationId, 10),
             clientName: document.getElementById('editClientName').value.trim(),
@@ -416,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lotNumber: document.getElementById('editLot').value.trim(),
             lotTypeID: document.getElementById('editLotType').value,
             burialDepth: document.getElementById('editBurialDepth').value,
-            status: null
+            status: currentStatus
         };
         console.log('Form data payload:', payload);
 
